@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { requireMember } from "@/lib/dal";
 import { prisma, withOrg } from "@/lib/db";
+import { LIMIT_MESSAGES } from "@/lib/plans";
 import { hashToken, newToken } from "@/lib/tokens";
 
 export type TeamState = { error: string | null; inviteLink?: string };
@@ -33,6 +34,9 @@ export async function inviteMember(
   const member = await requireMember();
   if (member.role !== "OWNER") {
     return { error: "Chỉ chủ nhà mới mời được người khác." };
+  }
+  if (!member.limits.team) {
+    return { error: LIMIT_MESSAGES.team };
   }
 
   const parsed = inviteSchema.safeParse({

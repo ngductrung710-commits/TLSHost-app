@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { canManageBookings, requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
+import { LIMIT_MESSAGES } from "@/lib/plans";
 import { runSync } from "@/lib/sync";
 import { newToken } from "@/lib/tokens";
 
@@ -24,6 +25,9 @@ export async function connectChannel(
   const member = await requireMember();
   if (member.role !== "OWNER") {
     return { error: "Chỉ chủ nhà mới kết nối được kênh." };
+  }
+  if (!member.limits.channels) {
+    return { error: LIMIT_MESSAGES.channels };
   }
 
   const parsed = connectSchema.safeParse(Object.fromEntries(formData));
@@ -89,6 +93,9 @@ export async function connectChannel(
 export async function syncNow(formData: FormData): Promise<void> {
   const member = await requireMember();
   if (!canManageBookings(member)) return;
+  // A lapsed subscription stops pulling. The channel row and its blocks stay —
+  // deleting them would free nights an OTA has genuinely sold.
+  if (!member.limits.channels) return;
 
   const channelId = String(formData.get("channelId") ?? "");
   if (!channelId) return;

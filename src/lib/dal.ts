@@ -4,6 +4,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { withUser } from "@/lib/db";
+import { limitsFor, type Plan, type PlanLimits } from "@/lib/plans";
 import { readSession } from "@/lib/session";
 
 /**
@@ -32,6 +33,12 @@ export type ActiveMember = {
   canEditOthersBookings: boolean;
   /** Empty means every property in the org — see MembershipScope. */
   scopedPropertyIds: string[];
+
+  /// What this organization is allowed to do. Resolved once here so no page
+  /// has to remember to check the expiry, and every gate reads the same
+  /// answer.
+  plan: Plan;
+  limits: PlanLimits;
 };
 
 /**
@@ -60,7 +67,9 @@ export const getActiveMember = cache(async (): Promise<ActiveMember | null> => {
         orgId: true,
         role: true,
         canEditOthersBookings: true,
-        org: { select: { name: true, timezone: true } },
+        org: {
+        select: { name: true, timezone: true, plan: true, planUntil: true },
+      },
         user: { select: { name: true, email: true } },
         scopes: { select: { propertyId: true } },
       },
@@ -80,6 +89,8 @@ export const getActiveMember = cache(async (): Promise<ActiveMember | null> => {
     role: membership.role,
     canEditOthersBookings: membership.canEditOthersBookings,
     scopedPropertyIds: membership.scopes.map((s) => s.propertyId),
+    plan: membership.org.plan,
+    limits: limitsFor(membership.org.plan, membership.org.planUntil),
   };
 });
 

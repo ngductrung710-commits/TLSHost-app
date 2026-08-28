@@ -59,6 +59,16 @@ model Organization {
   /// upload action, which decides the name itself.
   logoFile   String?
 
+  /* -- what they are paying for --------------------------------------- */
+
+  plan Plan @default(FREE)
+
+  /// Null on FREE, and on a plan that never expires. A date in the past means
+  /// the subscription lapsed: limits fall back to FREE but nothing is deleted,
+  /// because a host who forgets to pay for a month should not lose a season of
+  /// bookings.
+  planUntil DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -381,6 +391,21 @@ model PushSubscription {
   @@index([orgId])
   @@index([userId])
   @@map("push_subscription")
+}
+
+/// Matches the three plans on the marketing site.
+///
+/// Stored as an enum rather than a set of feature booleans: a plan is a thing
+/// a host bought, and the features it unlocks are a fact about the plan, not
+/// about the organization. Rows of booleans drift out of step with the pricing
+/// page the moment either changes.
+enum Plan {
+  /// "Khởi đầu" — one property, direct bookings, 0% commission.
+  FREE
+  /// "Kênh bán" — unlimited properties and two-way iCal sync.
+  CHANNELS
+  /// "Chuyên nghiệp" — everything, plus the assistant and scoped team access.
+  PRO
 }
 
 enum BookingTheme {

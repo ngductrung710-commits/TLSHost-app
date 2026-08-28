@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
+import { LIMIT_MESSAGES } from "@/lib/plans";
 
 export type PropertyState = { error: string | null };
 
@@ -48,6 +49,17 @@ export async function createProperty(
   const duplicates = roomNames.length !== new Set(roomNames).size;
   if (duplicates) {
     return { error: "Có tên phòng bị trùng. Mỗi phòng cần một tên riêng." };
+  }
+
+  // Counted at the moment of creation, not cached on the org. A limit that
+  // reads a stale counter is a limit that can be walked past by opening two
+  // tabs.
+  const max = member.limits.maxProperties;
+  if (max !== null) {
+    const existing = await withOrg(member.orgId, (tx) => tx.property.count());
+    if (existing >= max) {
+      return { error: LIMIT_MESSAGES.properties(max) };
+    }
   }
 
   await withOrg(member.orgId, async (tx) => {

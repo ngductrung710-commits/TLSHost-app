@@ -8,6 +8,7 @@ import { draftProposal } from "@/lib/assistant";
 import { canManageBookings, requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { todayIn } from "@/lib/dates";
+import { LIMIT_MESSAGES } from "@/lib/plans";
 import { PROPOSAL_TTL_MS } from "@/lib/proposals";
 
 export type AssistantState = { error: string | null };
@@ -23,6 +24,9 @@ export async function ask(
   const member = await requireMember();
   if (!canManageBookings(member)) {
     return { error: "Bạn không có quyền dùng trợ lý." };
+  }
+  if (!member.limits.assistant) {
+    return { error: LIMIT_MESSAGES.assistant };
   }
 
   const parsed = askSchema.safeParse(Object.fromEntries(formData));

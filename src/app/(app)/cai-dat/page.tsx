@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { readAppearance } from "@/lib/appearance";
+import { PLANS, PLAN_ORDER, effectivePlan } from "@/lib/plans";
 import { pushConfigured } from "@/lib/push";
+import { formatVnd } from "@/lib/dates";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 
@@ -55,12 +57,19 @@ export default async function SettingsPage() {
         name: true,
         timezone: true,
         currency: true,
+        plan: true,
+        planUntil: true,
         bookingTheme: true,
         brandColor: true,
         logoFile: true,
       },
     }),
   );
+
+  // What they bought, and what is actually in force — different when a
+  // subscription has lapsed.
+  const active = org ? effectivePlan(org.plan, org.planUntil) : "FREE";
+  const lapsed = Boolean(org && org.plan !== "FREE" && active === "FREE");
 
   return (
     <>
@@ -148,6 +157,90 @@ export default async function SettingsPage() {
           ))}
         </div>
       </section>
+
+      {/* ---- plan ----------------------------------------------------------- */}
+      {isOwner ? (
+        <section className="mt-12 border-t border-line pt-10">
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">
+            Gói dịch vụ
+          </h2>
+          <p className="mb-5 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+            Thuê bao cố định, không phí trên mỗi lượt đặt ở bất kỳ gói nào.
+          </p>
+
+          {lapsed ? (
+            <p
+              role="alert"
+              className="mb-5 max-w-2xl rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-[13.5px] leading-relaxed text-warning"
+            >
+              Gói {PLANS[org!.plan].name} đã hết hạn. Giới hạn tạm quay về gói
+              Khởi đầu — không có gì bị xoá, chỗ nghỉ và đặt phòng vẫn nguyên,
+              chỉ là chưa thêm mới được cho tới khi gia hạn.
+            </p>
+          ) : null}
+
+          <ul className="grid gap-4 sm:grid-cols-3">
+            {PLAN_ORDER.map((p) => {
+              const plan = PLANS[p];
+              const current = p === active;
+              return (
+                <li
+                  key={p}
+                  className={`rounded-2xl border p-5 ${
+                    current ? "border-ink-900 bg-sand-50" : "border-line bg-surface"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-[15px] font-semibold text-ink-900">
+                      {plan.name}
+                    </p>
+                    {current ? (
+                      <span className="rounded-full bg-ink-900 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-sand-100">
+                        Đang dùng
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="mt-2 text-[1.375rem] font-semibold text-ink-900 tnum">
+                    {plan.price === 0 ? "Miễn phí" : formatVnd(plan.price)}
+                    {plan.price > 0 ? (
+                      <span className="text-[13px] font-normal text-ink-500">
+                        {" "}
+                        / tháng
+                      </span>
+                    ) : null}
+                  </p>
+
+                  <ul className="mt-4 space-y-1.5 border-t border-line pt-4 text-[13px] text-ink-700">
+                    <li>
+                      {plan.maxProperties === null
+                        ? "Không giới hạn chỗ nghỉ"
+                        : `${plan.maxProperties} chỗ nghỉ`}
+                    </li>
+                    <li className={plan.channels ? "" : "text-ink-400"}>
+                      {plan.channels ? "Đồng bộ kênh OTA" : "Chưa có đồng bộ kênh"}
+                    </li>
+                    <li className={plan.assistant ? "" : "text-ink-400"}>
+                      {plan.assistant ? "Trợ lý AI" : "Chưa có trợ lý AI"}
+                    </li>
+                    <li className={plan.team ? "" : "text-ink-400"}>
+                      {plan.team ? "Đội ngũ & phân quyền" : "Chưa có đội ngũ"}
+                    </li>
+                  </ul>
+                </li>
+              );
+            })}
+          </ul>
+
+          <p className="mt-5 max-w-2xl text-[13px] leading-relaxed text-ink-500">
+            Đang dùng: <span className="font-medium text-ink-700">{PLANS[active].name}</span>
+            {org?.planUntil
+              ? ` · đến ${org.planUntil.toLocaleDateString("vi-VN")}`
+              : ""}
+            . Chưa có thanh toán trong ứng dụng — nhắn cho chúng tôi để đổi gói.
+          </p>
+        </section>
+      ) : null}
 
       {/* ---- notifications -------------------------------------------------- */}
       <section className="mt-12 border-t border-line pt-10">
