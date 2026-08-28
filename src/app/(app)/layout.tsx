@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5">
           <div className="flex items-center gap-6">
             <Link
-              href={member.role === "HOUSEKEEPER" ? "/buong-phong" : "/lich"}
+              href={member.role === "HOUSEKEEPER" ? "/buong-phong" : "/tong-quan"}
               className="text-[15px] font-bold text-ink-900"
             >
               TLSHost
@@ -38,14 +38,19 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 needs doing separately. */}
             <nav aria-label="Chính" className="flex items-center gap-1">
               {(member.role === "HOUSEKEEPER"
-                ? [{ href: "/buong-phong", label: "Buồng phòng" }]
+                ? [
+                    { href: "/buong-phong", label: "Buồng phòng" },
+                    { href: "/cai-dat", label: "Cài đặt" },
+                  ]
                 : [
+                    { href: "/tong-quan", label: "Bảng điều khiển" },
                     { href: "/lich", label: "Lịch" },
                     { href: "/tro-ly", label: "Trợ lý" },
                     { href: "/buong-phong", label: "Buồng phòng" },
                     { href: "/cho-nghi", label: "Chỗ nghỉ" },
                     { href: "/kenh", label: "Kênh bán" },
                     { href: "/doi-ngu", label: "Đội ngũ" },
+                    { href: "/cai-dat", label: "Cài đặt" },
                   ]
               ).map((item) => (
                 <Link

@@ -182,6 +182,33 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
               </div>
             </div>
           ))}
+
+          {/* Occupancy, one column per day. Sits under the rooms so the eye
+              lands on it after scanning the grid, which is the order a host
+              reads in: what is booked, then how full that leaves the night. */}
+          <div className="board__sticky border-t border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+            Lấp đầy
+          </div>
+          {board.perDay.map((day, i) => (
+            <div
+              key={`occ-${toIsoDate(board.days[i])}`}
+              className={[
+                "border-t border-line px-1 py-2 text-center",
+                i === todayIndex ? "bg-clay-50" : isWeekend(board.days[i]) ? "bg-sand-50" : "",
+              ].join(" ")}
+            >
+              <div
+                className={`text-[12px] font-semibold tnum ${
+                  day.sold === 0 ? "text-ink-300" : "text-ink-900"
+                }`}
+              >
+                {day.total === 0 ? "—" : `${Math.round((day.sold / day.total) * 100)}%`}
+              </div>
+              <div className="text-[10px] text-ink-400 tnum">
+                {day.sold}/{day.total}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

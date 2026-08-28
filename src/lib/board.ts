@@ -44,6 +44,15 @@ export type Board = {
   rooms: BoardRoom[];
   /** Booked nights ÷ available nights across the window, 0–100. */
   occupancy: number;
+  /**
+   * Per-day: how many rooms are sold, and out of how many.
+   *
+   * The window average above answers "how is the month"; this answers "which
+   * night is empty", which is the one a host can still act on. Blocked nights
+   * count in neither — a night held for maintenance is not a night sold, and
+   * showing it as one would flatter the number exactly when it should not.
+   */
+  perDay: { sold: number; total: number }[];
 };
 
 export async function loadBoard(
@@ -181,6 +190,21 @@ export async function loadBoard(
   );
   const availableNights = boardRooms.length * dayCount;
 
+  // Counted from the placed spans rather than re-queried: a booking bar covers
+  // columns [offset, offset + span), which is the same half-open range the
+  // database used to select it.
+  const perDay = Array.from({ length: dayCount }, (_, column) => {
+    const sold = boardRooms.filter((room) =>
+      room.spans.some(
+        (s) =>
+          s.kind === "booking" &&
+          s.offset <= column &&
+          column < s.offset + s.span,
+      ),
+    ).length;
+    return { sold, total: boardRooms.length };
+  });
+
   return {
     from,
     to,
@@ -190,6 +214,7 @@ export async function loadBoard(
       availableNights === 0
         ? 0
         : Math.round((soldNights / availableNights) * 100),
+    perDay,
   };
 }
 
