@@ -1,0 +1,268 @@
+// TLSHost PMS — slice 1: accounts, properties, rooms, calendar.
+//
+// Only what the calendar needs to be correct. Channels, housekeeping, the AI
+// assistant and payments are named in the spec but have no tables here yet;
+// they all read from Booking and Block, so those two have to be right first.
+//
+// Two conventions run through the whole file and are not negotiable later:
+//
+//   1. A stay is stored as two DATE columns, never a timestamp. A night is a
+//      calendar concept in the property's timezone, not an instant. Storing an
+//      instant buys a family of off-by-one-day bugs that only surface when a
+//      guest complains.
+//
+//   2. Ranges are half-open: [checkIn, checkOut). A guest leaving on the 15th
+//      frees the night of the 15th. Nights = checkOut - checkIn with no
+//      adjustment, and it matches how iCal defines DTEND for all-day events,
+//      so the sync layer added later needs no conversion.
+//
+// The overlap constraints and row-level security that enforce all of this live
+// in migrations/, not here: Prisma's schema language cannot express either.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tenancy                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/// One host business. Every row that carries data belongs to exactly one, and
+/// a missing orgId filter is the worst bug this product can have — so it is
+/// guarded twice: a Prisma client extension, and Postgres row-level security.
+model Organization {
+  id       String @id @default(cuid())
+  name     String
+  /// IANA zone. Decides what "today" means on the board.
+  timezone String @default("Asia/Ho_Chi_Minh")
+  currency String @default("VND")
+  locale   String @default("vi")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  properties  Property[]
+  bookings    Booking[]
+  blocks      Block[]
+
+  @@map("organization")
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  /// Argon2id. Null for accounts that only ever signed in through a provider.
+  passwordHash String?
+  name         String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  sessions    Session[]
+
+  @@map("user")
+}
+
+enum Role {
+  OWNER
+  COLLABORATOR
+  HOUSEKEEPER
+}
+
+/// A user's place in one organization. A user may belong to several.
+model Membership {
+  id     String @id @default(cuid())
+  orgId  String
+  userId String
+  role   Role   @default(OWNER)
+
+  /// Only meaningful for COLLABORATOR. Owners always can; housekeepers never
+  /// touch bookings at all.
+  canEditOthersBookings Boolean @default(false)
+
+  invitedAt DateTime  @default(now())
+  joinedAt  DateTime?
+
+  org             Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scopes          MembershipScope[]
+  createdBookings Booking[]         @relation("BookingCreator")
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@map("membership")
+}
+
+/// Which properties a scoped member may see. No rows means every property in
+/// the org — the common case for an owner, and the reason this is a separate
+/// table rather than a column.
+model MembershipScope {
+  id           String @id @default(cuid())
+  membershipId String
+  propertyId   String
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  property   Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, propertyId])
+  @@map("membership_scope")
+}
+
+/// Auth.js database sessions. Chosen over JWT because revoking access has to
+/// take effect immediately: when an owner removes a collaborator, that person
+/// must lose the calendar on their next request, not when a token expires.
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+/* -------------------------------------------------------------------------- */
+/* Inventory                                                                   */
+/* -------------------------------------------------------------------------- */
+
+model Property {
+  id    String @id @default(cuid())
+  orgId String
+  name  String
+  /// Free text for now. Becomes structured when the guest-facing booking page
+  /// needs to render a location.
+  address String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org    Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  rooms  Room[]
+  scopes MembershipScope[]
+
+  @@index([orgId])
+  @@map("property")
+}
+
+/// The sellable unit. Everything that can be booked or blocked hangs off a
+/// room, including whole-villa listings — a villa is a property with one room.
+/// Keeping it uniform means the overlap constraint has exactly one shape.
+model Room {
+  id         String @id @default(cuid())
+  propertyId String
+  name       String
+  capacity   Int    @default(2)
+  /// Minor units, so VND is stored whole. Nullable because a room can exist
+  /// before it has been priced.
+  basePrice  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  blocks   Block[]
+
+  @@index([propertyId])
+  @@map("room")
+}
+
+/* -------------------------------------------------------------------------- */
+/* Calendar                                                                    */
+/* -------------------------------------------------------------------------- */
+
+enum BookingSource {
+  DIRECT
+  AIRBNB
+  BOOKING_COM
+  AGODA
+  TRAVELOKA
+  OTHER
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+/// A stay. checkIn is inclusive, checkOut exclusive — see the file header.
+///
+/// The overlap constraint added in the migration excludes CANCELLED rows, so a
+/// cancelled booking keeps its dates as a record without holding the nights.
+model Booking {
+  id     String @id @default(cuid())
+  orgId  String
+  roomId String
+
+  guestName  String
+  guestEmail String?
+  guestPhone String?
+
+  /// @db.Date, both of them. A timestamp here would be a bug.
+  checkIn  DateTime @db.Date
+  checkOut DateTime @db.Date
+
+  guests    Int           @default(2)
+  /// Minor units. Total for the whole stay, not per night.
+  totalCents Int?
+  source    BookingSource @default(DIRECT)
+  status    BookingStatus @default(CONFIRMED)
+  notes     String?
+
+  /// Who entered it. Null for bookings that arrived from a channel feed rather
+  /// than a person. This is the column the "who created this" trail reads.
+  createdByMembershipId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  room      Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdBy Membership?  @relation("BookingCreator", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([roomId, checkIn])
+  @@map("booking")
+}
+
+enum BlockReason {
+  MAINTENANCE
+  OWNER_STAY
+  CHANNEL_SYNC
+  OTHER
+}
+
+/// Nights held without a guest: maintenance, an owner staying, or a night an
+/// OTA has sold that was imported as a block rather than a full booking.
+///
+/// Separate from Booking rather than a Booking subtype, because a block has no
+/// guest, no money and no channel, and folding it in would make half of
+/// Booking's columns nullable for the sake of one flag.
+model Block {
+  id     String @id @default(cuid())
+  orgId  String
+  roomId String
+
+  dateFrom DateTime    @db.Date
+  dateTo   DateTime    @db.Date
+  reason   BlockReason @default(MAINTENANCE)
+  note     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  room Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([roomId, dateFrom])
+  @@map("block")
+}
