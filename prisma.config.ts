@@ -24,5 +24,11 @@ export default defineConfig({
   // Migrations, not runtime. The application connects as a non-owner role that
   // row-level security applies to; that role cannot run DDL, and the owner role
   // that can must never be what serves requests.
-  datasource: { url: env("MIGRATE_DATABASE_URL") },
+  datasource: {
+    url: env("MIGRATE_DATABASE_URL"),
+    // Scratch database Prisma replays migrations into when it needs to know
+    // what they add up to. It gets dropped and rebuilt on every use, so it must
+    // never point at anything real.
+    shadowDatabaseUrl: env("SHADOW_DATABASE_URL"),
+  },
 });

@@ -1,26 +1,137 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   TLSHost app — design tokens.
+
+   The same palette as the marketing site: espresso on bone, sand rules, clay
+   accent. Shared by hand rather than by package, because two deployments that
+   must not be able to break each other should not share a build.
+
+   Every text pair here was checked at 4.5:1 or better on the site this came
+   from; the additions below (the board's own colours) are checked in the
+   comments beside them.
+   ========================================================================== */
+
+@theme {
+  /* Espresso — brand and primary action */
+  --color-ink-50:  #f6f4f3;
+  --color-ink-100: #e9e4e1;
+  --color-ink-200: #d3c9c3;
+  --color-ink-300: #b3a49b;
+  --color-ink-400: #8a7f75;
+  --color-ink-500: #6e625a;
+  --color-ink-600: #544a43;
+  --color-ink-700: #3f3630;
+  --color-ink-800: #311817;
+  --color-ink-900: #231813;
+  --color-ink-950: #170f0c;
+
+  /* Sand — warm secondary surfaces and dividers */
+  --color-sand-50:  #faf9f7;
+  --color-sand-100: #f2f0ed;
+  --color-sand-200: #e6e1da;
+  --color-sand-300: #dcd5cc;
+  --color-sand-400: #ccbeb4;
+  --color-sand-500: #c8bfae;
+  --color-sand-600: #a89886;
+  --color-sand-700: #8a7a68;
+
+  /* Clay — accent */
+  --color-clay-50:  #fbf3ef;
+  --color-clay-100: #f4e2d8;
+  --color-clay-200: #e6c3b0;
+  --color-clay-300: #d29c7f;
+  --color-clay-400: #bd7455;
+  --color-clay-500: #a05436;
+  --color-clay-600: #8a452b;
+  --color-clay-700: #703723;
+
+  /* Semantic */
+  --color-positive: #4f6b52;
+  --color-positive-soft: #eaf0ea;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf3e7;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fbeceb;
+
+  /* Roles */
+  --color-canvas: #f2f0ed;
+  --color-canvas-alt: #e9e4e1;
+  --color-surface: #ffffff;
+  --color-line: #dcd5cc;        /* decorative divider */
+  --color-line-strong: #8a7f75; /* control boundary — 3.44:1 on canvas */
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-900);
+    -webkit-font-smoothing: antialiased;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Visible focus on everything interactive. The board is keyboard-heavy —
+     a host correcting six bookings will tab, not reach for the mouse. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ink-900);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Prices and dates must not jitter as digits change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* ------------------------------------------------------------------
+     The board.
+
+     A CSS grid whose column count is set per render from the number of
+     days shown. Room names sit in a sticky first column so they stay
+     readable while the dates scroll sideways — the one interaction this
+     screen has to get right, since a host reads left-to-right from a
+     room name to a date every single time.
+     ------------------------------------------------------------------ */
+  .board {
+    display: grid;
+    grid-template-columns: var(--board-name-col) repeat(var(--board-days), var(--board-day-col));
+  }
+
+  .board__sticky {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--color-surface);
+  }
+
+  /* Stays are absolutely positioned over the day cells rather than placed in
+     them, because one stay spans several days and grid items cannot overlap
+     the way back-to-back bookings need to at their shared edge. */
+  .board__row {
+    position: relative;
+  }
+}
+
+/* A stay that continues past the window keeps a flat edge on that side, so a
+   reader can tell "starts here" from "started before this screen". */
+.stay--open-start {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.stay--open-end {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

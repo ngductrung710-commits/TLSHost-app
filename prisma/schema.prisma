@@ -114,14 +114,28 @@ model MembershipScope {
   @@map("membership_scope")
 }
 
-/// Auth.js database sessions. Chosen over JWT because revoking access has to
-/// take effect immediately: when an owner removes a collaborator, that person
-/// must lose the calendar on their next request, not when a token expires.
+/// Server-side sessions, deliberately not JWTs.
+///
+/// Revoking access has to take effect immediately: when an owner removes a
+/// collaborator, that person must lose the calendar on their next request, not
+/// whenever a token happens to expire. A row that can be deleted does that; a
+/// signed token cannot without a revocation list, which is this table with
+/// extra steps.
+///
+/// Auth.js was the first choice and was dropped after reading @auth/core: its
+/// credentials path always issues a JWT cookie and never writes to the adapter
+/// session table, whatever the configured strategy says. The needed piece is
+/// small enough to own — see src/lib/session.ts.
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
+  id String @id @default(cuid())
+
+  /// SHA-256 of the token, never the token. A leaked database backup should
+  /// not hand over live sessions, and nothing here needs the original value.
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
