@@ -4,8 +4,18 @@ import Link from "next/link";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 
+import type { BookingTheme } from "@/lib/themes";
+
+import { AppearanceForm, LogoForm } from "./AppearanceForm";
 import { OrgForm, PasswordForm, ProfileForm } from "./SettingsForms";
-import { changePassword, updateOrg, updateProfile } from "./actions";
+import {
+  changePassword,
+  removeLogo,
+  updateAppearance,
+  updateOrg,
+  updateProfile,
+  uploadLogo,
+} from "./actions";
 
 export const metadata: Metadata = { title: "Cài đặt" };
 
@@ -22,7 +32,14 @@ export default async function SettingsPage() {
   const org = await withOrg(member.orgId, (tx) =>
     tx.organization.findUnique({
       where: { id: member.orgId },
-      select: { name: true, timezone: true, currency: true },
+      select: {
+        name: true,
+        timezone: true,
+        currency: true,
+        bookingTheme: true,
+        brandColor: true,
+        logoFile: true,
+      },
     }),
   );
 
@@ -80,6 +97,34 @@ export default async function SettingsPage() {
           </p>
         </section>
       )}
+
+      {/* ---- how the guest page looks -------------------------------------- */}
+      {isOwner ? (
+        <section className="mt-12 border-t border-line pt-10">
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">
+            Giao diện trang đặt phòng
+          </h2>
+          <p className="mb-6 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+            Trang khách nhìn thấy khi bạn chia sẻ link. Áp dụng cho tất cả chỗ
+            nghỉ.
+          </p>
+
+          <LogoForm
+            action={uploadLogo}
+            removeAction={removeLogo}
+            logoFile={org?.logoFile ?? null}
+            orgName={org?.name ?? ""}
+          />
+
+          <div className="mt-8">
+            <AppearanceForm
+              action={updateAppearance}
+              bookingTheme={(org?.bookingTheme ?? "CLASSIC") as BookingTheme}
+              brandColor={org?.brandColor ?? null}
+            />
+          </div>
+        </section>
+      ) : null}
 
       {/* ---- pointers ----------------------------------------------------- */}
       <section className="mt-12 border-t border-line pt-10">

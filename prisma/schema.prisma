@@ -40,7 +40,24 @@ model Organization {
   /// IANA zone. Decides what "today" means on the board.
   timezone String @default("Asia/Ho_Chi_Minh")
   currency String @default("VND")
+  /// Workspace language. "vi" or "en"; the guest booking page follows it too.
   locale   String @default("vi")
+
+  /* -- how the guest booking page looks ------------------------------- */
+
+  /// One of four presets. Not free-form CSS: a host picking a look should not
+  /// be able to produce an unreadable page, and four choices that were each
+  /// checked for contrast are worth more than infinite ones that were not.
+  bookingTheme BookingTheme @default(CLASSIC)
+
+  /// Hex, or null for the preset's own accent. Contrast against the preset's
+  /// background is checked on save — a brand colour nobody can read is worse
+  /// than the default.
+  brandColor String?
+
+  /// Filename under the uploads directory, never a path. Set only by the
+  /// upload action, which decides the name itself.
+  logoFile   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -329,6 +346,13 @@ model SyncRun {
 /* -------------------------------------------------------------------------- */
 /* Calendar                                                                    */
 /* -------------------------------------------------------------------------- */
+
+enum BookingTheme {
+  CLASSIC
+  MINIMAL
+  WARM
+  BOLD
+}
 
 enum ProposalKind {
   CREATE_BOOKING

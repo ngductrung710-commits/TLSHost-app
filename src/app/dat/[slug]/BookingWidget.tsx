@@ -5,8 +5,13 @@ import { useFormStatus } from "react-dom";
 
 import type { GuestState } from "./actions";
 
+// Reads the page's theme variables rather than the app's palette: this
+// component renders inside a host's chosen look, and hardcoded ink-900 on a
+// dark preset is white text on white.
 const inputClass =
-  "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
+  "mt-1.5 block min-h-11 w-full border border-[var(--line)] bg-[var(--surface)] px-3.5 text-[16px] text-[var(--ink)] outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/25";
+
+const roundedField = { borderRadius: "calc(var(--radius) * 0.6)" } as const;
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -14,7 +19,7 @@ function Submit() {
     <button
       type="submit"
       disabled={pending}
-      className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
+      className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[var(--accent)] px-6 text-[15px] font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90 disabled:opacity-60"
     >
       {pending ? "Đang gửi…" : "Đặt phòng này"}
     </button>
@@ -50,7 +55,7 @@ export function BookingWidget({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-4 inline-flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100 hover:bg-ink-800"
+        className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--accent)] px-5 text-[14px] font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90"
       >
         Chọn phòng này
       </button>
@@ -60,7 +65,7 @@ export function BookingWidget({
   return (
     <form
       action={formAction}
-      className="relative mt-5 space-y-4 border-t border-line pt-5"
+      className="relative mt-5 space-y-4 border-t border-[var(--line)] pt-5"
     >
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="roomId" value={roomId} />
@@ -95,7 +100,7 @@ export function BookingWidget({
       <div>
         <label
           htmlFor={`name-${roomId}`}
-          className="block text-[14px] font-medium text-ink-700"
+          className="block text-[14px] font-medium"
         >
           Tên của bạn
         </label>
@@ -105,6 +110,7 @@ export function BookingWidget({
           required
           autoComplete="name"
           className={inputClass}
+          style={roundedField}
         />
       </div>
 
@@ -112,7 +118,7 @@ export function BookingWidget({
         <div>
           <label
             htmlFor={`email-${roomId}`}
-            className="block text-[14px] font-medium text-ink-700"
+            className="block text-[14px] font-medium"
           >
             Email
           </label>
@@ -123,12 +129,13 @@ export function BookingWidget({
             required
             autoComplete="email"
             className={inputClass}
+            style={roundedField}
           />
         </div>
         <div>
           <label
             htmlFor={`phone-${roomId}`}
-            className="block text-[14px] font-medium text-ink-700"
+            className="block text-[14px] font-medium"
           >
             Điện thoại
           </label>
@@ -139,6 +146,7 @@ export function BookingWidget({
             required
             autoComplete="tel"
             className={inputClass}
+            style={roundedField}
           />
         </div>
       </div>
@@ -146,7 +154,7 @@ export function BookingWidget({
       <div>
         <label
           htmlFor={`guests-${roomId}`}
-          className="block text-[14px] font-medium text-ink-700"
+          className="block text-[14px] font-medium"
         >
           Số khách
         </label>
@@ -164,10 +172,10 @@ export function BookingWidget({
       <div>
         <label
           htmlFor={`notes-${roomId}`}
-          className="block text-[14px] font-medium text-ink-700"
+          className="block text-[14px] font-medium"
         >
           Ghi chú cho chủ nhà{" "}
-          <span className="font-normal text-ink-500">(không bắt buộc)</span>
+          <span className="font-normal text-[var(--ink-soft)]">(không bắt buộc)</span>
         </label>
         <textarea
           id={`notes-${roomId}`}
@@ -175,6 +183,7 @@ export function BookingWidget({
           rows={3}
           defaultValue=""
           className={inputClass + " min-h-24 py-2.5"}
+          style={roundedField}
         />
       </div>
 
@@ -183,7 +192,7 @@ export function BookingWidget({
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="block min-h-11 w-full text-center text-[14px] text-ink-500 hover:text-ink-900"
+        className="block min-h-11 w-full text-center text-[14px] text-[var(--ink-soft)] hover:text-[var(--ink)]"
       >
         Bỏ chọn phòng này
       </button>

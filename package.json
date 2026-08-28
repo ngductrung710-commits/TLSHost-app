@@ -12,7 +12,8 @@
     "build:worker": "esbuild src/lib/sync.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/sync.mjs",
     "sync": "npm run build:worker && node --env-file=.env scripts/sync-worker.mjs",
     "check:proposals": "esbuild src/lib/applyProposal.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/applyProposal.mjs && node --env-file=.env scripts/check-proposals.mjs",
-    "check": "npm run check:ical && npm run check:sync && npm run check:proposals"
+    "check": "npm run check:ical && npm run check:sync && npm run check:proposals && npm run check:themes",
+    "check:themes": "esbuild src/lib/themes.ts --bundle --format=esm --platform=node --outfile=.tmp/themes.mjs --alias:@=./src && node scripts/check-themes.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

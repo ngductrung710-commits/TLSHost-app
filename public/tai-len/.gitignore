@@ -1,0 +1,7 @@
+# Uploaded logos live here at runtime.
+#
+# Kept out of git: they are a host's files, they differ per deployment, and a
+# repo that carries them would grow without bound. The directory itself is
+# tracked so a fresh checkout has somewhere to write.
+*
+!.gitignore

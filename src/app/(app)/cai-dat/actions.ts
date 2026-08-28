@@ -12,6 +12,8 @@ import {
 } from "@/lib/passwords";
 import { createSession } from "@/lib/session";
 import { TIMEZONES } from "@/lib/timezones";
+import { brandColorProblem } from "@/lib/themes";
+import { deleteLogo, saveLogo } from "@/lib/uploads";
 
 export type SettingsState = { error: string | null; notice?: string };
 
@@ -133,4 +135,111 @@ export async function changePassword(
     notice:
       "Đã đổi mật khẩu. Mọi phiên đăng nhập khác đã bị đăng xuất; phiên này vẫn giữ.",
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Appearance                                                                  */
+/* -------------------------------------------------------------------------- */
+
+const appearanceSchema = z.object({
+  bookingTheme: z.enum(["CLASSIC", "MINIMAL", "WARM", "BOLD"]),
+  /** Empty means "use the preset's own accent", which is not the same as black. */
+  brandColor: z.string().trim(),
+});
+
+export async function updateAppearance(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const member = await requireMember();
+  if (member.role !== "OWNER") {
+    return { error: "Chỉ chủ nhà mới đổi được giao diện." };
+  }
+
+  const parsed = appearanceSchema.safeParse({
+    bookingTheme: formData.get("bookingTheme"),
+    brandColor: formData.get("brandColor"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+  }
+
+  const { bookingTheme } = parsed.data;
+  const raw = parsed.data.brandColor;
+
+  // Checked here rather than at render. A host who picks a colour nobody can
+  // read should be told by the form, in the same second, rather than find out
+  // from a guest who could not see the button.
+  if (raw !== "") {
+    const problem = brandColorProblem(raw, bookingTheme);
+    if (problem) return { error: problem };
+  }
+
+  await withOrg(member.orgId, (tx) =>
+    tx.organization.update({
+      where: { id: member.orgId },
+      data: {
+        bookingTheme,
+        brandColor: raw === "" ? null : raw.toLowerCase(),
+      },
+    }),
+  );
+
+  revalidatePath("/cai-dat");
+  return { error: null, notice: "Đã lưu giao diện trang đặt phòng." };
+}
+
+export async function uploadLogo(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const member = await requireMember();
+  if (member.role !== "OWNER") {
+    return { error: "Chỉ chủ nhà mới đổi được logo." };
+  }
+
+  const file = formData.get("logo");
+  if (!(file instanceof File)) return { error: "Chưa chọn tệp nào." };
+
+  const saved = await saveLogo(file);
+  if (!saved.ok) return { error: saved.error };
+
+  const previous = await withOrg(member.orgId, async (tx) => {
+    const org = await tx.organization.findUnique({
+      where: { id: member.orgId },
+      select: { logoFile: true },
+    });
+    await tx.organization.update({
+      where: { id: member.orgId },
+      data: { logoFile: saved.filename },
+    });
+    return org?.logoFile ?? null;
+  });
+
+  // Only after the row points at the new file. The other order leaves a window
+  // where the page has no logo at all if the write fails.
+  if (previous) await deleteLogo(previous);
+
+  revalidatePath("/cai-dat");
+  return { error: null, notice: "Đã tải logo lên." };
+}
+
+export async function removeLogo(): Promise<void> {
+  const member = await requireMember();
+  if (member.role !== "OWNER") return;
+
+  const previous = await withOrg(member.orgId, async (tx) => {
+    const org = await tx.organization.findUnique({
+      where: { id: member.orgId },
+      select: { logoFile: true },
+    });
+    await tx.organization.update({
+      where: { id: member.orgId },
+      data: { logoFile: null },
+    });
+    return org?.logoFile ?? null;
+  });
+
+  if (previous) await deleteLogo(previous);
+  revalidatePath("/cai-dat");
 }
