@@ -69,6 +69,7 @@ model Organization {
   blocks      Block[]
   channels    Channel[]
   proposals   AiProposal[]
+  pushSubs    PushSubscription[]
 
   @@map("organization")
 }
@@ -85,6 +86,7 @@ model User {
 
   memberships Membership[]
   sessions    Session[]
+  pushSubs    PushSubscription[]
 
   @@map("user")
 }
@@ -346,6 +348,40 @@ model SyncRun {
 /* -------------------------------------------------------------------------- */
 /* Calendar                                                                    */
 /* -------------------------------------------------------------------------- */
+
+/// One browser that has agreed to receive push notifications.
+///
+/// Per subscription, not per user: someone signs in on a phone and a laptop
+/// and wants the phone to buzz. The endpoint is issued by the browser's own
+/// push service and is the address messages are sent to; the two keys are what
+/// encrypt them, so nothing in transit — including the push service — can read
+/// what a notification says.
+model PushSubscription {
+  id     String @id @default(cuid())
+  orgId  String
+  userId String
+
+  /// Unique because the browser reissues the same endpoint for the same
+  /// device: re-subscribing should update a row, not add one.
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  /// For telling one device from another in the settings list.
+  userAgent String?
+
+  createdAt DateTime  @default(now())
+  /// Cleared on every successful send. A subscription the push service has
+  /// rejected is deleted rather than retried forever.
+  lastSentAt DateTime?
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@map("push_subscription")
+}
 
 enum BookingTheme {
   CLASSIC

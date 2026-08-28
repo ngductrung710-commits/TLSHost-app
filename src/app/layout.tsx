@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 
+import { ServiceWorker } from "@/components/ServiceWorker";
 import { readAppearance } from "@/lib/appearance";
 
 import "./globals.css";
@@ -21,6 +22,8 @@ const sans = Be_Vietnam_Pro({
 export const metadata: Metadata = {
   title: { default: "TLSHost", template: "%s — TLSHost" },
   description: "Không gian vận hành cho chủ nhà độc lập.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "TLSHost", statusBarStyle: "default" },
   // This is a private workspace, not a page anyone should reach from search.
   robots: { index: false, follow: false },
 };
@@ -42,6 +45,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col font-[family-name:var(--font-sans)]">
         {children}
+        <ServiceWorker />
       </body>
     </html>
   );

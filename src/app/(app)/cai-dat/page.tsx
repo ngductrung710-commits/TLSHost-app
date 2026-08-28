@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { readAppearance } from "@/lib/appearance";
+import { pushConfigured } from "@/lib/push";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 
@@ -18,6 +19,8 @@ import {
   uploadLogo,
 } from "./actions";
 import { setAppearance } from "./appearanceAction";
+import { PushControls } from "./PushControls";
+import { sendTestPush, subscribePush, unsubscribePush } from "./pushActions";
 
 export const metadata: Metadata = { title: "Cài đặt" };
 
@@ -31,6 +34,19 @@ export default async function SettingsPage() {
   const member = await requireMember();
   const isOwner = member.role === "OWNER";
   const appearance = await readAppearance();
+
+  // Endpoints this org already has, so the control can tell "this device is
+  // registered" from "this browser has a subscription the server forgot".
+  const pushEndpoints = pushConfigured()
+    ? (
+        await withOrg(member.orgId, (tx) =>
+          tx.pushSubscription.findMany({
+            where: { userId: member.userId },
+            select: { endpoint: true },
+          }),
+        )
+      ).map((s) => s.endpoint)
+    : [];
 
   const org = await withOrg(member.orgId, (tx) =>
     tx.organization.findUnique({
@@ -131,6 +147,33 @@ export default async function SettingsPage() {
             </form>
           ))}
         </div>
+      </section>
+
+      {/* ---- notifications -------------------------------------------------- */}
+      <section className="mt-12 border-t border-line pt-10">
+        <h2 className="text-[1.125rem] font-semibold text-ink-900">
+          Thông báo đặt phòng
+        </h2>
+        <p className="mb-4 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+          Báo trên thiết bị này khi có khách đặt trực tiếp. Thông báo chỉ nói
+          tên khách và phòng — không có số điện thoại, không có số tiền, vì nó
+          hiện trên màn hình khoá nơi người bên cạnh cũng đọc được.
+        </p>
+
+        {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ? (
+          <PushControls
+            publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+            subscribeAction={subscribePush}
+            unsubscribeAction={unsubscribePush}
+            testAction={sendTestPush}
+            knownEndpoints={pushEndpoints}
+          />
+        ) : (
+          <p className="max-w-xl rounded-xl border border-line bg-sand-50 px-4 py-3 text-[13.5px] leading-relaxed text-ink-600">
+            Chưa cấu hình khoá VAPID trên máy chủ, nên thông báo chưa dùng
+            được. Xem README để tạo và thêm vào .env.
+          </p>
+        )}
       </section>
 
       {/* ---- how the guest page looks -------------------------------------- */}

@@ -10,7 +10,8 @@ import {
   withOrg,
   withPublicSlug,
 } from "@/lib/db";
-import { daysBetween, parseIsoDate } from "@/lib/dates";
+import { daysBetween, parseIsoDate, shortVi } from "@/lib/dates";
+import { notifyOrgInBackground } from "@/lib/push";
 
 export type GuestState = { error: string | null };
 
@@ -123,6 +124,15 @@ export async function requestBooking(
     if (pgErrorCode(error) === PG_EXCLUSION_VIOLATION) return { error: TAKEN };
     throw error;
   }
+
+  // After the write, and not awaited. A guest pressing "book" must not wait on
+  // a push service, and must not see an error because one was slow — the
+  // booking already exists by the time this runs.
+  notifyOrgInBackground(found.orgId, {
+    title: "Đặt phòng mới",
+    body: `${data.guestName} · ${shortVi(checkIn)}–${shortVi(checkOut)}`,
+    url: "/lich",
+  });
 
   redirect(`/dat/${data.slug}/xong`);
 }

@@ -1,0 +1,17 @@
+{
+  "name": "TLSHost",
+  "short_name": "TLSHost",
+  "description": "Không gian vận hành cho chủ nhà độc lập.",
+  "start_url": "/tong-quan",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f0ed",
+  "theme_color": "#231813",
+  "lang": "vi",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
