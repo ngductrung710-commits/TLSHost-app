@@ -4,6 +4,7 @@ import Link from "next/link";
 import { readAppearance } from "@/lib/appearance";
 import { PLANS, PLAN_ORDER, effectivePlan } from "@/lib/plans";
 import { pushConfigured } from "@/lib/push";
+import { secretsConfigured } from "@/lib/secrets";
 import { formatVnd } from "@/lib/dates";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
@@ -23,6 +24,8 @@ import {
 import { setAppearance } from "./appearanceAction";
 import { PushControls } from "./PushControls";
 import { sendTestPush, subscribePush, unsubscribePush } from "./pushActions";
+import { PaymentForm } from "./PaymentForm";
+import { connectPayments, disconnectPayments } from "./paymentActions";
 
 export const metadata: Metadata = { title: "Cài đặt" };
 
@@ -65,6 +68,16 @@ export default async function SettingsPage() {
       },
     }),
   );
+
+  const paymentAccounts = isOwner
+    ? await withOrg(member.orgId, (tx) =>
+        tx.paymentAccount.findMany({
+          select: { provider: true, publicId: true, live: true, verifiedAt: true },
+        }),
+      )
+    : [];
+  const accountFor = (p: "STRIPE" | "PAYPAL") =>
+    paymentAccounts.find((a) => a.provider === p) ?? null;
 
   // What they bought, and what is actually in force — different when a
   // subscription has lapsed.
@@ -157,6 +170,61 @@ export default async function SettingsPage() {
           ))}
         </div>
       </section>
+
+      {/* ---- payments -------------------------------------------------------- */}
+      {isOwner ? (
+        <section className="mt-12 border-t border-line pt-10">
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">
+            Thanh toán
+          </h2>
+          <p className="mb-5 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+            Kết nối tài khoản Stripe hoặc PayPal <span className="font-medium">của
+            chính bạn</span>. Khách trả thẳng vào đó — TLSHost không giữ tiền và
+            không lấy phần trăm nào. Phí của cổng thanh toán là do họ thu, không
+            phải chúng tôi.
+          </p>
+
+          {!secretsConfigured() ? (
+            <p className="max-w-2xl rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-[13.5px] leading-relaxed text-warning">
+              Máy chủ chưa đặt SECRET_KEY nên chưa lưu được khoá thanh toán một
+              cách an toàn. Xem README để tạo.
+            </p>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {(["STRIPE", "PAYPAL"] as const).map((p) => {
+                const account = accountFor(p);
+                return (
+                  <div key={p} className="space-y-2">
+                    <PaymentForm
+                      action={connectPayments}
+                      provider={p}
+                      connected={Boolean(account?.verifiedAt)}
+                      live={account?.live ?? false}
+                      publicId={account?.publicId ?? null}
+                    />
+                    {account ? (
+                      <form action={disconnectPayments}>
+                        <input type="hidden" name="provider" value={p} />
+                        <button
+                          type="submit"
+                          className="min-h-11 px-3 text-[13px] font-medium text-danger hover:underline"
+                        >
+                          Ngắt kết nối {p === "STRIPE" ? "Stripe" : "PayPal"}
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <p className="mt-5 max-w-2xl text-[13px] leading-relaxed text-ink-500">
+            Chưa kết nối cổng nào thì khách vẫn đặt phòng bình thường và trả khi
+            nhận phòng — đó cũng là cách phần lớn chỗ nghỉ ở Việt Nam đang làm.
+          </p>
+        </section>
+      ) : null}
 
       {/* ---- plan ----------------------------------------------------------- */}
       {isOwner ? (

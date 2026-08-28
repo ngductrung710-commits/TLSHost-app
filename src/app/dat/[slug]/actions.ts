@@ -84,8 +84,11 @@ export async function requestBooking(
     return { error: `Phòng này nhận tối đa ${found.room.capacity} khách.` };
   }
 
+  let bookingId: string;
+  let payable = false;
+
   try {
-    await withOrg(found.orgId, async (tx) => {
+    const result = await withOrg(found.orgId, async (tx) => {
       // The same check the host's own calendar runs, including the room lock.
       // A guest and a host racing for the last night is exactly what it is for.
       await assertNightsFree(tx, {
@@ -94,7 +97,7 @@ export async function requestBooking(
         to: checkOut,
       });
 
-      await tx.booking.create({
+      const created = await tx.booking.create({
         data: {
           orgId: found.orgId,
           roomId: found.room.id,
@@ -115,8 +118,27 @@ export async function requestBooking(
           // not involved.
           createdByMembershipId: null,
         },
+        select: { id: true, totalCents: true },
       });
+
+      // Read inside the same scope: whether to offer online payment depends on
+      // the host having connected a provider, and on this booking having a
+      // price at all. A room with no basePrice produces a null total, and
+      // sending a guest to a checkout for nothing would be worse than sending
+      // them nowhere.
+      const account = await tx.paymentAccount.findFirst({
+        where: { verifiedAt: { not: null } },
+        select: { id: true },
+      });
+
+      return {
+        id: created.id,
+        payable: Boolean(account) && (created.totalCents ?? 0) > 0,
+      };
     });
+
+    bookingId = result.id;
+    payable = result.payable;
   } catch (error) {
     // Both branches say the same thing to a guest. The distinction — our check
     // caught it, or the constraint did — matters to us, not to them.
@@ -134,5 +156,12 @@ export async function requestBooking(
     url: "/lich",
   });
 
-  redirect(`/dat/${data.slug}/xong`);
+  // Paying is optional and the booking already exists, so the two endings
+  // differ only in what the guest is offered next — never in whether the room
+  // is theirs.
+  redirect(
+    payable
+      ? `/dat/${data.slug}/thanh-toan?dat=${bookingId}`
+      : `/dat/${data.slug}/xong`,
+  );
 }

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { withOrg, withPublicSlug } from "@/lib/db";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
 
+import { settlePayment } from "../thanh-toan/actions";
+
 export const metadata: Metadata = {
   title: "Đã nhận đặt phòng",
   robots: { index: false, follow: false },
@@ -11,6 +13,15 @@ export const metadata: Metadata = {
 
 export default async function BookedPage(props: PageProps<"/dat/[slug]/xong">) {
   const { slug } = await props.params;
+  const params = await props.searchParams;
+
+  // Stripe substitutes its id into ?tt=; PayPal appends its own ?token=.
+  // Both land here, and neither is trusted for anything beyond "look up a
+  // payment we ourselves created" — the id is matched against a row in this
+  // org before a single call goes out to a provider.
+  const back = typeof params.tt === "string" ? params.tt : null;
+  const paypal = typeof params.token === "string" ? params.token : null;
+  const externalId = back ?? paypal;
 
   // The theme has to be looked up again here. This is a separate route, so it
   // does not inherit the booking page's wrapper — and a confirmation rendered
@@ -32,6 +43,13 @@ export default async function BookedPage(props: PageProps<"/dat/[slug]/xong">) {
         }),
       )
     : null;
+
+  // A guest who paid must be told so, and a guest who did not must not be. The
+  // provider is the authority on which happened, so it is asked here rather
+  // than inferring anything from the fact that they came back at all — a guest
+  // can reach this URL by pressing back, or by closing the checkout.
+  const settled =
+    found && externalId ? await settlePayment(found.orgId, externalId) : null;
 
   const theme = (org?.bookingTheme ?? "CLASSIC") as BookingTheme;
   const vars = themeVars(theme, org?.brandColor ?? null);
@@ -55,6 +73,23 @@ export default async function BookedPage(props: PageProps<"/dat/[slug]/xong">) {
           Những đêm bạn chọn đã khoá lại ngay trên lịch của chủ nhà — và trên
           mọi kênh khác. Chủ nhà sẽ liên hệ để sắp xếp phần còn lại.
         </p>
+
+        {settled === "paid" ? (
+          <p
+            role="status"
+            className="mx-auto mt-6 max-w-sm rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[15px] leading-relaxed"
+          >
+            Đã nhận thanh toán. Cảm ơn bạn.
+          </p>
+        ) : settled === "pending" ? (
+          <p
+            role="status"
+            className="mx-auto mt-6 max-w-sm rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[15px] leading-relaxed text-[var(--ink-soft)]"
+          >
+            Chưa xác nhận được thanh toán. Phòng vẫn là của bạn — chủ nhà sẽ
+            liên hệ để thu xếp.
+          </p>
+        ) : null}
         <p className="mt-8">
           <Link
             href={`/dat/${slug}`}

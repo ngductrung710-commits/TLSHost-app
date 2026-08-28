@@ -94,7 +94,7 @@ export function OrgForm({
         >
           {TIMEZONES.map((tz) => (
             <option key={tz} value={tz}>
-              {tz.replace("_", " ")}
+              {tz.replaceAll("_", " ")}
             </option>
           ))}
         </select>

@@ -80,6 +80,8 @@ model Organization {
   channels    Channel[]
   proposals   AiProposal[]
   pushSubs    PushSubscription[]
+  paymentAccounts PaymentAccount[]
+  payments        Payment[]
 
   @@map("organization")
 }
@@ -399,6 +401,91 @@ model PushSubscription {
 /// a host bought, and the features it unlocks are a fact about the plan, not
 /// about the organization. Rows of booleans drift out of step with the pricing
 /// page the moment either changes.
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+}
+
+/// A host's own payment account.
+///
+/// Their credentials, their money. TLSHost never holds funds and never takes a
+/// cut: a guest pays into the host's Stripe or PayPal account directly, and
+/// this app only ever asks that account to create a checkout and later asks
+/// whether it was paid. That is the whole reason the marketing site can say
+/// 0% commission without an asterisk.
+///
+/// The secret is encrypted at rest with a key from the environment. A database
+/// backup that leaks must not hand over the ability to move a host's money.
+model PaymentAccount {
+  id       String          @id @default(cuid())
+  orgId    String
+  provider PaymentProvider
+
+  /// Stripe's publishable key, or PayPal's client id. Public by design.
+  publicId String
+
+  /// AES-256-GCM, base64. Never returned to a page — only decrypted inside the
+  /// server action that is about to call the provider.
+  secretEnc String
+
+  /// A sandbox account is for a host trying it out. Kept distinct so a real
+  /// guest cannot be sent to a test checkout by accident.
+  live Boolean @default(false)
+
+  /// Set once the credentials have been used successfully at least once, so
+  /// the settings page can say "connected" rather than "we stored something".
+  verifiedAt DateTime?
+  lastError  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, provider])
+  @@map("payment_account")
+}
+
+enum PaymentStatus {
+  /// A checkout was created and the guest was sent to it.
+  PENDING
+  PAID
+  /// The provider said it failed, or the guest came back without paying.
+  FAILED
+  REFUNDED
+}
+
+/// One attempt to pay for one booking.
+///
+/// A row per attempt rather than a column on the booking: a guest who
+/// abandons a checkout and tries again produces two, and a host asking "did
+/// they pay" deserves to see both rather than one field that lost the first.
+model Payment {
+  id        String          @id @default(cuid())
+  orgId     String
+  bookingId String
+  provider  PaymentProvider
+
+  /// The provider's own id for this checkout — a Stripe session or a PayPal
+  /// order. Unique, so a webhook or a return-url hit can only ever settle the
+  /// row it belongs to.
+  externalId String @unique
+
+  amount   Int
+  currency String        @default("VND")
+  status   PaymentStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([bookingId])
+  @@map("payment")
+}
+
 enum Plan {
   /// "Khởi đầu" — one property, direct bookings, 0% commission.
   FREE
@@ -533,6 +620,7 @@ model Booking {
   org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   room      Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
   createdBy Membership?  @relation("BookingCreator", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  payments  Payment[]
 
   @@index([orgId])
   @@index([roomId, checkIn])

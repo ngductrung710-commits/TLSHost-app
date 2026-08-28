@@ -1,0 +1,103 @@
+// Money: currency conversion, and the encryption around a host's provider keys.
+//
+//   npm run check:payments
+//
+// Two things here can go wrong quietly and expensively.
+//
+// The first is the exponent. Stripe takes the smallest unit of the currency,
+// which for USD is cents and for VND is the đồng itself — VND has no minor
+// unit. Multiplying by 100 anyway turns 1 200 000 ₫ into 120 000 000 ₫, and
+// the guest's card is charged a hundred times the room rate. Nothing in the
+// type system stops that; the numbers stay plausible either way.
+//
+// The second is the encryption of a host's secret key. AES-GCM either refuses
+// tampered input or it is not doing its job, and "it round-trips" is the half
+// of that which is easy to get right.
+//
+// The live provider calls are NOT covered. Reaching Stripe and PayPal needs
+// real credentials, which do not exist in this repository and must not.
+
+process.env.SECRET_KEY ??= "check-payments-key-that-is-long-enough-32+";
+
+const {
+  __testing: { stripeAmount, paypalAmount },
+  decryptSecret,
+  encryptSecret,
+  maskSecret,
+  secretsConfigured,
+} = await import("../.tmp/payments.mjs");
+
+let failures = 0;
+const check = (label, got, want) => {
+  const ok = Object.is(got, want);
+  if (!ok) failures += 1;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label}`);
+  if (!ok) console.log(`      got  ${JSON.stringify(got)}\n      want ${JSON.stringify(want)}`);
+};
+
+/* -------------------------------------------------------------------- */
+console.log("-- Stripe: zero-decimal currencies are not multiplied");
+
+// The one that matters. A three-night stay at 400 000 ₫.
+check("VND passes through untouched", stripeAmount(1_200_000, "VND"), 1_200_000);
+check("vnd, lowercase, same", stripeAmount(1_200_000, "vnd"), 1_200_000);
+check("JPY passes through", stripeAmount(15_000, "JPY"), 15_000);
+check("KRW passes through", stripeAmount(90_000, "KRW"), 90_000);
+
+console.log("\n-- Stripe: everything else is in minor units");
+check("USD becomes cents", stripeAmount(120, "USD"), 12_000);
+check("usd, lowercase, same", stripeAmount(120, "usd"), 12_000);
+check("EUR becomes cents", stripeAmount(85, "EUR"), 8_500);
+check("zero stays zero", stripeAmount(0, "USD"), 0);
+
+console.log("\n-- PayPal: strings, with the right number of decimals");
+check("VND has none", paypalAmount(1_200_000, "VND"), "1200000");
+check("JPY has none", paypalAmount(15_000, "JPY"), "15000");
+check("USD has two", paypalAmount(120, "USD"), "120.00");
+check("usd, lowercase, same", paypalAmount(120, "usd"), "120.00");
+check("EUR has two", paypalAmount(85.5, "EUR"), "85.50");
+
+/* -------------------------------------------------------------------- */
+console.log("\n-- provider secrets survive a round trip");
+
+const secret = "not-a-real-key-only-round-trip-material";
+const stored = encryptSecret(secret);
+
+check("configured with a long enough key", secretsConfigured(), true);
+check("decrypts back to the original", decryptSecret(stored), secret);
+check("the plaintext is not in the stored value", stored.includes("round-trip"), false);
+
+// Same input, encrypted twice, must not produce the same bytes — a fixed IV
+// under one key is how GCM stops protecting anything.
+check("two encryptions differ", encryptSecret(secret) === encryptSecret(secret), false);
+
+console.log("\n-- and are refused when altered");
+
+const [iv, body, tag] = stored.split(".");
+const flip = (b64) => {
+  const buf = Buffer.from(b64, "base64url");
+  buf[0] ^= 0x01;
+  return buf.toString("base64url");
+};
+
+check("a flipped ciphertext bit is refused", decryptSecret(`${iv}.${flip(body)}.${tag}`), null);
+check("a flipped tag bit is refused", decryptSecret(`${iv}.${body}.${flip(tag)}`), null);
+check("a flipped IV bit is refused", decryptSecret(`${flip(iv)}.${body}.${tag}`), null);
+check("a truncated value is refused", decryptSecret(`${iv}.${body}`), null);
+check("an empty value is refused", decryptSecret(""), null);
+check("garbage is refused", decryptSecret("not-even-close"), null);
+
+// A rotated SECRET_KEY must disable payments, not crash a guest's checkout.
+const original = process.env.SECRET_KEY;
+process.env.SECRET_KEY = "a-completely-different-key-also-32-chars";
+check("a rotated key returns null rather than throwing", decryptSecret(stored), null);
+process.env.SECRET_KEY = original;
+
+console.log("\n-- masking shows enough to recognise, not enough to use");
+check("keeps the prefix and last four", maskSecret(secret), "not-a-r…rial");
+check("short values are hidden entirely", maskSecret("abc"), "•••");
+check("the middle is gone", maskSecret(secret).includes("round-trip"), false);
+
+/* -------------------------------------------------------------------- */
+console.log(failures === 0 ? "\nall checks passed" : `\n${failures} FAILED`);
+process.exit(failures === 0 ? 0 : 1);
