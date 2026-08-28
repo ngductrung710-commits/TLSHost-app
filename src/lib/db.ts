@@ -104,8 +104,8 @@ export async function withUser<T>(
 /**
  * Runs `fn` in a transaction scoped to one invitation.
  *
- * The third and last of these. Accepting an invitation happens before the
- * person has a session, so neither of the other two applies: there is no
+ * Accepting an invitation happens before the person has a session, so neither
+ * withOrg nor withUser applies: there is no
  * current org (they are not in one yet) and no current user (they are not
  * signed in). The policy admits exactly the row whose invite token hash
  * matches, which is one row, and only to whoever holds the link.
@@ -119,6 +119,30 @@ export async function withInviteToken<T>(
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT set_config('app.invite_token_hash', ${tokenHash}, true)`;
+    return fn(tx);
+  });
+}
+
+/**
+ * Runs `fn` in a transaction scoped to one room's public feed token.
+ *
+ * The last of the three narrow scopes, and together they name a pattern worth
+ * remembering: every place where identity arrives as something other than a
+ * session needs its own arm, because the policies are written around an org
+ * that nothing has established yet. Sign-in has withUser, invitations have
+ * withInviteToken, and a feed request — which carries no account at all — has
+ * this. Each is one table, SELECT only, matched on a value the caller must
+ * already hold.
+ *
+ * Used only to learn which organization the room belongs to. Everything the
+ * feed then reads goes through withOrg like the rest of the app.
+ */
+export async function withFeedToken<T>(
+  token: string,
+  fn: (tx: OrgClient) => Promise<T>,
+): Promise<T> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.ical_token', ${token}, true)`;
     return fn(tx);
   });
 }

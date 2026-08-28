@@ -47,6 +47,7 @@ model Organization {
 
   memberships Membership[]
   properties  Property[]
+  rooms       Room[]
   bookings    Booking[]
   blocks      Block[]
   channels    Channel[]
@@ -179,7 +180,17 @@ model Property {
 /// room, including whole-villa listings — a villa is a property with one room.
 /// Keeping it uniform means the overlap constraint has exactly one shape.
 model Room {
-  id         String @id @default(cuid())
+  id String @id @default(cuid())
+
+  /// Carried directly, not reached through the property.
+  ///
+  /// Every other tenant table has one; room was the exception, and the
+  /// exception cost a mutually recursive pair of row-level security policies
+  /// the moment a second way of identifying a room appeared. A room that
+  /// cannot say which organization it belongs to without a join is a room
+  /// whose policy has to perform that join, and Postgres refuses when the
+  /// other side does the same in reverse.
+  orgId      String
   propertyId String
   name       String
   capacity   Int    @default(2)
@@ -194,11 +205,13 @@ model Room {
   /// a feed that exists is a feed that can leak, so it is opt-in per room.
   icalToken String? @unique
 
-  property Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  property Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   bookings Booking[]
   blocks   Block[]
   channels Channel[]
 
+  @@index([orgId])
   @@index([propertyId])
   @@map("room")
 }

@@ -56,7 +56,9 @@ export async function createProperty(
         orgId: member.orgId,
         name: parsed.data.name,
         address: parsed.data.address || null,
-        rooms: { create: roomNames.map((name) => ({ name })) },
+        rooms: {
+          create: roomNames.map((name) => ({ name, orgId: member.orgId })),
+        },
       },
     });
   });

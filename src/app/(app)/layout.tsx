@@ -42,6 +42,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 Chỗ nghỉ
               </Link>
               <Link
+                href="/kenh"
+                className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
+              >
+                Kênh bán
+              </Link>
+              <Link
                 href="/doi-ngu"
                 className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
               >

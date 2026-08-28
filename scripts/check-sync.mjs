@@ -86,7 +86,7 @@ try {
         id: "check-sync-prop",
         orgId: ORG,
         name: "P",
-        rooms: { create: { id: ROOM, name: "R" } },
+        rooms: { create: { id: ROOM, orgId: ORG, name: "R" } },
       },
     });
     await tx.channel.create({
