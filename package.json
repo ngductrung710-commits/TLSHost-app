@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:ical": "esbuild src/lib/ical.ts --bundle --format=esm --platform=node --outfile=.tmp/ical.mjs --alias:@=./src && node scripts/check-ical.mjs",
+    "check:sync": "esbuild src/lib/sync.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/sync.mjs && node --env-file=.env scripts/check-sync.mjs"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.1.0",
@@ -24,6 +26,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "prisma": "^7.10.0",

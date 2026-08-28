@@ -49,6 +49,7 @@ model Organization {
   properties  Property[]
   bookings    Booking[]
   blocks      Block[]
+  channels    Channel[]
 
   @@map("organization")
 }
@@ -189,12 +190,91 @@ model Room {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// Secret in the public export feed URL. Null until the host asks for one —
+  /// a feed that exists is a feed that can leak, so it is opt-in per room.
+  icalToken String? @unique
+
   property Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   bookings Booking[]
   blocks   Block[]
+  channels Channel[]
 
   @@index([propertyId])
   @@map("room")
+}
+
+/* -------------------------------------------------------------------------- */
+/* Channels                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/// One OTA's iCal feed for one room.
+///
+/// Per room rather than per property: OTAs publish availability per listing,
+/// and a listing is a room. A villa rented whole is one room, so it gets one
+/// channel per OTA and nothing about this is special-cased.
+model Channel {
+  id     String        @id @default(cuid())
+  orgId  String
+  roomId String
+  kind   BookingSource
+
+  /// The OTA's iCal URL. These carry an unguessable token and are effectively
+  /// credentials, which is why the channel list never shows one in full.
+  importUrl String
+  label     String?
+
+  active Boolean @default(true)
+
+  lastSyncAt   DateTime?
+  lastSyncOk   Boolean?
+  /// Set when a sync refused to apply deletions. Stays until a later sync
+  /// succeeds cleanly, so a host is not told once and left to forget.
+  heldDeletions Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  room     Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  blocks   Block[]
+  syncRuns SyncRun[]
+
+  @@unique([roomId, kind])
+  @@index([orgId])
+  @@map("channel")
+}
+
+enum SyncStatus {
+  RUNNING
+  OK
+  FAILED
+  /// Finished, but deletions were withheld — see the sync guards.
+  HELD
+}
+
+/// One attempt at pulling a channel's feed. Kept as a record because "the
+/// calendar looks wrong" is answered by knowing what sync did and when.
+model SyncRun {
+  id        String     @id @default(cuid())
+  orgId     String
+  channelId String
+  status    SyncStatus @default(RUNNING)
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  eventsSeen    Int @default(0)
+  eventsApplied Int @default(0)
+  eventsRemoved Int @default(0)
+  heldDeletions Int @default(0)
+
+  error String?
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, startedAt])
+  @@index([orgId])
+  @@map("sync_run")
 }
 
 /* -------------------------------------------------------------------------- */
@@ -278,12 +358,20 @@ model Block {
   reason   BlockReason @default(MAINTENANCE)
   note     String?
 
+  /// Set on blocks that came from a feed. The pair identifies the row on the
+  /// next sync, so an unchanged event updates in place instead of piling up a
+  /// duplicate every hour.
+  channelId   String?
+  externalUid String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  room Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  room    Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  channel Channel?     @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
+  @@unique([channelId, externalUid])
   @@index([orgId])
   @@index([roomId, dateFrom])
   @@map("block")
