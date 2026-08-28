@@ -161,9 +161,22 @@ model Property {
   id    String @id @default(cuid())
   orgId String
   name  String
-  /// Free text for now. Becomes structured when the guest-facing booking page
-  /// needs to render a location.
+  /// Free text. Shown to guests on the booking page as written.
   address String?
+
+  /// The guest-facing booking page lives at /dat/<slug>.
+  ///
+  /// Opt-in, like the export feed: a page that exists is a page that can take
+  /// a booking, and a host should decide when that starts. Unique across every
+  /// organization, because the URL is global.
+  ///
+  /// Not a secret — it is meant to be shared — so unlike the feed token it is
+  /// readable and short.
+  publicSlug String? @unique
+  /// Turning this off hides the page without giving up the slug.
+  published  Boolean @default(false)
+  /// Shown under the property name. Plain text; guests see it verbatim.
+  intro      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

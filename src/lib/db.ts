@@ -78,73 +78,95 @@ export async function withOrg<T>(
 }
 
 /**
- * Runs `fn` in a transaction scoped to a *user* rather than an organization.
+ * Runs `fn` in a transaction that has set one Postgres session variable.
  *
- * Exists for exactly one query: the membership lookup that works out which org
- * a session belongs to. That query cannot use withOrg(), because finding the
- * org is its whole job — and `membership` is under row-level security, so
- * without some identity set it reads back nothing. That was a real bug: sign-up
- * wrote a user, an org, a membership and a session, then bounced the person
- * straight back to the sign-in page because the very next read saw zero rows.
+ * Everything below is a wrapper on this, and together they name a pattern the
+ * codebase arrived at the hard way: every entry point that identifies itself
+ * with something other than a session needs a narrow policy arm keyed on
+ * whatever it does present, because the ordinary policies are written around an
+ * organization that nothing has established yet.
  *
- * The policy that makes this work grants SELECT on a membership row whose
- * userId matches — nothing else, and no write. See the membership_lookup
- * migration.
+ * There are four, and each is one table, SELECT only, matched on a value the
+ * caller must already hold:
+ *
+ *   sign-in            reads `membership` to find the org   app.current_user_id
+ *   invitations        read `membership` before joining     app.invite_token_hash
+ *   availability feeds read `room` with no account          app.ical_token
+ *   the booking page   reads `property` and `room`          app.public_slug
+ *
+ * Two things learned from getting these wrong. A narrow arm on the table you
+ * query is not enough — every table the query traverses is filtered
+ * independently, and a filtered-out join comes back as null rather than as an
+ * error. And two arms that join to each other's tables deadlock the planner:
+ * Postgres refuses the pair with 42P17.
+ *
+ * Each of these buys only enough to learn the organization. Everything after
+ * that goes through withOrg, like the rest of the app.
  */
-export async function withUser<T>(
+function withSetting<T>(
+  name: string,
+  value: string,
+  fn: (tx: OrgClient) => Promise<T>,
+): Promise<T> {
+  return prisma.$transaction(async (tx) => {
+    // The name is a literal from the call sites below, never user input; the
+    // value is parameterised.
+    await tx.$executeRawUnsafe(
+      `SELECT set_config('${name}', $1, true)`,
+      value,
+    );
+    return fn(tx);
+  });
+}
+
+/**
+ * Scoped to one user, for the membership lookup that works out which org a
+ * session belongs to. That query cannot use withOrg — finding the org is its
+ * whole job — and `membership` is under row-level security, so without some
+ * identity set it reads back nothing. That was a real bug: sign-up wrote every
+ * row correctly and then bounced the person back to the sign-in page.
+ */
+export function withUser<T>(
   userId: string,
   fn: (tx: OrgClient) => Promise<T>,
 ): Promise<T> {
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
-    return fn(tx);
-  });
+  return withSetting("app.current_user_id", userId, fn);
 }
 
 /**
- * Runs `fn` in a transaction scoped to one invitation.
+ * Scoped to one invitation. Accepting one happens before the person has a
+ * session, so neither withOrg nor withUser applies.
  *
- * Accepting an invitation happens before the person has a session, so neither
- * withOrg nor withUser applies: there is no
- * current org (they are not in one yet) and no current user (they are not
- * signed in). The policy admits exactly the row whose invite token hash
- * matches, which is one row, and only to whoever holds the link.
- *
- * The caller passes the hash, never the token — so this file never sees a
- * value that could be replayed as a credential.
+ * Takes the hash, never the token, so this file never handles a value that
+ * could be replayed as a credential.
  */
-export async function withInviteToken<T>(
+export function withInviteToken<T>(
   tokenHash: string,
   fn: (tx: OrgClient) => Promise<T>,
 ): Promise<T> {
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.invite_token_hash', ${tokenHash}, true)`;
-    return fn(tx);
-  });
+  return withSetting("app.invite_token_hash", tokenHash, fn);
 }
 
-/**
- * Runs `fn` in a transaction scoped to one room's public feed token.
- *
- * The last of the three narrow scopes, and together they name a pattern worth
- * remembering: every place where identity arrives as something other than a
- * session needs its own arm, because the policies are written around an org
- * that nothing has established yet. Sign-in has withUser, invitations have
- * withInviteToken, and a feed request — which carries no account at all — has
- * this. Each is one table, SELECT only, matched on a value the caller must
- * already hold.
- *
- * Used only to learn which organization the room belongs to. Everything the
- * feed then reads goes through withOrg like the rest of the app.
- */
-export async function withFeedToken<T>(
+/** Scoped to one room's public availability feed. Carries no account at all. */
+export function withFeedToken<T>(
   token: string,
   fn: (tx: OrgClient) => Promise<T>,
 ): Promise<T> {
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.ical_token', ${token}, true)`;
-    return fn(tx);
-  });
+  return withSetting("app.ical_token", token, fn);
+}
+
+/**
+ * Scoped to one published property's guest booking page.
+ *
+ * The slug is not a secret — it is meant to be shared. What guards the page is
+ * the `published` flag, which both policy arms test, so an unpublished
+ * property cannot be reached through a guessed URL.
+ */
+export function withPublicSlug<T>(
+  slug: string,
+  fn: (tx: OrgClient) => Promise<T>,
+): Promise<T> {
+  return withSetting("app.public_slug", slug, fn);
 }
 
 /**

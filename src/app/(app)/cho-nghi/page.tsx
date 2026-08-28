@@ -16,6 +16,8 @@ export default async function PropertiesPage() {
         id: true,
         name: true,
         address: true,
+        published: true,
+        publicSlug: true,
         rooms: { select: { id: true, name: true }, orderBy: { name: "asc" } },
       },
       orderBy: { name: "asc" },
@@ -63,10 +65,24 @@ export default async function PropertiesPage() {
               className="rounded-2xl border border-line bg-surface p-5"
             >
               <h2 className="text-[16px] font-semibold text-ink-900">
-                {property.name}
+                {member.role === "OWNER" ? (
+                  <Link
+                    href={`/cho-nghi/${property.id}`}
+                    className="hover:underline"
+                  >
+                    {property.name}
+                  </Link>
+                ) : (
+                  property.name
+                )}
               </h2>
               {property.address ? (
                 <p className="mt-0.5 text-[13px] text-ink-500">{property.address}</p>
+              ) : null}
+              {property.published && property.publicSlug ? (
+                <p className="mt-2 inline-flex rounded-full bg-positive-soft px-2.5 py-1 text-[11px] font-semibold text-positive">
+                  Trang khách đang mở
+                </p>
               ) : null}
 
               <ul className="mt-4 space-y-1.5 border-t border-line pt-4">
