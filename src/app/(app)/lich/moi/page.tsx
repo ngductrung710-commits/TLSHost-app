@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { canManageBookings, requireMember, visiblePropertyFilter } from "@/lib/dal";
+import {
+  canManageBookings,
+  requireMember,
+  visiblePropertyFilter,
+} from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { addDays, parseIsoDate, todayIn, toIsoDate } from "@/lib/dates";
 
-import { BookingForm } from "./BookingForm";
+import { BookingForm } from "@/components/BookingForm";
+
 import { createBooking } from "../actions";
 
 export const metadata: Metadata = { title: "Đặt phòng mới" };
@@ -28,7 +33,8 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
   if (rooms.length === 0) redirect("/cho-nghi/moi");
 
   const today = todayIn(member.timezone);
-  const requested = typeof params.from === "string" ? parseIsoDate(params.from) : null;
+  const requested =
+    typeof params.from === "string" ? parseIsoDate(params.from) : null;
   const checkIn = requested ?? today;
 
   // The room named in the query string, but only if it is one this member can
@@ -49,7 +55,8 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
         Đặt phòng mới
       </h1>
       <p className="mb-7 mt-1 text-[14px] text-ink-600">
-        Nếu những đêm này đã có người giữ, hệ thống sẽ từ chối và nói rõ ai đang giữ.
+        Nếu những đêm này đã có người giữ, hệ thống sẽ từ chối và nói rõ ai đang
+        giữ.
       </p>
 
       <BookingForm
@@ -59,9 +66,20 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
           name: r.name,
           propertyName: r.property.name,
         }))}
-        defaultRoomId={defaultRoomId}
-        defaultCheckIn={toIsoDate(checkIn)}
-        defaultCheckOut={toIsoDate(addDays(checkIn, 2))}
+        defaults={{
+          roomId: defaultRoomId,
+          checkIn: toIsoDate(checkIn),
+          checkOut: toIsoDate(addDays(checkIn, 2)),
+          guestName: "",
+          guestEmail: "",
+          guestPhone: "",
+          guests: 2,
+          totalCents: "",
+          source: "DIRECT",
+          notes: "",
+        }}
+        submitLabel="Tạo đặt phòng"
+        cancelHref="/lich"
       />
     </>
   );

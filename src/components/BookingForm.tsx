@@ -4,11 +4,36 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import type { BookingState } from "../actions";
+import type { BookingState } from "@/app/(app)/lich/actions";
 
-type RoomOption = { id: string; name: string; propertyName: string };
+/**
+ * One form for creating and for editing a booking.
+ *
+ * Kept as a single component rather than two: the two differ by a hidden id
+ * and a button label, and the parts that are easy to get wrong — the checkout
+ * date's lower bound, the error region, the focus behaviour — should not have
+ * two copies that can drift.
+ */
 
-function Submit() {
+export type RoomOption = { id: string; name: string; propertyName: string };
+
+export type BookingDefaults = {
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  guests: number;
+  totalCents: string;
+  source: string;
+  notes: string;
+};
+
+const inputClass =
+  "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
+
+function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -16,26 +41,26 @@ function Submit() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : "Tạo đặt phòng"}
+      {pending ? "Đang lưu…" : label}
     </button>
   );
 }
 
-const inputClass =
-  "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
-
 export function BookingForm({
   action,
   rooms,
-  defaultRoomId,
-  defaultCheckIn,
-  defaultCheckOut,
+  defaults,
+  bookingId,
+  submitLabel,
+  cancelHref,
 }: {
   action: (prev: BookingState, formData: FormData) => Promise<BookingState>;
   rooms: RoomOption[];
-  defaultRoomId: string;
-  defaultCheckIn: string;
-  defaultCheckOut: string;
+  defaults: BookingDefaults;
+  /** Present when editing. Sent as a hidden field the action re-checks. */
+  bookingId?: string;
+  submitLabel: string;
+  cancelHref: string;
 }) {
   const [state, formAction] = useActionState<BookingState, FormData>(action, {
     error: null,
@@ -44,10 +69,12 @@ export function BookingForm({
   // Held in state so the checkout input's `min` tracks the arrival date. The
   // server rejects a backwards range regardless — this only stops a host
   // producing one by accident.
-  const [checkIn, setCheckIn] = useState(defaultCheckIn);
+  const [checkIn, setCheckIn] = useState(defaults.checkIn);
 
   return (
     <form action={formAction} className="max-w-xl space-y-5">
+      {bookingId ? <input type="hidden" name="id" value={bookingId} /> : null}
+
       {state.error ? (
         <p
           role="alert"
@@ -65,7 +92,7 @@ export function BookingForm({
         <select
           id="roomId"
           name="roomId"
-          defaultValue={defaultRoomId}
+          defaultValue={defaults.roomId}
           className={inputClass}
         >
           {rooms.map((r) => (
@@ -101,7 +128,7 @@ export function BookingForm({
             type="date"
             required
             min={checkIn}
-            defaultValue={defaultCheckOut}
+            defaultValue={defaults.checkOut}
             aria-describedby="checkout-hint"
             className={inputClass}
           />
@@ -120,6 +147,7 @@ export function BookingForm({
           name="guestName"
           required
           autoComplete="off"
+          defaultValue={defaults.guestName}
           className={inputClass}
         />
       </div>
@@ -133,7 +161,7 @@ export function BookingForm({
             id="guestEmail"
             name="guestEmail"
             type="email"
-            defaultValue=""
+            defaultValue={defaults.guestEmail}
             className={inputClass}
           />
         </div>
@@ -145,7 +173,7 @@ export function BookingForm({
             id="guestPhone"
             name="guestPhone"
             type="tel"
-            defaultValue=""
+            defaultValue={defaults.guestPhone}
             className={inputClass}
           />
         </div>
@@ -162,7 +190,7 @@ export function BookingForm({
             type="number"
             min={1}
             max={50}
-            defaultValue={2}
+            defaultValue={defaults.guests}
             className={inputClass + " tnum"}
           />
         </div>
@@ -176,7 +204,7 @@ export function BookingForm({
             type="number"
             min={0}
             step={1000}
-            defaultValue=""
+            defaultValue={defaults.totalCents}
             className={inputClass + " tnum"}
           />
         </div>
@@ -184,7 +212,12 @@ export function BookingForm({
           <label htmlFor="source" className="block text-[14px] font-medium text-ink-700">
             Nguồn
           </label>
-          <select id="source" name="source" defaultValue="DIRECT" className={inputClass}>
+          <select
+            id="source"
+            name="source"
+            defaultValue={defaults.source}
+            className={inputClass}
+          >
             <option value="DIRECT">Trực tiếp</option>
             <option value="AIRBNB">Airbnb</option>
             <option value="BOOKING_COM">Booking.com</option>
@@ -203,15 +236,15 @@ export function BookingForm({
           id="notes"
           name="notes"
           rows={3}
-          defaultValue=""
+          defaultValue={defaults.notes}
           className={inputClass + " min-h-24 py-2.5"}
         />
       </div>
 
       <div className="flex items-center gap-3 pt-1">
-        <Submit />
+        <Submit label={submitLabel} />
         <Link
-          href="/lich"
+          href={cancelHref}
           className="inline-flex min-h-11 items-center rounded-full px-4 text-[15px] font-medium text-ink-600 hover:text-ink-900"
         >
           Hủy

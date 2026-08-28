@@ -111,12 +111,43 @@ export async function withUser<T>(
 export const PG_EXCLUSION_VIOLATION = "23P01";
 export const PG_CHECK_VIOLATION = "23514";
 
-/** Reads the SQLSTATE off an unknown thrown value, or null if it has none. */
+/**
+ * Reads the Postgres SQLSTATE off an unknown thrown value, or null.
+ *
+ * Prisma does not surface it at the top level. A constraint violation arrives
+ * as PrismaClientKnownRequestError with `code: "P2039"` — a generic "database
+ * error" — and the real 23P01 sits three levels down:
+ *
+ *   error.meta.driverAdapterError.cause.code
+ *
+ * An earlier version of this checked `error.code` and `error.meta.code`, which
+ * meant the exclusion-constraint branch in the booking actions never fired:
+ * a genuine double-booking race would have produced a 500 instead of the
+ * message written for it. Found by throwing the violation on purpose against
+ * the real database and printing the error, which is the only way to learn
+ * this — the shape is in no type definition.
+ */
 export function pgErrorCode(error: unknown): string | null {
   if (typeof error !== "object" || error === null) return null;
-  const withCode = error as { code?: unknown; meta?: { code?: unknown } };
-  if (typeof withCode.code === "string") return withCode.code;
-  // Prisma wraps driver errors; the original SQLSTATE hides one level down.
-  if (typeof withCode.meta?.code === "string") return withCode.meta.code;
+
+  const meta = (error as { meta?: unknown }).meta;
+  if (typeof meta === "object" && meta !== null) {
+    const driver = (meta as { driverAdapterError?: unknown })
+      .driverAdapterError;
+    if (typeof driver === "object" && driver !== null) {
+      const cause = (driver as { cause?: unknown }).cause;
+      if (typeof cause === "object" && cause !== null) {
+        const code = (cause as { code?: unknown }).code;
+        if (typeof code === "string") return code;
+      }
+    }
+  }
+
+  // A raw driver error that never passed through Prisma carries it directly.
+  const direct = (error as { code?: unknown }).code;
+  if (typeof direct === "string" && /^\d{2}[0-9A-Z]{3}$/.test(direct)) {
+    return direct;
+  }
+
   return null;
 }
