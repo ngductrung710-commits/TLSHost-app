@@ -64,11 +64,124 @@
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ==========================================================================
+   Dark mode.
+
+   The tokens above are the light palette; these redefine the *roles* only —
+   canvas, surface, line, ink — so every component keeps working without
+   knowing a theme exists. Nothing below invents a colour: each dark value was
+   picked so the text pairings that pass in light also pass here, and
+   check:appearance proves it.
+
+   Three selectors, because there are three states. An explicit choice stamps
+   data-theme on <html>; the default stamps nothing and follows the device.
+   Getting this wrong in either direction is a page that ignores the toggle or
+   one that ignores the system setting.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: #17100d;
+    --color-canvas-alt: #211815;
+    --color-surface: #211815;
+    --color-line: #3a2e28;
+    /* #6b5a4f was the first pick and read 2.65:1 on the dark surface, under
+       the 3:1 a control boundary needs. Caught by check:appearance. */
+    --color-line-strong: #877668;
+
+    --color-ink-900: #ede7e1;
+    --color-ink-800: #d8d0c8;
+    --color-ink-700: #c9beb5;
+    --color-ink-600: #b3a79d;
+    --color-ink-500: #a89a90;
+    --color-ink-400: #8a7c72;
+    --color-ink-300: #6b5d54;
+    --color-ink-200: #3f342e;
+    --color-ink-100: #2b201b;
+    --color-ink-50: #211815;
+
+    --color-sand-50: #1d1512;
+    --color-sand-100: #2b201b;
+    --color-sand-200: #3a2e28;
+    --color-sand-300: #4a3b33;
+
+    --color-clay-50: #2a1c15;
+    --color-clay-100: #3a261c;
+    --color-clay-500: #d29c7f;
+    --color-clay-600: #e0b193;
+    --color-clay-700: #ecc7ae;
+
+    --color-positive: #8fb193;
+    --color-positive-soft: #1e2a20;
+    --color-warning: #e0a260;
+    --color-warning-soft: #2e2113;
+    --color-danger: #e59189;
+    --color-danger-soft: #2f1c1a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: #17100d;
+  --color-canvas-alt: #211815;
+  --color-surface: #211815;
+  --color-line: #3a2e28;
+  --color-line-strong: #877668;
+
+  --color-ink-900: #ede7e1;
+  --color-ink-800: #d8d0c8;
+  --color-ink-700: #c9beb5;
+  --color-ink-600: #b3a79d;
+  --color-ink-500: #a89a90;
+  --color-ink-400: #8a7c72;
+  --color-ink-300: #6b5d54;
+  --color-ink-200: #3f342e;
+  --color-ink-100: #2b201b;
+  --color-ink-50: #211815;
+
+  --color-sand-50: #1d1512;
+  --color-sand-100: #2b201b;
+  --color-sand-200: #3a2e28;
+  --color-sand-300: #4a3b33;
+
+  --color-clay-50: #2a1c15;
+  --color-clay-100: #3a261c;
+  --color-clay-500: #d29c7f;
+  --color-clay-600: #e0b193;
+  --color-clay-700: #ecc7ae;
+
+  --color-positive: #8fb193;
+  --color-positive-soft: #1e2a20;
+  --color-warning: #e0a260;
+  --color-warning-soft: #2e2113;
+  --color-danger: #e59189;
+  --color-danger-soft: #2f1c1a;
+}
+
 @layer base {
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink-900);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Native controls — date pickers, selects, scrollbars — follow the same
+     setting. Without this a dark page grows a white calendar popup.
+     
+     The system case needs saying too, and did not at first: with no
+     data-theme stamped the page went dark from prefers-color-scheme while
+     color-scheme stayed at its default, so the date pickers on the booking
+     forms stayed white. Measured as color-scheme "normal" on a page that was
+     already rendering dark. */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+    }
   }
 
   /* Visible focus on everything interactive. The board is keyboard-heavy —

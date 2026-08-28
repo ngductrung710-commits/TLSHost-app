@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 
+import { readAppearance } from "@/lib/appearance";
+
 import "./globals.css";
 
 /**
@@ -23,9 +25,21 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Read on the server so the first paint is already right. Doing this in the
+  // browser flashes the light theme on every navigation, which on a dark
+  // setting is a white rectangle in a dark room.
+  const appearance = await readAppearance();
+
   return (
-    <html lang="vi" className={`${sans.variable} h-full`}>
+    <html
+      lang="vi"
+      // Nothing stamped for "system": the CSS follows prefers-color-scheme
+      // when no attribute is present, which is the behaviour that setting
+      // names.
+      data-theme={appearance === "system" ? undefined : appearance}
+      className={`${sans.variable} h-full`}
+    >
       <body className="flex min-h-full flex-col font-[family-name:var(--font-sans)]">
         {children}
       </body>

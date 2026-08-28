@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { readAppearance } from "@/lib/appearance";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 
@@ -16,6 +17,7 @@ import {
   updateProfile,
   uploadLogo,
 } from "./actions";
+import { setAppearance } from "./appearanceAction";
 
 export const metadata: Metadata = { title: "Cài đặt" };
 
@@ -28,6 +30,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default async function SettingsPage() {
   const member = await requireMember();
   const isOwner = member.role === "OWNER";
+  const appearance = await readAppearance();
 
   const org = await withOrg(member.orgId, (tx) =>
     tx.organization.findUnique({
@@ -97,6 +100,38 @@ export default async function SettingsPage() {
           </p>
         </section>
       )}
+
+      {/* ---- this device ---------------------------------------------------- */}
+      <section className="mt-12 border-t border-line pt-10">
+        <h2 className="text-[1.125rem] font-semibold text-ink-900">Giao diện</h2>
+        <p className="mb-4 mt-1 max-w-xl text-[14px] leading-relaxed text-ink-600">
+          Sáng, tối, hoặc theo cài đặt của máy. Lưu riêng cho thiết bị này —
+          người khác trong đội không bị đổi theo.
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "light", label: "Sáng" },
+            { value: "dark", label: "Tối" },
+            { value: "system", label: "Theo hệ thống" },
+          ].map((option) => (
+            <form key={option.value} action={setAppearance}>
+              <input type="hidden" name="appearance" value={option.value} />
+              <button
+                type="submit"
+                aria-pressed={appearance === option.value}
+                className={`flex min-h-11 items-center rounded-full border px-5 text-[14px] font-medium transition-colors ${
+                  appearance === option.value
+                    ? "border-ink-900 bg-ink-900 text-sand-100"
+                    : "border-line bg-surface text-ink-700 hover:bg-sand-50"
+                }`}
+              >
+                {option.label}
+              </button>
+            </form>
+          ))}
+        </div>
+      </section>
 
       {/* ---- how the guest page looks -------------------------------------- */}
       {isOwner ? (
