@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bundles the check scripts build from src/. Linting generated output
+    // reports unused exports that are unused only because a bundler inlined
+    // the module — a warning about code nobody wrote.
+    ".tmp/**",
   ]),
 ]);
 

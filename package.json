@@ -10,9 +10,12 @@
     "check:ical": "esbuild src/lib/ical.ts --bundle --format=esm --platform=node --outfile=.tmp/ical.mjs --alias:@=./src && node scripts/check-ical.mjs",
     "check:sync": "esbuild src/lib/sync.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/sync.mjs && node --env-file=.env scripts/check-sync.mjs",
     "build:worker": "esbuild src/lib/sync.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/sync.mjs",
-    "sync": "npm run build:worker && node --env-file=.env scripts/sync-worker.mjs"
+    "sync": "npm run build:worker && node --env-file=.env scripts/sync-worker.mjs",
+    "check:proposals": "esbuild src/lib/applyProposal.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/applyProposal.mjs && node --env-file=.env scripts/check-proposals.mjs",
+    "check": "npm run check:ical && npm run check:sync && npm run check:proposals"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
     "@node-rs/argon2": "^2.1.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",

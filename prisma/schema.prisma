@@ -51,6 +51,7 @@ model Organization {
   bookings    Booking[]
   blocks      Block[]
   channels    Channel[]
+  proposals   AiProposal[]
 
   @@map("organization")
 }
@@ -328,6 +329,67 @@ model SyncRun {
 /* -------------------------------------------------------------------------- */
 /* Calendar                                                                    */
 /* -------------------------------------------------------------------------- */
+
+enum ProposalKind {
+  CREATE_BOOKING
+  BLOCK_NIGHTS
+  CANCEL_BOOKING
+  MOVE_BOOKING
+  SET_PRICE
+  /// The assistant understood the request but there is nothing it can propose.
+  NONE
+}
+
+enum ProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+/// Something the assistant drafted, waiting for a person.
+///
+/// The assistant never writes to the calendar. It reads a snapshot and returns
+/// one of these; a host approves it and the *application* code applies it
+/// through the same guarded paths a host's own click goes through. That is the
+/// whole safety model, and it is why this is a table rather than a tool call:
+/// a proposal that sits in a row can be shown, compared, and refused, and one
+/// that was never approved cannot have happened.
+model AiProposal {
+  id    String @id @default(cuid())
+  orgId String
+
+  /// What the host typed, kept verbatim so a wrong answer can be traced to the
+  /// question that produced it.
+  prompt  String
+  /// One sentence for the list.
+  summary String
+  kind    ProposalKind
+
+  /// The change itself, validated against a Zod schema on the way in and again
+  /// on the way out. JSON rather than columns because each kind has a
+  /// different shape and five nullable column sets would be worse.
+  payload Json
+
+  status    ProposalStatus @default(PENDING)
+  /// Proposals go stale: the nights they describe get taken. A short life means
+  /// an approval is always against a recent reading of the calendar.
+  expiresAt DateTime
+
+  createdByMembershipId String?
+  approvedByUserId      String?
+  approvedAt            DateTime?
+
+  /// Filled when applying failed, so the host sees why rather than nothing.
+  error String?
+
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+  @@map("ai_proposal")
+}
 
 enum CleanState {
   CLEAN

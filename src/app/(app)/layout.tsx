@@ -41,6 +41,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 ? [{ href: "/buong-phong", label: "Buồng phòng" }]
                 : [
                     { href: "/lich", label: "Lịch" },
+                    { href: "/tro-ly", label: "Trợ lý" },
                     { href: "/buong-phong", label: "Buồng phòng" },
                     { href: "/cho-nghi", label: "Chỗ nghỉ" },
                     { href: "/kenh", label: "Kênh bán" },
