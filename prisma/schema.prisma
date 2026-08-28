@@ -87,7 +87,15 @@ model Membership {
   canEditOthersBookings Boolean @default(false)
 
   invitedAt DateTime  @default(now())
+  /// Null until they set a password and accept. An unaccepted membership is
+  /// invisible to getActiveMember, so an invited person has no access at all
+  /// until they act on the invitation.
   joinedAt  DateTime?
+
+  /// SHA-256 of the invite token, never the token — same reasoning as Session.
+  /// Cleared on acceptance so a link cannot be replayed.
+  inviteTokenHash String?   @unique
+  inviteExpiresAt DateTime?
 
   org             Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)

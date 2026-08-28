@@ -41,6 +41,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               >
                 Chỗ nghỉ
               </Link>
+              <Link
+                href="/doi-ngu"
+                className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
+              >
+                Đội ngũ
+              </Link>
             </nav>
           </div>
 

@@ -1,9 +1,10 @@
 import "server-only";
 
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 import { prisma } from "@/lib/db";
+import { hashToken, newToken } from "@/lib/tokens";
 
 /**
  * Sessions, owned rather than delegated.
@@ -20,25 +21,11 @@ import { prisma } from "@/lib/db";
  */
 
 const COOKIE = "tlshost_session";
-const TOKEN_BYTES = 32; // 256 bits
 const MAX_AGE_DAYS = 30;
-
-/**
- * Only the hash is stored. A leaked backup then contains no usable session,
- * and nothing in the app ever needs the original value back — it arrives with
- * each request from the cookie.
- *
- * SHA-256 without a salt is right here, unlike for passwords: the input is 256
- * bits of CSPRNG output, so there is no dictionary to precompute and nothing
- * for a slow KDF to protect against.
- */
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
 
 /** Issues a session and sets the cookie. Returns nothing on purpose. */
 export async function createSession(userId: string): Promise<void> {
-  const token = randomBytes(TOKEN_BYTES).toString("base64url");
+  const token = newToken();
   const expiresAt = new Date(Date.now() + MAX_AGE_DAYS * 86_400_000);
 
   await prisma.session.create({

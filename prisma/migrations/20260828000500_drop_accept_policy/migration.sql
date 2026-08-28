@@ -1,0 +1,24 @@
+-- Removes a policy that did not do what it looked like it did.
+--
+-- membership_accept_invite was FOR UPDATE with WITH CHECK (true), added on the
+-- assumption that a permissive policy's WITH CHECK is OR'd with the others and
+-- would therefore let the acceptance flow write the row. It does not. Tested
+-- against this database:
+--
+--   token set, UPDATE keeping the token       → 1 row
+--   token set, UPDATE clearing the token      → 42501, new row violates policy
+--   token AND org set, clearing the token     → 1 row
+--
+-- So the write was only ever passing membership_write_in_org's check, and only
+-- when the new row still satisfied it. A policy that grants nothing but reads
+-- as though it grants something is worse than no policy at all: the next
+-- person to touch this will trust it.
+--
+-- Nothing is lost by dropping it. Accepting an invitation reads the row first
+-- — the SELECT arm on the token is what makes that possible, and that arm
+-- stays — and the row tells it which organization it is joining. It then sets
+-- app.current_org_id and writes through the ordinary org policy. The org id
+-- comes from a row the caller proved they hold a token for, never from
+-- anything they sent, so this is narrower than the policy it replaces.
+
+DROP POLICY "membership_accept_invite" ON "membership";
