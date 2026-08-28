@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { requireMember } from "@/lib/dal";
@@ -23,6 +24,8 @@ const ROLE_STYLES: Record<string, string> = {
 
 export default async function TeamPage() {
   const member = await requireMember();
+  // The team list carries everyone's email address.
+  if (member.role === "HOUSEKEEPER") redirect("/buong-phong");
 
   const { members, properties } = await withOrg(member.orgId, async (tx) => {
     const members = await tx.membership.findMany({

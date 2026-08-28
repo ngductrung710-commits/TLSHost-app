@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { BoardGrid } from "@/components/BoardGrid";
@@ -21,6 +22,10 @@ const WINDOW_DAYS = 21;
 
 export default async function CalendarPage(props: PageProps<"/lich">) {
   const member = await requireMember();
+  // Housekeepers see rooms, never bookings: the calendar names every guest,
+  // and the spec is explicit that they should not see guest or payment detail.
+  // Their screen is the housekeeping board.
+  if (member.role === "HOUSEKEEPER") redirect("/buong-phong");
   const params = await props.searchParams;
 
   const today = todayIn(member.timezone);

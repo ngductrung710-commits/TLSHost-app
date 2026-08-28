@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { SOURCE_LABELS } from "@/lib/board";
@@ -27,6 +28,8 @@ function ago(date: Date): string {
 
 export default async function ChannelsPage() {
   const member = await requireMember();
+  // Channel URLs are credentials, and nothing here is a housekeeper's job.
+  if (member.role === "HOUSEKEEPER") redirect("/buong-phong");
   const isOwner = member.role === "OWNER";
 
   const { channels, rooms, runs } = await withOrg(member.orgId, async (tx) => {

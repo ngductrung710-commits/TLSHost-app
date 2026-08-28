@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { requireMember, visiblePropertyFilter } from "@/lib/dal";
@@ -8,6 +9,7 @@ export const metadata: Metadata = { title: "Chỗ nghỉ" };
 
 export default async function PropertiesPage() {
   const member = await requireMember();
+  if (member.role === "HOUSEKEEPER") redirect("/buong-phong");
 
   const properties = await withOrg(member.orgId, (tx) =>
     tx.property.findMany({

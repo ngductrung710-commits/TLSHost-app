@@ -25,34 +25,36 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5">
           <div className="flex items-center gap-6">
-            <Link href="/lich" className="text-[15px] font-bold text-ink-900">
+            <Link
+              href={member.role === "HOUSEKEEPER" ? "/buong-phong" : "/lich"}
+              className="text-[15px] font-bold text-ink-900"
+            >
               TLSHost
             </Link>
+            {/* A housekeeper gets one link, because every other screen holds
+                something they are not meant to see. Those pages redirect them
+                anyway — this keeps the header from offering doors that close
+                in their face, which is a different job from the redirect and
+                needs doing separately. */}
             <nav aria-label="Chính" className="flex items-center gap-1">
-              <Link
-                href="/lich"
-                className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
-              >
-                Lịch
-              </Link>
-              <Link
-                href="/cho-nghi"
-                className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
-              >
-                Chỗ nghỉ
-              </Link>
-              <Link
-                href="/kenh"
-                className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
-              >
-                Kênh bán
-              </Link>
-              <Link
-                href="/doi-ngu"
-                className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
-              >
-                Đội ngũ
-              </Link>
+              {(member.role === "HOUSEKEEPER"
+                ? [{ href: "/buong-phong", label: "Buồng phòng" }]
+                : [
+                    { href: "/lich", label: "Lịch" },
+                    { href: "/buong-phong", label: "Buồng phòng" },
+                    { href: "/cho-nghi", label: "Chỗ nghỉ" },
+                    { href: "/kenh", label: "Kênh bán" },
+                    { href: "/doi-ngu", label: "Đội ngũ" },
+                  ]
+              ).map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-700 hover:bg-ink-100"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
 

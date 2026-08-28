@@ -103,6 +103,7 @@ model Membership {
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   scopes          MembershipScope[]
   createdBookings Booking[]         @relation("BookingCreator")
+  cleanedRooms    Room[]            @relation("RoomCleaner")
 
   @@unique([orgId, userId])
   @@index([userId])
@@ -214,6 +215,23 @@ model Room {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// What the housekeeping board says about this room right now.
+  ///
+  /// Stored rather than derived, because a person marks it — but "needs
+  /// cleaning" is *not* stored: see cleanedAt. That split is what lets a
+  /// check-out turn a room dirty with no scheduled job to run.
+  cleanState CleanState @default(CLEAN)
+
+  /// When the room was last marked clean, and by whom.
+  ///
+  /// A room needs cleaning if it was never cleaned, or if a guest has checked
+  /// out since. Comparing this timestamp against the last check-out answers
+  /// that from data already present — no nightly job to run, nothing to miss
+  /// when the job does not run, and a room that self-corrects the moment
+  /// anyone looks at it.
+  cleanedAt             DateTime?
+  cleanedByMembershipId String?
+
   /// Secret in the public export feed URL. Null until the host asks for one —
   /// a feed that exists is a feed that can leak, so it is opt-in per room.
   icalToken String? @unique
@@ -223,6 +241,10 @@ model Room {
   bookings Booking[]
   blocks   Block[]
   channels Channel[]
+
+  /// SetNull, like Booking's creator: removing someone from the team must not
+  /// delete the rooms they cleaned.
+  cleanedByMembership Membership? @relation("RoomCleaner", fields: [cleanedByMembershipId], references: [id], onDelete: SetNull)
 
   @@index([orgId])
   @@index([propertyId])
@@ -306,6 +328,15 @@ model SyncRun {
 /* -------------------------------------------------------------------------- */
 /* Calendar                                                                    */
 /* -------------------------------------------------------------------------- */
+
+enum CleanState {
+  CLEAN
+  DIRTY
+  INSPECTED
+  /// Held out of service. Unlike DIRTY this does not clear when someone
+  /// cleans — a manager has to take it back.
+  MAINTENANCE
+}
 
 enum BookingSource {
   DIRECT
