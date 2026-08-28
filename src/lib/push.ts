@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createECDH } from "node:crypto";
+import { createPublicKey } from "node:crypto";
 
 import webpush from "web-push";
 
@@ -55,8 +55,23 @@ function configure(): boolean {
 export function keysAreUsable(p256dh: string, auth: string): boolean {
   try {
     if (Buffer.from(auth, "base64url").length !== 16) return false;
-    const ecdh = createECDH("prime256v1");
-    ecdh.setPublicKey(Buffer.from(p256dh, "base64url"));
+
+    const point = Buffer.from(p256dh, "base64url");
+    if (point.length !== 65 || point[0] !== 0x04) return false;
+
+    // Imported as a JWK, which makes Node do the curve arithmetic and throw
+    // for a point that is not on it. ECDH.setPublicKey does the same job and
+    // still works at runtime, but it is gone from @types/node, so using it
+    // meant a build that failed while the code ran fine — the worst of both.
+    createPublicKey({
+      key: {
+        kty: "EC",
+        crv: "P-256",
+        x: point.subarray(1, 33).toString("base64url"),
+        y: point.subarray(33, 65).toString("base64url"),
+      },
+      format: "jwk",
+    });
     return true;
   } catch {
     return false;
