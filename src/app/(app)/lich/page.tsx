@@ -65,60 +65,67 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[18px] font-semibold text-ink-900">
-            {t("Lịch")}
-          </h1>
-          <p className="mt-1 text-[14px] text-ink-600">
-            {fill(t("{n} phòng"), { n: board.rooms.length })} ·{" "}
-            {shortVi(board.from)} –{" "}
-            {shortVi(addDays(board.to, -1))} ·{" "}
-            <span className="tnum font-medium text-ink-900">
-              {fill(t("lấp đầy {n}%"), { n: board.occupancy })}
-            </span>
-          </p>
-        </div>
-
-        <nav
-          aria-label={t("Chuyển khoảng ngày")}
-          className="flex flex-wrap items-center gap-2"
-        >
-          <Link
-            href="/lich/khoa"
-            className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
-          >
-            {t("Khóa đêm")}
-          </Link>
-          <Link
-            href="/lich/moi"
-            className="flex min-h-11 items-center rounded-full bg-ink-900 px-4 text-[14px] font-semibold text-sand-100 hover:bg-ink-800"
-          >
-            {t("Đặt phòng mới")}
-          </Link>
-          <span aria-hidden="true" className="mx-1 h-6 w-px bg-line" />
+      {/* Full-bleed: the toolbar is a rule across the whole pane, so it has to
+          undo the padding <main> puts on every other screen. */}
+      <div className="-mx-4 -mt-4 mb-4 flex flex-wrap items-center gap-2 border-b border-line bg-surface px-4 py-2.5 sm:-mx-5 sm:px-5">
+        <nav aria-label={t("Chuyển khoảng ngày")} className="flex items-center gap-1">
           <Link
             href={`/lich?tu=${prev}`}
-            className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
+            aria-label={t("← Trước")}
+            className="grid size-9 place-items-center rounded-full border border-line text-ink-700 hover:bg-sand-50"
           >
-            {t("← Trước")}
+            <span aria-hidden="true">‹</span>
           </Link>
           <Link
             href="/lich"
-            className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
+            className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-semibold text-ink-800 hover:bg-sand-50"
           >
             {t("Hôm nay")}
           </Link>
           <Link
             href={`/lich?tu=${next}`}
-            className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
+            aria-label={t("Sau →")}
+            className="grid size-9 place-items-center rounded-full border border-line text-ink-700 hover:bg-sand-50"
           >
-            Sau →
+            <span aria-hidden="true">›</span>
           </Link>
         </nav>
+
+        <h1 className="ml-1 text-[15px] font-semibold text-ink-900">
+          {shortVi(board.from)} – {shortVi(addDays(board.to, -1))}
+        </h1>
+
+        <p className="text-[13px] text-ink-500">
+          {fill(t("{n} phòng"), { n: board.rooms.length })} ·{" "}
+          <span className="tnum font-medium text-ink-700">
+            {fill(t("lấp đầy {n}%"), { n: board.occupancy })}
+          </span>
+        </p>
+
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Link
+            href="/ban-hang"
+            className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
+          >
+            {t("Tìm phòng trống")}
+          </Link>
+          <Link
+            href="/lich/khoa"
+            className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
+          >
+            {t("Khóa đêm")}
+          </Link>
+          <Link
+            href="/lich/moi"
+            className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white hover:bg-brand-dark"
+          >
+            <span aria-hidden="true" className="text-[15px] leading-none">+</span>
+            {t("Đặt phòng mới")}
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-6">
+      <div>
         <BoardGrid board={board} today={toIsoDate(today)} locale={locale} />
       </div>
 

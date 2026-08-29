@@ -29,6 +29,7 @@ import { PaymentForm } from "./PaymentForm";
 import { connectPayments, disconnectPayments } from "./paymentActions";
 import { getT, readLocale } from "@/lib/locale";
 import { LOCALE_NAMES, fill } from "@/lib/i18n";
+import { SettingsTabs, type SettingsTab } from "@/components/SettingsTabs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -41,7 +42,7 @@ const ROLE_LABELS: Record<string, string> = {
   HOUSEKEEPER: "Dọn phòng",
 };
 
-export default async function SettingsPage() {
+export default async function SettingsPage(props: PageProps<"/cai-dat">) {
   const t = await getT();
   const locale = await readLocale();
   const member = await requireMember();
@@ -92,6 +93,13 @@ export default async function SettingsPage() {
   const active = org ? effectivePlan(org.plan, org.planUntil) : "FREE";
   const lapsed = Boolean(org && org.plan !== "FREE" && active === "FREE");
 
+  // Which tab. Anything unrecognised falls back to the first one rather than
+  // rendering an empty page — a stale bookmark should land somewhere useful.
+  const params = await props.searchParams;
+  const asked = typeof params.muc === "string" ? params.muc : "chung";
+  const tab: SettingsTab =
+    isOwner && (asked === "thanh-toan" || asked === "goi") ? asked : "chung";
+
   return (
     <>
       <h1 className="text-[18px] font-semibold text-ink-900">
@@ -101,6 +109,14 @@ export default async function SettingsPage() {
         {member.email} · {t(ROLE_LABELS[member.role] ?? member.role)}
       </p>
 
+      <SettingsTabs
+        current={tab}
+        showTeam={member.role !== "HOUSEKEEPER"}
+        showBilling={isOwner}
+      />
+
+      {tab === "chung" ? (
+        <>
       {/* ---- personal ---------------------------------------------------- */}
       <section className="mt-10">
         <h2 className="text-[1.125rem] font-semibold text-ink-900">{t("Tài khoản")}</h2>
@@ -202,8 +218,11 @@ export default async function SettingsPage() {
         </div>
       </section>
 
+        </>
+      ) : null}
+
       {/* ---- payments -------------------------------------------------------- */}
-      {isOwner ? (
+      {isOwner && tab === "thanh-toan" ? (
         <section className="mt-12 border-t border-line pt-10">
           <h2 className="text-[1.125rem] font-semibold text-ink-900">
             {t("Thanh toán")}
@@ -255,7 +274,7 @@ export default async function SettingsPage() {
       ) : null}
 
       {/* ---- plan ----------------------------------------------------------- */}
-      {isOwner ? (
+      {isOwner && tab === "goi" ? (
         <section className="mt-12 border-t border-line pt-10">
           <h2 className="text-[1.125rem] font-semibold text-ink-900">
             {t("Gói dịch vụ")}
@@ -348,6 +367,10 @@ export default async function SettingsPage() {
         </section>
       ) : null}
 
+      {/* These three sit after the plan block in the source, so they need their
+          own guard — the first fragment closes before payments. */}
+      {tab === "chung" ? (
+        <>
       {/* ---- notifications -------------------------------------------------- */}
       <section className="mt-12 border-t border-line pt-10">
         <h2 className="text-[1.125rem] font-semibold text-ink-900">
@@ -434,6 +457,8 @@ export default async function SettingsPage() {
           </li>
         </ul>
       </section>
+        </>
+      ) : null}
     </>
   );
 }

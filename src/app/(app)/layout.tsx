@@ -35,13 +35,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       : [
           { href: "/lich", label: t("Lịch"), icon: "calendar" },
           { href: "/tong-quan", label: t("Bảng điều khiển"), icon: "grid" },
-          { href: "/ban-hang", label: t("Nhận đặt phòng"), icon: "search" },
           { href: "/buong-phong", label: t("Buồng phòng"), icon: "sparkle" },
           { href: "/cho-nghi", label: t("Chỗ nghỉ"), icon: "building" },
           { href: "/kenh", label: t("Kênh bán"), icon: "plug" },
-          { href: "/doi-ngu", label: t("Đội ngũ"), icon: "users" },
           { href: "/cai-dat", label: t("Cài đặt"), icon: "gear" },
         ];
+
+  // Two screens deliberately do not get a rail entry, and both are still one
+  // click away:
+  //
+  //   /ban-hang  — from the calendar toolbar, which is where someone is when
+  //                a guest asks about dates.
+  //   /doi-ngu   — it is the "Người dùng / Nhóm" tab of Settings.
+  //
+  // A rail that lists everything stops being a way to find anything.
 
   return (
     <div className="app-shell flex h-dvh overflow-hidden bg-canvas">

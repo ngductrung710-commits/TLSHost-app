@@ -118,6 +118,13 @@ for (const group of [FILES]) {
       if (!(m[2] in EN)) fail(file, `no English for ${JSON.stringify(m[2])}`);
     }
 
+    // Anything already wrapped in t() is a key, diacritics or not. "Sau →" is
+    // Vietnamese and carries none, so the scan above skipped it and rule 2
+    // then reported its perfectly good translation as an unused entry.
+    for (const m of code.matchAll(/\bt\(\s*(["'])((?:(?!\1)[^\\\n])*)\1/g)) {
+      found.add(m[2]);
+    }
+
     // JSX text and attribute values are rendered straight to the screen, so
     // unlike a constant they have to be wrapped right here.
     // The trailing comma matters: prettier wraps a long call as

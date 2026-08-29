@@ -606,4 +606,10 @@ export const EN: Record<string, string> = {
   "Hoạt động đặt phòng": "Booking activity",
   "Không có khách đến hay khách lưu trú trong ngày này.":
     "No arrivals and nobody staying on this day.",
+
+  "Sau →": "Next →",
+
+  /* ---- Settings tabs ---- */
+  Chung: "General",
+  "Người dùng / Nhóm": "Users / Team",
 };

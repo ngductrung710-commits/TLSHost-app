@@ -9,6 +9,7 @@ import { InviteForm } from "./InviteForm";
 import { inviteMember, removeMember, updateMember } from "./actions";
 import { getT } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
+import { SettingsTabs } from "@/components/SettingsTabs";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -68,8 +69,17 @@ export default async function TeamPage() {
   return (
     <>
       <h1 className="text-[18px] font-semibold text-ink-900">
-        {t("Đội ngũ & phân quyền")}
+        {t("Cài đặt")}
       </h1>
+      <p className="mt-1 text-[14px] text-ink-600">
+        {member.email} · {t(ROLE_LABELS[member.role] ?? member.role)}
+      </p>
+
+      <SettingsTabs current="nguoi-dung" showTeam showBilling={isOwner} />
+
+      <h2 className="mt-8 text-[18px] font-semibold text-ink-900">
+        {t("Đội ngũ & phân quyền")}
+      </h2>
       <p className="mt-1 text-[14px] text-ink-600">
         {fill(t("{n} người đang hoạt động"), {
           n: members.filter((m) => m.joinedAt).length,
