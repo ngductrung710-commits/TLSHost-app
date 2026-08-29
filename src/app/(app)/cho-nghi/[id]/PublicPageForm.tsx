@@ -6,11 +6,13 @@ import { useFormStatus } from "react-dom";
 import { slugify } from "@/lib/slug";
 
 import type { PublicPageState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
 
 function Submit() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -18,7 +20,7 @@ function Submit() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : "Lưu"}
+      {pending ? t("Đang lưu…") : t("Lưu")}
     </button>
   );
 }
@@ -41,6 +43,7 @@ export function PublicPageForm({
   /** The property's name, offered when no slug has been chosen yet. */
   suggestion: string;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<PublicPageState, FormData>(action, {
     error: null,
   });
@@ -64,7 +67,7 @@ export function PublicPageForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
 
@@ -73,13 +76,13 @@ export function PublicPageForm({
           role="status"
           className="rounded-xl border border-positive/25 bg-positive-soft px-4 py-3 text-[14px] text-positive"
         >
-          {state.notice}
+          {t(state.notice)}
         </p>
       ) : null}
 
       <div>
         <label htmlFor="slug" className="block text-[14px] font-medium text-ink-700">
-          Đường dẫn
+          {t("Đường dẫn")}
         </label>
         <input
           id="slug"
@@ -97,7 +100,7 @@ export function PublicPageForm({
 
       <div>
         <label htmlFor="intro" className="block text-[14px] font-medium text-ink-700">
-          Giới thiệu <span className="font-normal text-ink-500">(không bắt buộc)</span>
+          {t("Giới thiệu")} <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
         </label>
         <textarea
           id="intro"
@@ -109,7 +112,7 @@ export function PublicPageForm({
           className={inputClass + " min-h-24 py-2.5"}
         />
         <p id="intro-hint" className="mt-1.5 text-[13px] text-ink-500">
-          Vài dòng khách đọc trước khi đặt. Không bắt buộc.
+          {t("Vài dòng khách đọc trước khi đặt. Không bắt buộc.")}
         </p>
       </div>
 
@@ -121,10 +124,9 @@ export function PublicPageForm({
           className="mt-1 h-4 w-4 rounded border-line-strong"
         />
         <span className="text-[14px] leading-relaxed text-ink-700">
-          Mở trang cho khách
+          {t("Mở trang cho khách")}
           <span className="mt-0.5 block text-[13px] text-ink-500">
-            Tắt đi thì trang biến mất khỏi internet nhưng đường dẫn vẫn giữ,
-            bật lại lúc nào cũng được.
+            {t("Tắt đi thì trang biến mất khỏi internet nhưng đường dẫn vẫn giữ, bật lại lúc nào cũng được.")}
           </span>
         </span>
       </label>

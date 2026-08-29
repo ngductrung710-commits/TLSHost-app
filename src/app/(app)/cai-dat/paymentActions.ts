@@ -7,6 +7,8 @@ import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { testCredentials } from "@/lib/payments";
 import { encryptSecret, secretsConfigured } from "@/lib/secrets";
+import { getT } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
 export type PaymentState = { error: string | null; notice?: string };
 
@@ -29,14 +31,15 @@ export async function connectPayments(
   _prev: PaymentState,
   formData: FormData,
 ): Promise<PaymentState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới kết nối được cổng thanh toán." };
+    return { error: t("Chỉ chủ nhà mới kết nối được cổng thanh toán.") };
   }
   if (!secretsConfigured()) {
     return {
       error:
-        "Máy chủ chưa có SECRET_KEY nên chưa lưu khoá thanh toán an toàn được. Xem README.",
+        t("Máy chủ chưa có SECRET_KEY nên chưa lưu khoá thanh toán an toàn được. Xem README."),
     };
   }
 
@@ -47,7 +50,7 @@ export async function connectPayments(
     live: formData.get("live") === "on",
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const { provider, publicId, secret, live } = parsed.data;
@@ -56,10 +59,10 @@ export async function connectPayments(
   // of confusion. Stripe says which it is in the key itself.
   if (provider === "STRIPE") {
     if (live && secret.startsWith("sk_test_")) {
-      return { error: "Đây là khoá thử nghiệm nhưng bạn đã bật chế độ thật." };
+      return { error: t("Đây là khoá thử nghiệm nhưng bạn đã bật chế độ thật.") };
     }
     if (!live && secret.startsWith("sk_live_")) {
-      return { error: "Đây là khoá thật nhưng bạn đang để chế độ thử nghiệm." };
+      return { error: t("Đây là khoá thật nhưng bạn đang để chế độ thử nghiệm.") };
     }
   }
 
@@ -86,9 +89,10 @@ export async function connectPayments(
   revalidatePath("/cai-dat");
   return {
     error: null,
-    notice: `Đã kết nối ${provider === "STRIPE" ? "Stripe" : "PayPal"}${
-      live ? "" : " (chế độ thử nghiệm)"
-    }.`,
+    notice: fill(t("Đã kết nối {ten}{chedo}."), {
+      ten: provider === "STRIPE" ? "Stripe" : "PayPal",
+      chedo: live ? "" : t(" (chế độ thử nghiệm)"),
+    }),
   };
 }
 

@@ -7,6 +7,7 @@ import { requireMember } from "@/lib/dal";
 import { prisma, withOrg } from "@/lib/db";
 import { LIMIT_MESSAGES } from "@/lib/plans";
 import { hashToken, newToken } from "@/lib/tokens";
+import { getT } from "@/lib/locale";
 
 export type TeamState = { error: string | null; inviteLink?: string };
 
@@ -31,9 +32,10 @@ export async function inviteMember(
   _prev: TeamState,
   formData: FormData,
 ): Promise<TeamState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới mời được người khác." };
+    return { error: t("Chỉ chủ nhà mới mời được người khác.") };
   }
   if (!member.limits.team) {
     return { error: LIMIT_MESSAGES.team };
@@ -46,7 +48,7 @@ export async function inviteMember(
     canEditOthersBookings: formData.get("canEditOthersBookings") === "on",
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const { name, email, role, canEditOthersBookings } = parsed.data;
@@ -117,7 +119,7 @@ export async function inviteMember(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "ALREADY_MEMBER") {
-      return { error: "Người này đã ở trong đội của bạn." };
+      return { error: t("Người này đã ở trong đội của bạn.") };
     }
     throw error;
   }

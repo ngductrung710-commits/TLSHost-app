@@ -7,6 +7,7 @@ import { visiblePropertyFilter, type ActiveMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { addDays, formatVnd, toIsoDate } from "@/lib/dates";
 import { assistantReplySchema, type AssistantReply } from "@/lib/proposals";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * The assistant: reads, drafts, and stops.
@@ -134,14 +135,27 @@ Quy tắc:
 - Nếu những đêm được yêu cầu đã có người giữ, vẫn cứ soạn đề xuất. Hệ thống sẽ từ chối và nói rõ ai đang giữ — việc đó không phải của bạn.
 - summary viết cho chủ nhà đọc: một câu tiếng Việt, nêu tên phòng và ngày, không có id.`;
 
+/**
+ * The one sentence the host reads follows the host's own language.
+ *
+ * Kept out of SYSTEM rather than interpolated into it: SYSTEM is sent with
+ * cache_control, and a prompt that differs by one word per language is two
+ * cache entries instead of one. This block is small enough that missing the
+ * cache on it costs nothing.
+ */
+const SUMMARY_IN_ENGLISH =
+  "Write the `summary` field in English rather than Vietnamese. Everything else about the task is unchanged.";
+
 export async function draftProposal({
   member,
   today,
   prompt,
+  locale = "vi",
 }: {
   member: ActiveMember;
   today: Date;
   prompt: string;
+  locale?: Locale;
 }): Promise<AssistantOutcome> {
   if (!process.env.ANTHROPIC_API_KEY) {
     return {
@@ -168,6 +182,7 @@ export async function draftProposal({
         // every request after the first pays for the snapshot and the question
         // only.
         { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
+        ...(locale === "en" ? [{ type: "text" as const, text: SUMMARY_IN_ENGLISH }] : []),
       ],
       messages: [
         {

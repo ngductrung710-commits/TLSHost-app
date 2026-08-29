@@ -3,10 +3,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { canManageBookings, requireMember } from "@/lib/dal";
-import { loadDashboard, longVi, weekdayShortVi } from "@/lib/dashboard";
+import { loadDashboard, longDate, weekdayShort } from "@/lib/dashboard";
 import { formatVnd, todayIn } from "@/lib/dates";
+import { getT, readLocale } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Bảng điều khiển" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Bảng điều khiển") };
+}
 
 function Stat({
   value,
@@ -38,6 +43,8 @@ function Stat({
 }
 
 export default async function DashboardPage(props: PageProps<"/tong-quan">) {
+  const t = await getT();
+  const locale = await readLocale();
   const member = await requireMember();
   if (!canManageBookings(member)) redirect("/buong-phong");
 
@@ -51,21 +58,20 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
     return (
       <>
         <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-          Bảng điều khiển
+          {t("Bảng điều khiển")}
         </h1>
         <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
           <p className="text-[15px] font-semibold text-ink-900">
-            Chưa có cơ sở nào
+            {t("Chưa có cơ sở nào")}
           </p>
           <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-            Thêm chỗ nghỉ đầu tiên và các phòng của nó. Lịch, buồng phòng và
-            trang đặt phòng đều dựng lên từ đó.
+            {t("Thêm chỗ nghỉ đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.")}
           </p>
           <Link
             href="/cho-nghi/moi"
             className="mt-5 inline-flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100"
           >
-            Thêm chỗ nghỉ
+            {t("Thêm chỗ nghỉ")}
           </Link>
         </div>
       </>
@@ -79,17 +85,17 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-            Bảng điều khiển
+            {t("Bảng điều khiển")}
           </h1>
-          <p className="mt-1 text-[14px] text-ink-600">{longVi(d.date)}</p>
+          <p className="mt-1 text-[14px] text-ink-600">{longDate(d.date, locale)}</p>
         </div>
 
         {/* Links, not buttons: which day you are looking at belongs in the URL,
             so it survives a refresh and can be sent to someone. */}
-        <nav aria-label="Chọn ngày" className="flex items-center gap-1 rounded-full border border-line bg-surface p-1">
+        <nav aria-label={t("Chọn ngày")} className="flex items-center gap-1 rounded-full border border-line bg-surface p-1">
           {[
-            { key: "hom-nay", label: "Hôm nay", href: "/tong-quan", active: offset === 0 },
-            { key: "mai", label: "Ngày mai", href: "/tong-quan?ngay=mai", active: offset === 1 },
+            { key: "hom-nay", label: t("Hôm nay"), href: "/tong-quan", active: offset === 0 },
+            { key: "mai", label: t("Ngày mai"), href: "/tong-quan?ngay=mai", active: offset === 1 },
           ].map((t) => (
             <Link
               key={t.key}
@@ -125,15 +131,15 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
 
       {/* ---- the day ------------------------------------------------------ */}
       <div className="mt-6 grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
-        <Stat value={d.arrivals.length} label="Khách đến" />
-        <Stat value={d.departures.length} label="Khách đi" />
-        <Stat value={d.inHouse} label="Đang lưu trú" />
-        <Stat value={d.stayovers} label="Ở tiếp" />
-        <Stat value={d.bookedOn} label="Đơn đặt" />
-        <Stat value={d.cancelledOn} label="Hủy" />
+        <Stat value={d.arrivals.length} label={t("Khách đến")} />
+        <Stat value={d.departures.length} label={t("Khách đi")} />
+        <Stat value={d.inHouse} label={t("Đang lưu trú")} />
+        <Stat value={d.stayovers} label={t("Ở tiếp")} />
+        <Stat value={d.bookedOn} label={t("Đơn đặt")} />
+        <Stat value={d.cancelledOn} label={t("Hủy")} />
         <Stat
           value={d.overbooked}
-          label="Vượt phòng"
+          label={t("Vượt phòng")}
           tone={d.overbooked > 0 ? "danger" : "default"}
         />
       </div>
@@ -142,26 +148,26 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
       <section className="mt-5 rounded-2xl border border-line bg-surface p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[13px] font-medium text-ink-600">Lấp đầy</p>
+            <p className="text-[13px] font-medium text-ink-600">{t("Lấp đầy")}</p>
             <p className="mt-1 text-[2rem] font-semibold leading-none text-ink-900 tnum">
               {Math.round((d.booked / d.roomCount) * 100)}%
             </p>
           </div>
           <dl className="flex gap-6 text-[13px]">
             <div>
-              <dt className="text-ink-500">Đã đặt</dt>
+              <dt className="text-ink-500">{t("Đã đặt")}</dt>
               <dd className="mt-0.5 text-[16px] font-semibold text-ink-900 tnum">
                 {d.booked}
               </dd>
             </div>
             <div>
-              <dt className="text-ink-500">Còn trống</dt>
+              <dt className="text-ink-500">{t("Còn trống")}</dt>
               <dd className="mt-0.5 text-[16px] font-semibold text-ink-900 tnum">
                 {d.free}
               </dd>
             </div>
             <div>
-              <dt className="text-ink-500">Đã chặn</dt>
+              <dt className="text-ink-500">{t("Đã chặn")}</dt>
               <dd className="mt-0.5 text-[16px] font-semibold text-ink-900 tnum">
                 {d.blocked}
               </dd>
@@ -173,7 +179,15 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
         <div
           className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-sand-200"
           role="img"
-          aria-label={`${d.booked} phòng đã đặt, ${d.blocked} phòng đã chặn, ${d.free} phòng còn trống trên tổng ${d.roomCount}`}
+          aria-label={fill(
+            t("{daDat} phòng đã đặt, {daChan} phòng đã chặn, {conTrong} phòng còn trống trên tổng {tong}"),
+            {
+              daDat: d.booked,
+              daChan: d.blocked,
+              conTrong: d.free,
+              tong: d.roomCount,
+            },
+          )}
         >
           <span
             className="bg-ink-900"
@@ -189,8 +203,8 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
       {/* ---- movements ---------------------------------------------------- */}
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         {[
-          { title: "Khách đến", list: d.arrivals, empty: "Không có ai nhận phòng." },
-          { title: "Khách đi", list: d.departures, empty: "Không có ai trả phòng." },
+          { title: t("Khách đến"), list: d.arrivals, empty: t("Không có ai nhận phòng.") },
+          { title: t("Khách đi"), list: d.departures, empty: t("Không có ai trả phòng.") },
         ].map((col) => (
           <section
             key={col.title}
@@ -210,18 +224,20 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
                       {m.guestName}
                     </span>
                     <span className="text-[13px] text-ink-500">
-                      {m.roomName} · <span className="tnum">{m.guests}</span> khách
+                      {m.roomName} · <span className="tnum">{m.guests}</span> {t("khách")}
                     </span>
                   </li>
                 ))}
               </ul>
             )}
-            {col.title === "Khách đi" && d.roomsNeedingClean > 0 ? (
+            {col.title === t("Khách đi") && d.roomsNeedingClean > 0 ? (
               <Link
                 href="/buong-phong"
                 className="mt-4 inline-flex min-h-11 items-center text-[14px] font-semibold text-ink-900 underline underline-offset-4"
               >
-                {d.roomsNeedingClean} phòng cần dọn →
+                {fill(t("{n} phòng cần dọn →"), {
+                  n: d.roomsNeedingClean,
+                })}
               </Link>
             ) : null}
           </section>
@@ -231,9 +247,9 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
       {/* ---- forecast ------------------------------------------------------ */}
       <section className="mt-5 rounded-2xl border border-line bg-surface p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-[15px] font-semibold text-ink-900">Dự báo 14 ngày</h2>
+          <h2 className="text-[15px] font-semibold text-ink-900">{t("Dự báo 14 ngày")}</h2>
           <p className="text-[13px] text-ink-600">
-            Trung bình{" "}
+            {t("Trung bình")}{" "}
             <span className="font-semibold text-ink-900 tnum">
               {d.forecastAverage}%
             </span>{" "}
@@ -264,17 +280,14 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
                 {f.occupancy}%
               </p>
               <p className="text-[10.5px] text-ink-400">
-                {weekdayShortVi(f.date)} {f.date.getUTCDate()}
+                {weekdayShort(f.date, locale)} {f.date.getUTCDate()}
               </p>
             </li>
           ))}
         </ul>
 
         <p className="mt-4 border-t border-line pt-4 text-[12.5px] leading-relaxed text-ink-500">
-          Cột cao theo doanh thu, con số theo tỷ lệ lấp đầy. Hai thứ này tách
-          nhau khi phòng rẻ kín mà phòng đắt trống — đó chính là tuần đáng để ý.
-          Lượt đặt chưa nhập giá tính theo giá niêm yết của phòng; phòng chưa có
-          giá không đóng góp gì.
+          {t("Cột cao theo doanh thu, con số theo tỷ lệ lấp đầy. Hai thứ này tách nhau khi phòng rẻ kín mà phòng đắt trống — đó chính là tuần đáng để ý. Lượt đặt chưa nhập giá tính theo giá niêm yết của phòng; phòng chưa có giá không đóng góp gì.")}
         </p>
       </section>
     </>

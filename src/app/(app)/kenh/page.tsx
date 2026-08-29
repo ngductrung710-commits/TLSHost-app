@@ -13,20 +13,32 @@ import {
   enableFeed,
   syncNow,
 } from "./actions";
+import { getT } from "@/lib/locale";
+import { fill, type T } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Kênh bán" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Kênh bán") };
+}
 
-/** "3 phút trước". Coarse on purpose — the exact second means nothing here. */
-function ago(date: Date): string {
+/**
+ * "3 phút trước". Coarse on purpose — the exact second means nothing here.
+ *
+ * Takes t rather than reading the cookie itself: this is called inside a map
+ * over channels, and a page that awaited the language once per row would be
+ * doing the same lookup a dozen times to get the same answer.
+ */
+function ago(date: Date, t: T): string {
   const mins = Math.round((Date.now() - date.getTime()) / 60_000);
-  if (mins < 1) return "vừa xong";
-  if (mins < 60) return `${mins} phút trước`;
+  if (mins < 1) return t("vừa xong");
+  if (mins < 60) return fill(t("{n} phút trước"), { n: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} giờ trước`;
-  return `${Math.round(hours / 24)} ngày trước`;
+  if (hours < 24) return fill(t("{n} giờ trước"), { n: hours });
+  return fill(t("{n} ngày trước"), { n: Math.round(hours / 24) });
 }
 
 export default async function ChannelsPage() {
+  const t = await getT();
   const member = await requireMember();
   // Channel URLs are credentials, and nothing here is a housekeeper's job.
   if (member.role === "HOUSEKEEPER") redirect("/buong-phong");
@@ -96,10 +108,12 @@ export default async function ChannelsPage() {
   return (
     <>
       <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-        Kênh bán
+        {t("Kênh bán")}
       </h1>
       <p className="mt-1 text-[14px] text-ink-600">
-        {channels.length} kết nối · đồng bộ hai chiều qua iCal
+        {fill(t("{n} kết nối · đồng bộ hai chiều qua iCal"), {
+          n: channels.length,
+        })}
       </p>
 
       {held.length > 0 ? (
@@ -108,12 +122,10 @@ export default async function ChannelsPage() {
           className="mt-6 rounded-2xl border border-warning/30 bg-warning-soft px-5 py-4"
         >
           <p className="text-[14px] font-semibold text-warning">
-            Có {held.length} kênh đang giữ lại việc xoá
+            {fill(t("Có {n} kênh đang giữ lại việc xoá"), { n: held.length })}
           </p>
           <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-ink-700">
-            Lần đồng bộ gần nhất thấy nhiều khoảng biến mất cùng lúc, nên không
-            xoá gì cả. Kiểm tra lại trên trang của kênh: nếu đúng là khách đã
-            hủy, bấm Đồng bộ ngay lần nữa để áp dụng.
+            {t("Lần đồng bộ gần nhất thấy nhiều khoảng biến mất cùng lúc, nên không xoá gì cả. Kiểm tra lại trên trang của kênh: nếu đúng là khách đã hủy, bấm Đồng bộ ngay lần nữa để áp dụng.")}
           </p>
         </div>
       ) : null}
@@ -122,11 +134,10 @@ export default async function ChannelsPage() {
       {channels.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
           <p className="text-[15px] font-semibold text-ink-900">
-            Chưa kết nối kênh nào
+            {t("Chưa kết nối kênh nào")}
           </p>
           <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-ink-600">
-            Nối lịch của Airbnb, Booking.com hay Agoda vào đây, rồi dán link
-            xuất của bạn ngược lại bên đó. Một đêm bán ở đâu sẽ khoá ở mọi nơi.
+            {t("Nối lịch của Airbnb, Booking.com hay Agoda vào đây, rồi dán link xuất của bạn ngược lại bên đó. Một đêm bán ở đâu sẽ khoá ở mọi nơi.")}
           </p>
         </div>
       ) : (
@@ -135,31 +146,34 @@ export default async function ChannelsPage() {
             <li key={c.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
               <div className="min-w-0 flex-1">
                 <p className="text-[14px] font-semibold text-ink-900">
-                  {SOURCE_LABELS[c.kind] ?? c.kind}
+                  {t(SOURCE_LABELS[c.kind] ?? c.kind)}
                   <span className="font-normal text-ink-500">
                     {" · "}
                     {c.room.property.name} — {c.room.name}
                   </span>
                 </p>
                 <p className="mt-0.5 text-[12.5px] text-ink-500">
-                  {c.lastSyncAt ? `Đồng bộ ${ago(c.lastSyncAt)}` : "Chưa đồng bộ lần nào"}
+                  {c.lastSyncAt
+                    ? fill(t("Đồng bộ {khi}"), { khi: ago(c.lastSyncAt, t) })
+                    : t("Chưa đồng bộ lần nào")}
                   {" · "}
-                  <span className="tnum">{c._count.blocks}</span> khoảng đang giữ
+                  <span className="tnum">{c._count.blocks}</span>{" "}
+                  {t("khoảng đang giữ")}
                   {c.label ? ` · ${c.label}` : ""}
                 </p>
               </div>
 
               {c.heldDeletions > 0 ? (
                 <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning">
-                  Giữ {c.heldDeletions} việc xoá
+                  {fill(t("Giữ {n} việc xoá"), { n: c.heldDeletions })}
                 </span>
               ) : c.lastSyncOk === false ? (
                 <span className="rounded-full bg-danger-soft px-2.5 py-1 text-[11px] font-semibold text-danger">
-                  Lỗi
+                  {t("Lỗi")}
                 </span>
               ) : c.lastSyncOk ? (
                 <span className="rounded-full bg-positive-soft px-2.5 py-1 text-[11px] font-semibold text-positive">
-                  Đang chạy
+                  {t("Đang chạy")}
                 </span>
               ) : null}
 
@@ -169,7 +183,7 @@ export default async function ChannelsPage() {
                   type="submit"
                   className="flex min-h-11 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
                 >
-                  Đồng bộ ngay
+                  {t("Đồng bộ ngay")}
                 </button>
               </form>
 
@@ -180,7 +194,7 @@ export default async function ChannelsPage() {
                     type="submit"
                     className="flex min-h-11 items-center rounded-full px-3 text-[13px] font-medium text-danger hover:bg-danger-soft"
                   >
-                    Ngắt
+                    {t("Ngắt")}
                   </button>
                 </form>
               ) : null}
@@ -192,11 +206,10 @@ export default async function ChannelsPage() {
       {/* ---- export feeds ----------------------------------------------- */}
       <section className="mt-12 border-t border-line pt-10">
         <h2 className="text-[1.25rem] font-semibold text-ink-900">
-          Link xuất lịch của bạn
+          {t("Link xuất lịch của bạn")}
         </h2>
         <p className="mb-6 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
-          Dán link của một phòng vào phần nhập lịch của từng kênh. Link chỉ nói
-          đêm nào đã kín — không có tên khách, không có giá.
+          {t("Dán link của một phòng vào phần nhập lịch của từng kênh. Link chỉ nói đêm nào đã kín — không có tên khách, không có giá.")}
         </p>
 
         <ul className="space-y-3">
@@ -221,12 +234,12 @@ export default async function ChannelsPage() {
                     type="submit"
                     className="flex min-h-11 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
                   >
-                    Tạo link xuất
+                    {t("Tạo link xuất")}
                   </button>
                 </form>
               ) : (
                 <p className="mt-2 text-[13px] text-ink-500">
-                  Chưa có link. Nhờ chủ nhà tạo.
+                  {t("Chưa có link. Nhờ chủ nhà tạo.")}
                 </p>
               )}
             </li>
@@ -238,10 +251,10 @@ export default async function ChannelsPage() {
       {isOwner && rooms.length > 0 ? (
         <section className="mt-12 border-t border-line pt-10">
           <h2 className="text-[1.25rem] font-semibold text-ink-900">
-            Kết nối kênh mới
+            {t("Kết nối kênh mới")}
           </h2>
           <p className="mb-6 mt-1 max-w-xl text-[14px] leading-relaxed text-ink-600">
-            Mỗi phòng nối một link cho mỗi kênh.
+            {t("Mỗi phòng nối một link cho mỗi kênh.")}
           </p>
           <ConnectForm
             action={connectChannel}
@@ -258,10 +271,10 @@ export default async function ChannelsPage() {
       {runs.length > 0 ? (
         <section className="mt-12 border-t border-line pt-10">
           <h2 className="text-[1.25rem] font-semibold text-ink-900">
-            Lần đồng bộ gần đây
+            {t("Lần đồng bộ gần đây")}
           </h2>
           <p className="mb-4 mt-1 text-[14px] text-ink-600">
-            Khi lịch trông sai, đây là chỗ trả lời đồng bộ đã làm gì.
+            {t("Khi lịch trông sai, đây là chỗ trả lời đồng bộ đã làm gì.")}
           </p>
           <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
             {runs.map((run) => (
@@ -279,22 +292,27 @@ export default async function ChannelsPage() {
                     {run.status === "OK"
                       ? "Xong"
                       : run.status === "HELD"
-                        ? "Đã giữ lại"
+                        ? t("Đã giữ lại")
                         : run.status === "FAILED"
-                          ? "Lỗi"
-                          : "Đang chạy"}
+                          ? t("Lỗi")
+                          : t("Đang chạy")}
                   </span>
                   <span className="text-[13px] text-ink-700">
-                    {SOURCE_LABELS[run.channel.kind] ?? run.channel.kind} ·{" "}
+                    {t(SOURCE_LABELS[run.channel.kind] ?? run.channel.kind)} ·{" "}
                     {run.channel.room.name}
                   </span>
                   <span className="text-[12.5px] text-ink-500 tnum">
-                    {run.eventsSeen} thấy · {run.eventsApplied} áp dụng ·{" "}
-                    {run.eventsRemoved} gỡ
-                    {run.heldDeletions > 0 ? ` · ${run.heldDeletions} giữ lại` : ""}
+                    {fill(t("{thay} thấy · {ap} áp dụng · {go} gỡ"), {
+                      thay: run.eventsSeen,
+                      ap: run.eventsApplied,
+                      go: run.eventsRemoved,
+                    })}
+                    {run.heldDeletions > 0
+                      ? fill(t(" · {n} giữ lại"), { n: run.heldDeletions })
+                      : ""}
                   </span>
                   <span className="ml-auto text-[12.5px] text-ink-400">
-                    {ago(run.startedAt)}
+                    {ago(run.startedAt, t)}
                   </span>
                 </div>
                 {run.error ? (

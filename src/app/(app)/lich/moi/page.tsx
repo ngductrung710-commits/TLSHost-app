@@ -13,10 +13,15 @@ import { addDays, parseIsoDate, todayIn, toIsoDate } from "@/lib/dates";
 import { BookingForm } from "@/components/BookingForm";
 
 import { createBooking } from "../actions";
+import { getT } from "@/lib/locale";
 
-export const metadata: Metadata = { title: "Đặt phòng mới" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Đặt phòng mới") };
+}
 
 export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
+  const t = await getT();
   const member = await requireMember();
   if (!canManageBookings(member)) redirect("/lich");
 
@@ -49,14 +54,13 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
         href="/lich"
         className="text-[14px] font-medium text-ink-500 hover:text-ink-900"
       >
-        ← Về lịch
+        {t("← Về lịch")}
       </Link>
       <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-ink-900">
-        Đặt phòng mới
+        {t("Đặt phòng mới")}
       </h1>
       <p className="mb-7 mt-1 text-[14px] text-ink-600">
-        Nếu những đêm này đã có người giữ, hệ thống sẽ từ chối và nói rõ ai đang
-        giữ.
+        {t("Nếu những đêm này đã có người giữ, hệ thống sẽ từ chối và nói rõ ai đang giữ.")}
       </p>
 
       <BookingForm
@@ -78,7 +82,7 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
           source: "DIRECT",
           notes: "",
         }}
-        submitLabel="Tạo đặt phòng"
+        submitLabel={t("Tạo đặt phòng")}
         cancelHref="/lich"
       />
     </>

@@ -4,11 +4,13 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ChannelState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
 
 function Submit() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -16,7 +18,7 @@ function Submit() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : "Kết nối kênh"}
+      {pending ? t("Đang lưu…") : t("Kết nối kênh")}
     </button>
   );
 }
@@ -28,6 +30,7 @@ export function ConnectForm({
   action: (prev: ChannelState, formData: FormData) => Promise<ChannelState>;
   rooms: { id: string; name: string; propertyName: string }[];
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<ChannelState, FormData>(action, {
     error: null,
   });
@@ -40,7 +43,7 @@ export function ConnectForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
 
@@ -49,14 +52,14 @@ export function ConnectForm({
           role="status"
           className="rounded-xl border border-positive/25 bg-positive-soft px-4 py-3 text-[14px] text-positive"
         >
-          {state.notice}
+          {t(state.notice)}
         </p>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="roomId" className="block text-[14px] font-medium text-ink-700">
-            Phòng
+            {t("Phòng")}
           </label>
           <select id="roomId" name="roomId" className={inputClass}>
             {rooms.map((r) => (
@@ -68,21 +71,21 @@ export function ConnectForm({
         </div>
         <div>
           <label htmlFor="kind" className="block text-[14px] font-medium text-ink-700">
-            Kênh
+            {t("Kênh")}
           </label>
           <select id="kind" name="kind" defaultValue="AIRBNB" className={inputClass}>
             <option value="AIRBNB">Airbnb</option>
             <option value="BOOKING_COM">Booking.com</option>
             <option value="AGODA">Agoda</option>
             <option value="TRAVELOKA">Traveloka</option>
-            <option value="OTHER">Kênh khác</option>
+            <option value="OTHER">{t("Kênh khác")}</option>
           </select>
         </div>
       </div>
 
       <div>
         <label htmlFor="importUrl" className="block text-[14px] font-medium text-ink-700">
-          Link iCal của kênh
+          {t("Link iCal của kênh")}
         </label>
         <input
           id="importUrl"
@@ -94,14 +97,13 @@ export function ConnectForm({
           className={inputClass + " font-mono text-[13px]"}
         />
         <p id="url-hint" className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
-          Trong Airbnb: Lịch → Khả dụng → Đồng bộ lịch → Xuất lịch. Link này là
-          chìa khoá vào lịch của bạn, đừng chia sẻ ra ngoài.
+          {t("Trong Airbnb: Lịch → Khả dụng → Đồng bộ lịch → Xuất lịch. Link này là chìa khoá vào lịch của bạn, đừng chia sẻ ra ngoài.")}
         </p>
       </div>
 
       <div>
         <label htmlFor="label" className="block text-[14px] font-medium text-ink-700">
-          Ghi chú <span className="font-normal text-ink-500">(không bắt buộc)</span>
+          {t("Ghi chú")} <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
         </label>
         <input id="label" name="label" defaultValue="" className={inputClass} />
       </div>

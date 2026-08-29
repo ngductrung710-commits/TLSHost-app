@@ -6,12 +6,18 @@ import { hashToken } from "@/lib/tokens";
 
 import { AcceptForm } from "./AcceptForm";
 import { acceptInvite } from "./actions";
+import { getT } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Tham gia đội" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Tham gia đội") };
+}
 
 export default async function AcceptInvitePage(
   props: PageProps<"/tham-gia/[token]">,
 ) {
+  const t = await getT();
   const { token } = await props.params;
   const tokenHash = hashToken(token);
 
@@ -45,18 +51,17 @@ export default async function AcceptInvitePage(
     return (
       <>
         <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-          Lời mời không dùng được
+          {t("Lời mời không dùng được")}
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-600">
-          Link này đã được dùng, đã hết hạn, hoặc không đúng. Nhờ chủ nhà tạo
-          lại một lời mời mới giúp bạn.
+          {t("Link này đã được dùng, đã hết hạn, hoặc không đúng. Nhờ chủ nhà tạo lại một lời mời mới giúp bạn.")}
         </p>
         <p className="mt-6">
           <Link
             href="/dang-nhap"
             className="text-[15px] font-semibold text-ink-900 underline underline-offset-4"
           >
-            Về trang đăng nhập
+            {t("Về trang đăng nhập")}
           </Link>
         </p>
       </>
@@ -66,13 +71,15 @@ export default async function AcceptInvitePage(
   return (
     <>
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-500">
-        Lời mời
+        {t("Lời mời")}
       </p>
       <h1 className="mt-2 text-[1.75rem] font-semibold leading-tight text-ink-900">
         Tham gia {invite.org.name}
       </h1>
       <p className="mb-7 mt-2 text-[15px] leading-relaxed text-ink-600">
-        Chào {invite.user.name}. Đặt mật khẩu để bắt đầu — tài khoản của bạn là{" "}
+        {fill(t("Chào {ten}. Đặt mật khẩu để bắt đầu — tài khoản của bạn là"), {
+          ten: invite.user.name,
+        })}{" "}
         <span className="font-medium text-ink-900">{invite.user.email}</span>.
       </p>
 

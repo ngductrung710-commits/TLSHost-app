@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { slugify } from "@/lib/slug";
+import { getT } from "@/lib/locale";
 
 export type PublicPageState = { error: string | null; notice?: string };
 
@@ -20,9 +21,10 @@ export async function publishProperty(
   _prev: PublicPageState,
   formData: FormData,
 ): Promise<PublicPageState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới đổi được trang này." };
+    return { error: t("Chỉ chủ nhà mới đổi được trang này.") };
   }
 
   const parsed = publishSchema.safeParse({
@@ -32,14 +34,14 @@ export async function publishProperty(
     published: formData.get("published") === "on",
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const { propertyId, intro, published } = parsed.data;
   const slug = slugify(parsed.data.slug);
 
   if (published && slug.length < 3) {
-    return { error: "Đường dẫn cần ít nhất 3 ký tự." };
+    return { error: t("Đường dẫn cần ít nhất 3 ký tự.") };
   }
 
   try {
@@ -61,7 +63,7 @@ export async function publishProperty(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
-      return { error: "Không tìm thấy chỗ nghỉ này." };
+      return { error: t("Không tìm thấy chỗ nghỉ này.") };
     }
     // publicSlug is unique across every organization, because the URL is
     // global. Another host may already have taken this word.
@@ -70,7 +72,7 @@ export async function publishProperty(
       error !== null &&
       (error as { code?: string }).code === "P2002"
     ) {
-      return { error: "Đường dẫn này đã có người dùng. Thử thêm tên địa danh." };
+      return { error: t("Đường dẫn này đã có người dùng. Thử thêm tên địa danh.") };
     }
     throw error;
   }
@@ -79,8 +81,8 @@ export async function publishProperty(
   return {
     error: null,
     notice: published
-      ? "Trang đã mở. Chia sẻ link bên dưới cho khách."
-      : "Đã đóng trang. Link giữ nguyên, mở lại lúc nào cũng được.",
+      ? t("Trang đã mở. Chia sẻ link bên dưới cho khách.")
+      : t("Đã đóng trang. Link giữ nguyên, mở lại lúc nào cũng được."),
   };
 }
 

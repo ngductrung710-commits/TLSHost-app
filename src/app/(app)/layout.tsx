@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { requireMember } from "@/lib/dal";
 import { signOut } from "../(auth)/actions";
+import { getT } from "@/lib/locale";
 
 /**
  * The signed-in shell. requireMember() runs here, so every page in this group
@@ -11,6 +12,7 @@ import { signOut } from "../(auth)/actions";
  * navigation, and a server action reached directly never passes through it.
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  const t = await getT();
   const member = await requireMember();
 
   return (
@@ -19,7 +21,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         href="#noi-dung"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-[14px] focus:text-sand-100"
       >
-        Tới nội dung chính
+        {t("Tới nội dung chính")}
       </a>
 
       <header className="border-b border-line bg-surface">
@@ -36,21 +38,21 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 anyway — this keeps the header from offering doors that close
                 in their face, which is a different job from the redirect and
                 needs doing separately. */}
-            <nav aria-label="Chính" className="flex items-center gap-1">
+            <nav aria-label={t("Chính")} className="flex items-center gap-1">
               {(member.role === "HOUSEKEEPER"
                 ? [
-                    { href: "/buong-phong", label: "Buồng phòng" },
-                    { href: "/cai-dat", label: "Cài đặt" },
+                    { href: "/buong-phong", label: t("Buồng phòng") },
+                    { href: "/cai-dat", label: t("Cài đặt") },
                   ]
                 : [
-                    { href: "/tong-quan", label: "Bảng điều khiển" },
-                    { href: "/lich", label: "Lịch" },
-                    { href: "/tro-ly", label: "Trợ lý" },
-                    { href: "/buong-phong", label: "Buồng phòng" },
-                    { href: "/cho-nghi", label: "Chỗ nghỉ" },
-                    { href: "/kenh", label: "Kênh bán" },
-                    { href: "/doi-ngu", label: "Đội ngũ" },
-                    { href: "/cai-dat", label: "Cài đặt" },
+                    { href: "/tong-quan", label: t("Bảng điều khiển") },
+                    { href: "/lich", label: t("Lịch") },
+                    { href: "/tro-ly", label: t("Trợ lý") },
+                    { href: "/buong-phong", label: t("Buồng phòng") },
+                    { href: "/cho-nghi", label: t("Chỗ nghỉ") },
+                    { href: "/kenh", label: t("Kênh bán") },
+                    { href: "/doi-ngu", label: t("Đội ngũ") },
+                    { href: "/cai-dat", label: t("Cài đặt") },
                   ]
               ).map((item) => (
                 <Link
@@ -76,7 +78,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 type="submit"
                 className="flex min-h-11 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-ink-100"
               >
-                Đăng xuất
+                {t("Đăng xuất")}
               </button>
             </form>
           </div>

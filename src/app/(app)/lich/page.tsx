@@ -14,13 +14,20 @@ import {
 } from "@/lib/dates";
 
 import { deleteBlock } from "./actions";
+import { getT, readLocale } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Lịch" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Lịch") };
+}
 
 /** How many days fit before the board needs scrolling on a laptop. */
 const WINDOW_DAYS = 21;
 
 export default async function CalendarPage(props: PageProps<"/lich">) {
+  const t = await getT();
+  const locale = await readLocale();
   const member = await requireMember();
   // Housekeepers see rooms, never bookings: the calendar names every guest,
   // and the spec is explicit that they should not see guest or payment detail.
@@ -61,45 +68,46 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-            Lịch
+            {t("Lịch")}
           </h1>
           <p className="mt-1 text-[14px] text-ink-600">
-            {board.rooms.length} phòng · {shortVi(board.from)} –{" "}
+            {fill(t("{n} phòng"), { n: board.rooms.length })} ·{" "}
+            {shortVi(board.from)} –{" "}
             {shortVi(addDays(board.to, -1))} ·{" "}
             <span className="tnum font-medium text-ink-900">
-              lấp đầy {board.occupancy}%
+              {fill(t("lấp đầy {n}%"), { n: board.occupancy })}
             </span>
           </p>
         </div>
 
         <nav
-          aria-label="Chuyển khoảng ngày"
+          aria-label={t("Chuyển khoảng ngày")}
           className="flex flex-wrap items-center gap-2"
         >
           <Link
             href="/lich/khoa"
             className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
           >
-            Khóa đêm
+            {t("Khóa đêm")}
           </Link>
           <Link
             href="/lich/moi"
             className="flex min-h-11 items-center rounded-full bg-ink-900 px-4 text-[14px] font-semibold text-sand-100 hover:bg-ink-800"
           >
-            Đặt phòng mới
+            {t("Đặt phòng mới")}
           </Link>
           <span aria-hidden="true" className="mx-1 h-6 w-px bg-line" />
           <Link
             href={`/lich?tu=${prev}`}
             className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
           >
-            ← Trước
+            {t("← Trước")}
           </Link>
           <Link
             href="/lich"
             className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
           >
-            Hôm nay
+            {t("Hôm nay")}
           </Link>
           <Link
             href={`/lich?tu=${next}`}
@@ -111,11 +119,11 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
       </div>
 
       <div className="mt-6">
-        <BoardGrid board={board} today={toIsoDate(today)} />
+        <BoardGrid board={board} today={toIsoDate(today)} locale={locale} />
       </div>
 
       <p className="mt-4 text-[13px] text-ink-500">
-        Bấm vào một ô trống để thêm đặt phòng, bấm vào một lượt đặt để sửa.
+        {t("Bấm vào một ô trống để thêm đặt phòng, bấm vào một lượt đặt để sửa.")}
       </p>
 
       {/* Blocks have no page of their own — there is nothing to edit on one
@@ -124,7 +132,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
       {blocks.length > 0 ? (
         <section className="mt-8">
           <h2 className="text-[14px] font-semibold text-ink-900">
-            Đêm đang khóa trong khoảng này
+            {t("Đêm đang khóa trong khoảng này")}
           </h2>
           <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-surface">
             {blocks.map((block) => (
@@ -137,7 +145,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
                     {block.roomName}
                   </span>{" "}
                   · {block.label} ·{" "}
-                  <span className="tnum">{block.nights} đêm</span>
+                  <span className="tnum">{fill(t("{n} đêm"), { n: block.nights })}</span>
                 </span>
                 <form action={deleteBlock}>
                   <input type="hidden" name="id" value={block.id} />
@@ -145,7 +153,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
                     type="submit"
                     className="flex min-h-11 items-center rounded-full px-3 text-[13px] font-medium text-danger hover:bg-danger-soft"
                   >
-                    Bỏ khóa
+                    {t("Bỏ khóa")}
                   </button>
                 </form>
               </li>

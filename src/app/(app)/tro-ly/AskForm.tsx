@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { AssistantState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 const EXAMPLES = [
   "Khóa Garden Suite từ 5 đến 8 tháng 12 để sơn lại phòng tắm",
@@ -12,6 +13,7 @@ const EXAMPLES = [
 ];
 
 function Submit({ disabled }: { disabled: boolean }) {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -19,7 +21,7 @@ function Submit({ disabled }: { disabled: boolean }) {
       disabled={pending || disabled}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {pending ? "Đang soạn…" : "Nhờ trợ lý soạn"}
+      {pending ? t("Đang soạn…") : t("Nhờ trợ lý soạn")}
     </button>
   );
 }
@@ -31,6 +33,7 @@ export function AskForm({
   action: (prev: AssistantState, formData: FormData) => Promise<AssistantState>;
   disabled: boolean;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<AssistantState, FormData>(action, {
     error: null,
   });
@@ -43,7 +46,7 @@ export function AskForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] leading-relaxed text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
 
@@ -52,7 +55,7 @@ export function AskForm({
           htmlFor="prompt"
           className="block text-[14px] font-medium text-ink-700"
         >
-          Bạn cần làm gì?
+          {t("Bạn cần làm gì?")}
         </label>
         <textarea
           id="prompt"
@@ -60,7 +63,7 @@ export function AskForm({
           rows={3}
           required
           disabled={disabled}
-          placeholder={EXAMPLES[0]}
+          placeholder={t(EXAMPLES[0])}
           aria-describedby="prompt-hint"
           className="mt-1.5 block min-h-24 w-full rounded-xl border border-line-strong bg-white px-3.5 py-2.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15 disabled:bg-sand-50 disabled:text-ink-400"
         />
@@ -68,9 +71,9 @@ export function AskForm({
           id="prompt-hint"
           className="mt-2 text-[13px] leading-relaxed text-ink-500"
         >
-          Ví dụ:{" "}
+          {t("Ví dụ:")}{" "}
           {EXAMPLES.slice(1)
-            .map((e) => `“${e}”`)
+            .map((example) => `“${t(example)}”`)
             .join(" · ")}
         </p>
       </div>

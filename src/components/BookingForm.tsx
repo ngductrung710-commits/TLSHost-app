@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { BookingState } from "@/app/(app)/lich/actions";
+import { useT } from "@/components/I18nProvider";
 
 /**
  * One form for creating and for editing a booking.
@@ -34,6 +35,7 @@ const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
 
 function Submit({ label }: { label: string }) {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -41,7 +43,7 @@ function Submit({ label }: { label: string }) {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : label}
+      {pending ? t("Đang lưu…") : label}
     </button>
   );
 }
@@ -62,6 +64,7 @@ export function BookingForm({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<BookingState, FormData>(action, {
     error: null,
   });
@@ -87,7 +90,7 @@ export function BookingForm({
 
       <div>
         <label htmlFor="roomId" className="block text-[14px] font-medium text-ink-700">
-          Phòng
+          {t("Phòng")}
         </label>
         <select
           id="roomId"
@@ -106,7 +109,7 @@ export function BookingForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="checkIn" className="block text-[14px] font-medium text-ink-700">
-            Nhận phòng
+            {t("Nhận phòng")}
           </label>
           <input
             id="checkIn"
@@ -120,7 +123,7 @@ export function BookingForm({
         </div>
         <div>
           <label htmlFor="checkOut" className="block text-[14px] font-medium text-ink-700">
-            Trả phòng
+            {t("Trả phòng")}
           </label>
           <input
             id="checkOut"
@@ -133,14 +136,14 @@ export function BookingForm({
             className={inputClass}
           />
           <p id="checkout-hint" className="mt-1.5 text-[13px] text-ink-500">
-            Đêm cuối là đêm trước ngày này — phòng trống lại từ sáng hôm đó.
+            {t("Đêm cuối là đêm trước ngày này — phòng trống lại từ sáng hôm đó.")}
           </p>
         </div>
       </div>
 
       <div>
         <label htmlFor="guestName" className="block text-[14px] font-medium text-ink-700">
-          Tên khách
+          {t("Tên khách")}
         </label>
         <input
           id="guestName"
@@ -155,7 +158,7 @@ export function BookingForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="guestEmail" className="block text-[14px] font-medium text-ink-700">
-            Email <span className="font-normal text-ink-500">(không bắt buộc)</span>
+            Email <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
           </label>
           <input
             id="guestEmail"
@@ -167,7 +170,7 @@ export function BookingForm({
         </div>
         <div>
           <label htmlFor="guestPhone" className="block text-[14px] font-medium text-ink-700">
-            Điện thoại <span className="font-normal text-ink-500">(không bắt buộc)</span>
+            {t("Điện thoại")} <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
           </label>
           <input
             id="guestPhone"
@@ -182,7 +185,7 @@ export function BookingForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label htmlFor="guests" className="block text-[14px] font-medium text-ink-700">
-            Số khách
+            {t("Số khách")}
           </label>
           <input
             id="guests"
@@ -196,7 +199,7 @@ export function BookingForm({
         </div>
         <div>
           <label htmlFor="totalCents" className="block text-[14px] font-medium text-ink-700">
-            Tổng tiền (₫)
+            {t("Tổng tiền (₫)")}
           </label>
           <input
             id="totalCents"
@@ -210,7 +213,7 @@ export function BookingForm({
         </div>
         <div>
           <label htmlFor="source" className="block text-[14px] font-medium text-ink-700">
-            Nguồn
+            {t("Nguồn")}
           </label>
           <select
             id="source"
@@ -218,19 +221,19 @@ export function BookingForm({
             defaultValue={defaults.source}
             className={inputClass}
           >
-            <option value="DIRECT">Trực tiếp</option>
+            <option value="DIRECT">{t("Trực tiếp")}</option>
             <option value="AIRBNB">Airbnb</option>
             <option value="BOOKING_COM">Booking.com</option>
             <option value="AGODA">Agoda</option>
             <option value="TRAVELOKA">Traveloka</option>
-            <option value="OTHER">Kênh khác</option>
+            <option value="OTHER">{t("Kênh khác")}</option>
           </select>
         </div>
       </div>
 
       <div>
         <label htmlFor="notes" className="block text-[14px] font-medium text-ink-700">
-          Ghi chú <span className="font-normal text-ink-500">(không bắt buộc)</span>
+          {t("Ghi chú")} <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
         </label>
         <textarea
           id="notes"
@@ -247,7 +250,7 @@ export function BookingForm({
           href={cancelHref}
           className="inline-flex min-h-11 items-center rounded-full px-4 text-[15px] font-medium text-ink-600 hover:text-ink-900"
         >
-          Hủy
+          {t("Hủy")}
         </Link>
       </div>
     </form>

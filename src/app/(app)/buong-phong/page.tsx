@@ -5,8 +5,13 @@ import { contextLabel, loadHousekeeping } from "@/lib/housekeeping";
 import { shortVi, todayIn } from "@/lib/dates";
 
 import { markAllClean, markRoom } from "./actions";
+import { getT } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Buồng phòng" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Buồng phòng") };
+}
 
 const STATE_STYLES: Record<string, string> = {
   CLEAN: "bg-positive-soft text-positive",
@@ -23,6 +28,7 @@ const STATE_LABELS: Record<string, string> = {
 };
 
 export default async function HousekeepingPage() {
+  const t = await getT();
   const member = await requireMember();
   const today = todayIn(member.timezone);
   const jobs = await loadHousekeeping(member, today);
@@ -35,15 +41,15 @@ export default async function HousekeepingPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-            Buồng phòng
+            {t("Buồng phòng")}
           </h1>
           <p className="mt-1 text-[14px] text-ink-600">
             {shortVi(today)} ·{" "}
             {needing.length === 0 ? (
-              "không còn phòng nào cần dọn"
+              t("không còn phòng nào cần dọn")
             ) : (
               <span className="font-medium text-ink-900">
-                <span className="tnum">{needing.length}</span> phòng cần dọn
+                <span className="tnum">{needing.length}</span> {t("phòng cần dọn")}
               </span>
             )}
           </p>
@@ -55,7 +61,7 @@ export default async function HousekeepingPage() {
               type="submit"
               className="flex min-h-11 items-center rounded-full border border-line bg-surface px-5 text-[14px] font-medium text-ink-700 hover:bg-sand-50"
             >
-              Đánh dấu tất cả đã sạch
+              {t("Đánh dấu tất cả đã sạch")}
             </button>
           </form>
         ) : null}
@@ -64,10 +70,10 @@ export default async function HousekeepingPage() {
       {jobs.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
           <p className="text-[15px] font-semibold text-ink-900">
-            Chưa có phòng nào
+            {t("Chưa có phòng nào")}
           </p>
           <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-            Bảng này dựng từ danh sách phòng. Thêm chỗ nghỉ rồi quay lại.
+            {t("Bảng này dựng từ danh sách phòng. Thêm chỗ nghỉ rồi quay lại.")}
           </p>
         </div>
       ) : (
@@ -85,11 +91,11 @@ export default async function HousekeepingPage() {
                     {job.roomName}
                   </p>
                   <p className="mt-0.5 text-[12.5px] text-ink-500">
-                    {job.propertyName} · {contextLabel(job.context)}
+                    {job.propertyName} · {t(contextLabel(job.context))}
                     {/* Housekeepers are deliberately not told who is coming.
                         The spec is explicit that they see rooms, not guests. */}
                     {!housekeeper && job.arrivingGuest
-                      ? ` · đón ${job.arrivingGuest}`
+                      ? fill(t(" · đón {ten}"), { ten: job.arrivingGuest })
                       : ""}
                   </p>
                 </div>
@@ -101,7 +107,7 @@ export default async function HousekeepingPage() {
                       : STATE_STYLES[job.state]
                   }`}
                 >
-                  {job.needsCleaning ? "Cần dọn" : STATE_LABELS[job.state]}
+                  {job.needsCleaning ? t("Cần dọn") : t(STATE_LABELS[job.state])}
                 </span>
               </div>
 
@@ -114,7 +120,7 @@ export default async function HousekeepingPage() {
                       type="submit"
                       className="flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100 hover:bg-ink-800"
                     >
-                      Đánh dấu sạch
+                      {t("Đánh dấu sạch")}
                     </button>
                   </form>
                 ) : null}
@@ -129,7 +135,7 @@ export default async function HousekeepingPage() {
                           type="submit"
                           className="flex min-h-11 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
                         >
-                          Đã kiểm tra
+                          {t("Đã kiểm tra")}
                         </button>
                       </form>
                     ) : null}
@@ -146,8 +152,8 @@ export default async function HousekeepingPage() {
                         className="flex min-h-11 items-center rounded-full px-3 text-[13px] font-medium text-danger hover:bg-danger-soft"
                       >
                         {job.state === "MAINTENANCE"
-                          ? "Bỏ đánh dấu bảo trì"
-                          : "Gắn cờ bảo trì"}
+                          ? t("Bỏ đánh dấu bảo trì")
+                          : t("Gắn cờ bảo trì")}
                       </button>
                     </form>
                   </>
@@ -155,7 +161,7 @@ export default async function HousekeepingPage() {
 
                 {job.cleanedAt && !job.needsCleaning ? (
                   <span className="ml-auto text-[12px] text-ink-400">
-                    Dọn {shortVi(job.cleanedAt)}
+                    {fill(t("Dọn {ngay}"), { ngay: shortVi(job.cleanedAt) })}
                     {job.cleanedBy ? ` · ${job.cleanedBy}` : ""}
                   </span>
                 ) : null}
@@ -166,9 +172,7 @@ export default async function HousekeepingPage() {
       )}
 
       <p className="mt-6 max-w-2xl text-[13px] leading-relaxed text-ink-500">
-        Phòng tự chuyển sang cần dọn khi có khách trả phòng — không phải chờ ai
-        bấm gì. Trạng thái đọc lại từ lịch mỗi lần mở trang, nên không bao giờ
-        lệch.
+        {t("Phòng tự chuyển sang cần dọn khi có khách trả phòng — không phải chờ ai bấm gì. Trạng thái đọc lại từ lịch mỗi lần mở trang, nên không bao giờ lệch.")}
       </p>
     </>
   );

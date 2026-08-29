@@ -5,11 +5,13 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { PropertyState } from "../actions";
+import { useT } from "@/components/I18nProvider";
 
 const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
 
 function Submit() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -17,7 +19,7 @@ function Submit() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : "Tạo chỗ nghỉ"}
+      {pending ? t("Đang lưu…") : t("Tạo chỗ nghỉ")}
     </button>
   );
 }
@@ -27,6 +29,7 @@ export function PropertyForm({
 }: {
   action: (prev: PropertyState, formData: FormData) => Promise<PropertyState>;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<PropertyState, FormData>(action, {
     error: null,
   });
@@ -39,39 +42,39 @@ export function PropertyForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
 
       <div>
         <label htmlFor="name" className="block text-[14px] font-medium text-ink-700">
-          Tên chỗ nghỉ
+          {t("Tên chỗ nghỉ")}
         </label>
         <input
           id="name"
           name="name"
           required
-          placeholder="An Bàng Villa"
+          placeholder={t("An Bàng Villa")}
           className={inputClass}
         />
       </div>
 
       <div>
         <label htmlFor="address" className="block text-[14px] font-medium text-ink-700">
-          Địa chỉ <span className="font-normal text-ink-500">(không bắt buộc)</span>
+          {t("Địa chỉ")} <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
         </label>
         <input
           id="address"
           name="address"
           defaultValue=""
-          placeholder="Hội An, Đà Nẵng"
+          placeholder={t("Hội An, Đà Nẵng")}
           className={inputClass}
         />
       </div>
 
       <div>
         <label htmlFor="rooms" className="block text-[14px] font-medium text-ink-700">
-          Phòng
+          {t("Phòng")}
         </label>
         <textarea
           id="rooms"
@@ -84,8 +87,7 @@ export function PropertyForm({
           className={inputClass + " min-h-32 py-2.5"}
         />
         <p id="rooms-hint" className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
-          Mỗi dòng một phòng. Nếu cho thuê nguyên căn, viết một dòng duy nhất —
-          cả căn villa là một phòng.
+          {t("Mỗi dòng một phòng. Nếu cho thuê nguyên căn, viết một dòng duy nhất — cả căn villa là một phòng.")}
         </p>
       </div>
 
@@ -95,7 +97,7 @@ export function PropertyForm({
           href="/cho-nghi"
           className="inline-flex min-h-11 items-center rounded-full px-4 text-[15px] font-medium text-ink-600 hover:text-ink-900"
         >
-          Hủy
+          {t("Hủy")}
         </Link>
       </div>
     </form>

@@ -8,8 +8,13 @@ import { KIND_LABELS, proposalSchema } from "@/lib/proposals";
 
 import { AskForm } from "./AskForm";
 import { approve, ask, reject } from "./actions";
+import { getT, readLocale } from "@/lib/locale";
+import { fill, type Locale, type T } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Trợ lý" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Trợ lý") };
+}
 
 /**
  * Renders a proposal as the change it would make.
@@ -18,41 +23,57 @@ export const metadata: Metadata = { title: "Trợ lý" };
  * wrote, and the point of a preview is to show what will actually be applied.
  * If the two disagree, this is the one that is true.
  */
-function preview(raw: unknown, rooms: Map<string, string>): string[] {
+function preview(
+  raw: unknown,
+  rooms: Map<string, string>,
+  t: T,
+  locale: Locale,
+): string[] {
   const parsed = proposalSchema.safeParse(raw);
-  if (!parsed.success) return ["Không đọc được nội dung đề xuất."];
+  if (!parsed.success) return [t("Không đọc được nội dung đề xuất.")];
 
   const p = parsed.data;
-  const room = (id: string) => rooms.get(id) ?? "phòng không còn tồn tại";
+  const room = (id: string) => rooms.get(id) ?? t("phòng không còn tồn tại");
 
+  // These lines are what a host reads before approving a write to their
+  // calendar, so the label has to be in their language even though the value
+  // beside it — a room name, a guest's name — never is.
   switch (p.kind) {
     case "CREATE_BOOKING":
       return [
-        `Phòng: ${room(p.roomId)}`,
-        `Ngày: ${p.checkIn} → ${p.checkOut}`,
-        `Khách: ${p.guestName}${p.guestPhone ? ` · ${p.guestPhone}` : ""}`,
-        `Số khách: ${p.guests} · Nguồn: ${p.source}`,
-        ...(p.notes ? [`Ghi chú: ${p.notes}`] : []),
+        fill(t("Phòng: {ten}"), { ten: room(p.roomId) }),
+        fill(t("Ngày: {tu} → {den}"), { tu: p.checkIn, den: p.checkOut }),
+        fill(t("Khách: {ten}{sdt}"), {
+          ten: p.guestName,
+          sdt: p.guestPhone ? ` · ${p.guestPhone}` : "",
+        }),
+        fill(t("Số khách: {n} · Nguồn: {nguon}"), {
+          n: p.guests,
+          nguon: p.source,
+        }),
+        ...(p.notes ? [fill(t("Ghi chú: {noi}"), { noi: p.notes })] : []),
       ];
     case "BLOCK_NIGHTS":
       return [
-        `Phòng: ${room(p.roomId)}`,
-        `Khóa: ${p.dateFrom} → ${p.dateTo}`,
-        `Lý do: ${p.reason}`,
-        ...(p.note ? [`Ghi chú: ${p.note}`] : []),
+        fill(t("Phòng: {ten}"), { ten: room(p.roomId) }),
+        fill(t("Khóa: {tu} → {den}"), { tu: p.dateFrom, den: p.dateTo }),
+        fill(t("Lý do: {ly}"), { ly: p.reason }),
+        ...(p.note ? [fill(t("Ghi chú: {noi}"), { noi: p.note })] : []),
       ];
     case "CANCEL_BOOKING":
-      return [`Hủy đặt phòng: ${p.bookingId}`];
+      return [fill(t("Hủy đặt phòng: {ma}"), { ma: p.bookingId })];
     case "MOVE_BOOKING":
       return [
-        `Đặt phòng: ${p.bookingId}`,
-        `Chuyển sang: ${room(p.roomId)}`,
-        `Ngày mới: ${p.checkIn} → ${p.checkOut}`,
+        fill(t("Đặt phòng: {ma}"), { ma: p.bookingId }),
+        fill(t("Chuyển sang: {ten}"), { ten: room(p.roomId) }),
+        fill(t("Ngày mới: {tu} → {den}"), { tu: p.checkIn, den: p.checkOut }),
       ];
     case "SET_PRICE":
       return [
-        `Phòng: ${room(p.roomId)}`,
-        `Giá mỗi đêm: ${p.basePrice === null ? "bỏ giá" : formatVnd(p.basePrice)}`,
+        fill(t("Phòng: {ten}"), { ten: room(p.roomId) }),
+        fill(t("Giá mỗi đêm: {gia}"), {
+          gia: p.basePrice === null ? t("bỏ giá") : formatVnd(p.basePrice, locale),
+        }),
       ];
     case "NONE":
       return [p.why];
@@ -60,6 +81,8 @@ function preview(raw: unknown, rooms: Map<string, string>): string[] {
 }
 
 export default async function AssistantPage() {
+  const t = await getT();
+  const locale = await readLocale();
   const member = await requireMember();
   if (!canManageBookings(member)) redirect("/buong-phong");
 
@@ -98,11 +121,10 @@ export default async function AssistantPage() {
   return (
     <>
       <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-        Trợ lý
+        {t("Trợ lý")}
       </h1>
       <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
-        Mô tả việc bạn cần bằng lời thường ngày. Trợ lý soạn sẵn thay đổi, bạn
-        đọc rồi duyệt — không có gì được ghi vào lịch trước khi bạn gật đầu.
+        {t("Mô tả việc bạn cần bằng lời thường ngày. Trợ lý soạn sẵn thay đổi, bạn đọc rồi duyệt — không có gì được ghi vào lịch trước khi bạn gật đầu.")}
       </p>
 
       {!configured ? (
@@ -111,16 +133,14 @@ export default async function AssistantPage() {
           className="mt-6 max-w-2xl rounded-2xl border border-warning/30 bg-warning-soft px-5 py-4"
         >
           <p className="text-[14px] font-semibold text-warning">
-            Trợ lý chưa được bật
+            {t("Trợ lý chưa được bật")}
           </p>
           <p className="mt-1 text-[13.5px] leading-relaxed text-ink-700">
-            Cần một khóa API của Anthropic. Thêm{" "}
+            {t("Cần một khóa API của Anthropic. Thêm")}{" "}
             <code className="rounded bg-sand-200 px-1.5 py-0.5 font-mono text-[12px]">
               ANTHROPIC_API_KEY
             </code>{" "}
-            vào tệp <code className="font-mono text-[12px]">.env</code> rồi khởi
-            động lại. Mọi thứ khác trên trang này vẫn dùng được — đề xuất đã có
-            vẫn duyệt được bình thường.
+            {t("vào tệp")} <code className="font-mono text-[12px]">.env</code> {t("rồi khởi động lại. Mọi thứ khác trên trang này vẫn dùng được — đề xuất đã có vẫn duyệt được bình thường.")}
           </p>
         </div>
       ) : null}
@@ -131,7 +151,7 @@ export default async function AssistantPage() {
 
       {proposals.length > 0 ? (
         <section className="mt-12 border-t border-line pt-10">
-          <h2 className="text-[1.25rem] font-semibold text-ink-900">Đề xuất</h2>
+          <h2 className="text-[1.25rem] font-semibold text-ink-900">{t("Đề xuất")}</h2>
 
           <ul className="mt-5 space-y-4">
             {proposals.map((p) => {
@@ -150,7 +170,7 @@ export default async function AssistantPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-500">
-                        {KIND_LABELS[p.kind as keyof typeof KIND_LABELS] ?? p.kind}
+                        {t(KIND_LABELS[p.kind as keyof typeof KIND_LABELS] ?? p.kind)}
                       </p>
                       <p className="mt-1 text-[16px] font-semibold leading-snug text-ink-900">
                         {p.summary}
@@ -169,12 +189,12 @@ export default async function AssistantPage() {
                       }`}
                     >
                       {p.status === "APPROVED"
-                        ? "Đã duyệt"
+                        ? t("Đã duyệt")
                         : p.status === "REJECTED"
-                          ? "Đã từ chối"
+                          ? t("Đã từ chối")
                           : expired
-                            ? "Hết hạn"
-                            : "Chờ bạn duyệt"}
+                            ? t("Hết hạn")
+                            : t("Chờ bạn duyệt")}
                     </span>
                   </div>
 
@@ -185,7 +205,7 @@ export default async function AssistantPage() {
                   {/* The change itself, read back out of the stored payload
                       rather than from the summary above it. */}
                   <dl className="mt-4 space-y-1 rounded-xl bg-sand-50 px-4 py-3">
-                    {preview(p.payload, roomNames).map((line) => (
+                    {preview(p.payload, roomNames, t, locale).map((line) => (
                       <dd key={line} className="text-[13.5px] text-ink-700">
                         {line}
                       </dd>
@@ -209,7 +229,7 @@ export default async function AssistantPage() {
                           type="submit"
                           className="flex min-h-11 items-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800"
                         >
-                          Duyệt
+                          {t("Duyệt")}
                         </button>
                       </form>
                       <form action={reject}>
@@ -218,11 +238,11 @@ export default async function AssistantPage() {
                           type="submit"
                           className="flex min-h-11 items-center rounded-full border border-line px-5 text-[14px] font-medium text-ink-600 hover:bg-sand-50"
                         >
-                          Từ chối
+                          {t("Từ chối")}
                         </button>
                       </form>
                       <span className="text-[12.5px] text-ink-400">
-                        Hết hạn lúc{" "}
+                        {t("Hết hạn lúc")}{" "}
                         {p.expiresAt.toLocaleTimeString("vi-VN", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -232,7 +252,11 @@ export default async function AssistantPage() {
                   ) : (
                     <p className="mt-4 text-[12.5px] text-ink-400">
                       {shortVi(p.createdAt)}
-                      {p.approvedAt ? ` · duyệt ${shortVi(p.approvedAt)}` : ""}
+                      {p.approvedAt
+                        ? fill(t(" · duyệt {ngay}"), {
+                            ngay: shortVi(p.approvedAt),
+                          })
+                        : ""}
                     </p>
                   )}
                 </li>

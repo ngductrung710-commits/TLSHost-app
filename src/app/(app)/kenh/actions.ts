@@ -8,6 +8,7 @@ import { withOrg } from "@/lib/db";
 import { LIMIT_MESSAGES } from "@/lib/plans";
 import { runSync } from "@/lib/sync";
 import { newToken } from "@/lib/tokens";
+import { getT } from "@/lib/locale";
 
 export type ChannelState = { error: string | null; notice?: string };
 
@@ -22,9 +23,10 @@ export async function connectChannel(
   _prev: ChannelState,
   formData: FormData,
 ): Promise<ChannelState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới kết nối được kênh." };
+    return { error: t("Chỉ chủ nhà mới kết nối được kênh.") };
   }
   if (!member.limits.channels) {
     return { error: LIMIT_MESSAGES.channels };
@@ -32,7 +34,7 @@ export async function connectChannel(
 
   const parsed = connectSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const { roomId, kind, importUrl, label } = parsed.data;
@@ -43,13 +45,13 @@ export async function connectChannel(
   // to fetch().
   const url = new URL(importUrl);
   if (url.protocol !== "https:" && url.protocol !== "http:") {
-    return { error: "Link phải bắt đầu bằng http:// hoặc https://" };
+    return { error: t("Link phải bắt đầu bằng http:// hoặc https://") };
   }
   if (
     /^(localhost|127\.|0\.|10\.|169\.254\.|192\.168\.|\[?::1)/i.test(url.hostname) ||
     /^172\.(1[6-9]|2\d|3[01])\./.test(url.hostname)
   ) {
-    return { error: "Link này trỏ vào mạng nội bộ, không dùng được." };
+    return { error: t("Link này trỏ vào mạng nội bộ, không dùng được.") };
   }
 
   try {
@@ -72,7 +74,7 @@ export async function connectChannel(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "ROOM_NOT_FOUND") {
-      return { error: "Không tìm thấy phòng này." };
+      return { error: t("Không tìm thấy phòng này.") };
     }
     // The (roomId, kind) pair is unique: one Airbnb feed per room is all that
     // can mean anything.
@@ -81,13 +83,13 @@ export async function connectChannel(
       error !== null &&
       (error as { code?: string }).code === "P2002"
     ) {
-      return { error: "Phòng này đã kết nối kênh đó rồi." };
+      return { error: t("Phòng này đã kết nối kênh đó rồi.") };
     }
     throw error;
   }
 
   revalidatePath("/kenh");
-  return { error: null, notice: "Đã kết nối. Bấm Đồng bộ ngay để kéo lịch về." };
+  return { error: null, notice: t("Đã kết nối. Bấm Đồng bộ ngay để kéo lịch về.") };
 }
 
 export async function syncNow(formData: FormData): Promise<void> {

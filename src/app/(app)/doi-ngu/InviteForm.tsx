@@ -4,11 +4,13 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { TeamState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
 
 function Submit() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -16,7 +18,7 @@ function Submit() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang tạo…" : "Tạo lời mời"}
+      {pending ? t("Đang tạo…") : t("Tạo lời mời")}
     </button>
   );
 }
@@ -31,6 +33,7 @@ export function InviteForm({
   /** Passed from the server so the copied link is absolute. */
   origin: string;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<TeamState, FormData>(action, {
     error: null,
   });
@@ -46,7 +49,7 @@ export function InviteForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
 
@@ -56,10 +59,10 @@ export function InviteForm({
           className="rounded-xl border border-positive/25 bg-positive-soft px-4 py-3"
         >
           <p className="text-[14px] font-semibold text-positive">
-            Lời mời đã tạo
+            {t("Lời mời đã tạo")}
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-600">
-            Gửi link này cho họ. Link dùng được một lần, hết hạn sau 14 ngày.
+            {t("Gửi link này cho họ. Link dùng được một lần, hết hạn sau 14 ngày.")}
           </p>
           {/* Selected on focus so one tap or Ctrl+A grabs the whole thing —
               these are long and easy to truncate by hand. readOnly rather than
@@ -76,7 +79,7 @@ export function InviteForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="block text-[14px] font-medium text-ink-700">
-            Tên
+            {t("Tên")}
           </label>
           <input id="name" name="name" required className={inputClass} />
         </div>
@@ -90,7 +93,7 @@ export function InviteForm({
 
       <div>
         <label htmlFor="role" className="block text-[14px] font-medium text-ink-700">
-          Vai trò
+          {t("Vai trò")}
         </label>
         <select
           id="role"
@@ -100,13 +103,13 @@ export function InviteForm({
           aria-describedby="role-hint"
           className={inputClass}
         >
-          <option value="COLLABORATOR">Cộng tác viên</option>
-          <option value="HOUSEKEEPER">Dọn phòng</option>
+          <option value="COLLABORATOR">{t("Cộng tác viên")}</option>
+          <option value="HOUSEKEEPER">{t("Dọn phòng")}</option>
         </select>
         <p id="role-hint" className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
           {role === "COLLABORATOR"
-            ? "Xem và quản lý đặt phòng ở những chỗ nghỉ bạn giao."
-            : "Chỉ thấy phòng cần dọn. Không thấy giá phòng hay thông tin thanh toán của khách."}
+            ? t("Xem và quản lý đặt phòng ở những chỗ nghỉ bạn giao.")
+            : t("Chỉ thấy phòng cần dọn. Không thấy giá phòng hay thông tin thanh toán của khách.")}
         </p>
       </div>
 
@@ -118,9 +121,9 @@ export function InviteForm({
             className="mt-1 h-4 w-4 rounded border-line-strong"
           />
           <span className="text-[14px] leading-relaxed text-ink-700">
-            Được sửa đặt phòng do người khác tạo
+            {t("Được sửa đặt phòng do người khác tạo")}
             <span className="mt-0.5 block text-[13px] text-ink-500">
-              Bỏ trống thì họ chỉ sửa được những gì chính họ nhập.
+              {t("Bỏ trống thì họ chỉ sửa được những gì chính họ nhập.")}
             </span>
           </span>
         </label>
@@ -128,10 +131,10 @@ export function InviteForm({
 
       <fieldset>
         <legend className="text-[14px] font-medium text-ink-700">
-          Chỗ nghỉ được giao
+          {t("Chỗ nghỉ được giao")}
         </legend>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
-          Không chọn gì nghĩa là tất cả chỗ nghỉ.
+          {t("Không chọn gì nghĩa là tất cả chỗ nghỉ.")}
         </p>
         <div className="mt-3 space-y-2">
           {properties.map((p) => (

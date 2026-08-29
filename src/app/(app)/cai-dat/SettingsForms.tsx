@@ -6,27 +6,34 @@ import { useFormStatus } from "react-dom";
 import { TIMEZONES } from "@/lib/timezones";
 
 import type { SettingsState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 text-[16px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
 
 type Action = (prev: SettingsState, formData: FormData) => Promise<SettingsState>;
 
-function Submit({ label = "Lưu" }: { label?: string }) {
+function Submit({ label }: { label?: string }) {
+  const t = useT();
   const { pending } = useFormStatus();
+  // Not a default parameter: the fallback comes from a hook, and a default
+  // cannot call one.
+  const text = label ?? t("Lưu");
   return (
     <button
       type="submit"
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : label}
+      {pending ? t("Đang lưu…") : text}
     </button>
   );
 }
 
 /** The alert/status pair every form here shares. */
 function Feedback({ state }: { state: SettingsState }) {
+  const t = useT();
+
   if (state.error) {
     return (
       <p
@@ -34,7 +41,7 @@ function Feedback({ state }: { state: SettingsState }) {
         tabIndex={-1}
         className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
       >
-        {state.error}
+        {t(state.error)}
       </p>
     );
   }
@@ -44,7 +51,7 @@ function Feedback({ state }: { state: SettingsState }) {
         role="status"
         className="rounded-xl border border-positive/25 bg-positive-soft px-4 py-3 text-[14px] text-positive"
       >
-        {state.notice}
+        {t(state.notice)}
       </p>
     );
   }
@@ -60,6 +67,7 @@ export function OrgForm({
   name: string;
   timezone: string;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<SettingsState, FormData>(action, {
     error: null,
   });
@@ -70,7 +78,7 @@ export function OrgForm({
 
       <div>
         <label htmlFor="orgName" className="block text-[14px] font-medium text-ink-700">
-          Tên cơ sở
+          {t("Tên cơ sở")}
         </label>
         <input
           id="orgName"
@@ -83,7 +91,7 @@ export function OrgForm({
 
       <div>
         <label htmlFor="timezone" className="block text-[14px] font-medium text-ink-700">
-          Múi giờ
+          {t("Múi giờ")}
         </label>
         <select
           id="timezone"
@@ -99,9 +107,7 @@ export function OrgForm({
           ))}
         </select>
         <p id="tz-hint" className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
-          Quyết định “hôm nay” là ngày nào trên lịch và bảng buồng phòng. Đổi
-          múi giờ có thể làm một phòng chuyển sang cần dọn sớm hoặc muộn hơn
-          một ngày.
+          {t("Quyết định “hôm nay” là ngày nào trên lịch và bảng buồng phòng. Đổi múi giờ có thể làm một phòng chuyển sang cần dọn sớm hoặc muộn hơn một ngày.")}
         </p>
       </div>
 
@@ -111,6 +117,7 @@ export function OrgForm({
 }
 
 export function ProfileForm({ action, name }: { action: Action; name: string }) {
+  const t = useT();
   const [state, formAction] = useActionState<SettingsState, FormData>(action, {
     error: null,
   });
@@ -121,7 +128,7 @@ export function ProfileForm({ action, name }: { action: Action; name: string }) 
 
       <div>
         <label htmlFor="userName" className="block text-[14px] font-medium text-ink-700">
-          Tên của bạn
+          {t("Tên của bạn")}
         </label>
         <input
           id="userName"
@@ -133,7 +140,7 @@ export function ProfileForm({ action, name }: { action: Action; name: string }) 
           className={inputClass}
         />
         <p id="name-hint" className="mt-1.5 text-[13px] text-ink-500">
-          Tên này hiện bên cạnh mỗi đặt phòng và mỗi lần dọn phòng bạn ghi nhận.
+          {t("Tên này hiện bên cạnh mỗi đặt phòng và mỗi lần dọn phòng bạn ghi nhận.")}
         </p>
       </div>
 
@@ -143,6 +150,7 @@ export function ProfileForm({ action, name }: { action: Action; name: string }) 
 }
 
 export function PasswordForm({ action }: { action: Action }) {
+  const t = useT();
   const [state, formAction] = useActionState<SettingsState, FormData>(action, {
     error: null,
   });
@@ -153,7 +161,7 @@ export function PasswordForm({ action }: { action: Action }) {
 
       <div>
         <label htmlFor="current" className="block text-[14px] font-medium text-ink-700">
-          Mật khẩu hiện tại
+          {t("Mật khẩu hiện tại")}
         </label>
         <input
           id="current"
@@ -167,7 +175,7 @@ export function PasswordForm({ action }: { action: Action }) {
 
       <div>
         <label htmlFor="next" className="block text-[14px] font-medium text-ink-700">
-          Mật khẩu mới
+          {t("Mật khẩu mới")}
         </label>
         <input
           id="next"
@@ -179,12 +187,11 @@ export function PasswordForm({ action }: { action: Action }) {
           className={inputClass}
         />
         <p id="next-hint" className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
-          Ít nhất 12 ký tự. Đổi mật khẩu sẽ đăng xuất mọi thiết bị khác — phiên
-          bạn đang dùng vẫn giữ nguyên.
+          {t("Ít nhất 12 ký tự. Đổi mật khẩu sẽ đăng xuất mọi thiết bị khác — phiên bạn đang dùng vẫn giữ nguyên.")}
         </p>
       </div>
 
-      <Submit label="Đổi mật khẩu" />
+      <Submit label={t("Đổi mật khẩu")} />
     </form>
   );
 }

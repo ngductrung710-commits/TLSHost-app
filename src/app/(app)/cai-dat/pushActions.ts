@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { keysAreUsable, notifyOrg } from "@/lib/push";
+import { getT } from "@/lib/locale";
 
 export type PushState = { error: string | null; notice?: string };
 
@@ -80,11 +81,12 @@ export async function unsubscribePush(formData: FormData): Promise<void> {
  * for before a real booking arrives at two in the morning.
  */
 export async function sendTestPush(): Promise<void> {
+  const t = await getT();
   const member = await requireMember();
 
   await notifyOrg(member.orgId, {
     title: "TLSHost",
-    body: "Thông báo đang hoạt động. Đặt phòng mới sẽ hiện như thế này.",
+    body: t("Thông báo đang hoạt động. Đặt phòng mới sẽ hiện như thế này."),
     url: "/tong-quan",
   });
 

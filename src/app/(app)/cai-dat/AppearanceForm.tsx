@@ -12,12 +12,14 @@ import {
 } from "@/lib/themes";
 
 import type { SettingsState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 type Action = (prev: SettingsState, formData: FormData) => Promise<SettingsState>;
 
 const ORDER: BookingTheme[] = ["CLASSIC", "MINIMAL", "WARM", "BOLD"];
 
 function Submit() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -25,7 +27,7 @@ function Submit() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang lưu…" : "Lưu giao diện"}
+      {pending ? t("Đang lưu…") : t("Lưu giao diện")}
     </button>
   );
 }
@@ -76,6 +78,7 @@ export function AppearanceForm({
   bookingTheme: BookingTheme;
   brandColor: string | null;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<SettingsState, FormData>(action, {
     error: null,
   });
@@ -95,7 +98,7 @@ export function AppearanceForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] leading-relaxed text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
       {state.notice ? (
@@ -103,25 +106,24 @@ export function AppearanceForm({
           role="status"
           className="rounded-xl border border-positive/25 bg-positive-soft px-4 py-3 text-[14px] text-positive"
         >
-          {state.notice}
+          {t(state.notice)}
         </p>
       ) : null}
 
       <fieldset>
         <legend className="text-[14px] font-medium text-ink-700">
-          Phong cách
+          {t("Phong cách")}
         </legend>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-500">
-          Áp dụng cho trang đặt phòng của mọi chỗ nghỉ. Bốn phong cách này đều
-          đã được kiểm tra độ tương phản, nên khách luôn đọc được.
+          {t("Áp dụng cho trang đặt phòng của mọi chỗ nghỉ. Bốn phong cách này đều đã được kiểm tra độ tương phản, nên khách luôn đọc được.")}
         </p>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-4">
-          {ORDER.map((t) => (
+          {ORDER.map((option) => (
             <label
-              key={t}
+              key={option}
               className={`cursor-pointer rounded-2xl border p-2 transition-colors ${
-                theme === t
+                theme === option
                   ? "border-ink-900 bg-sand-50"
                   : "border-line hover:border-ink-300"
               }`}
@@ -129,14 +131,18 @@ export function AppearanceForm({
               <input
                 type="radio"
                 name="bookingTheme"
-                value={t}
-                checked={theme === t}
-                onChange={() => setTheme(t)}
+                value={option}
+                checked={theme === option}
+                onChange={() => setTheme(option)}
                 className="sr-only"
               />
-              <Swatch theme={t} brandColor={color.trim() || null} selected={theme === t} />
+              <Swatch
+                theme={option}
+                brandColor={color.trim() || null}
+                selected={theme === option}
+              />
               <span className="mt-2 block text-center text-[13px] font-medium text-ink-800">
-                {THEME_LABELS[t]}
+                {t(THEME_LABELS[option])}
               </span>
             </label>
           ))}
@@ -145,8 +151,8 @@ export function AppearanceForm({
 
       <div>
         <label htmlFor="brandColor" className="block text-[14px] font-medium text-ink-700">
-          Màu thương hiệu{" "}
-          <span className="font-normal text-ink-500">(không bắt buộc)</span>
+          {t("Màu thương hiệu")}{" "}
+          <span className="font-normal text-ink-500">{t("(không bắt buộc)")}</span>
         </label>
         <div className="mt-1.5 flex items-center gap-3">
           {/* A native colour picker and a text field over the same value: the
@@ -154,7 +160,7 @@ export function AppearanceForm({
               from a brand guide. */}
           <input
             type="color"
-            aria-label="Chọn màu"
+            aria-label={t("Chọn màu")}
             value={/^#[0-9a-f]{6}$/i.test(color) ? color : THEMES[theme].accent}
             onChange={(e) => setColor(e.target.value)}
             className="h-11 w-14 cursor-pointer rounded-xl border border-line-strong bg-white p-1"
@@ -174,7 +180,7 @@ export function AppearanceForm({
               onClick={() => setColor("")}
               className="min-h-11 px-2 text-[13px] font-medium text-ink-500 hover:text-ink-900"
             >
-              Dùng màu mặc định
+              {t("Dùng màu mặc định")}
             </button>
           ) : null}
         </div>
@@ -185,8 +191,7 @@ export function AppearanceForm({
           </p>
         ) : (
           <p id="brand-hint" className="mt-1.5 text-[13px] leading-relaxed text-ink-500">
-            Dùng cho nút và điểm nhấn. Để trống thì lấy màu của phong cách. Màu
-            quá nhạt sẽ bị từ chối — nút phải đọc được.
+            {t("Dùng cho nút và điểm nhấn. Để trống thì lấy màu của phong cách. Màu quá nhạt sẽ bị từ chối — nút phải đọc được.")}
           </p>
         )}
       </div>
@@ -207,6 +212,7 @@ export function LogoForm({
   logoFile: string | null;
   orgName: string;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<SettingsState, FormData>(action, {
     error: null,
   });
@@ -219,7 +225,7 @@ export function LogoForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
       {state.notice ? (
@@ -227,7 +233,7 @@ export function LogoForm({
           role="status"
           className="rounded-xl border border-positive/25 bg-positive-soft px-4 py-3 text-[14px] text-positive"
         >
-          {state.notice}
+          {t(state.notice)}
         </p>
       ) : null}
 
@@ -242,7 +248,7 @@ export function LogoForm({
             />
           ) : (
             <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-400">
-              Chưa có
+              {t("Chưa có")}
             </span>
           )}
         </span>
@@ -260,7 +266,7 @@ export function LogoForm({
             type="submit"
             className="min-h-11 rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100 hover:bg-ink-800"
           >
-            Tải lên
+            {t("Tải lên")}
           </button>
         </form>
 
@@ -270,16 +276,14 @@ export function LogoForm({
               type="submit"
               className="min-h-11 px-3 text-[13px] font-medium text-danger hover:underline"
             >
-              Gỡ logo
+              {t("Gỡ logo")}
             </button>
           </form>
         ) : null}
       </div>
 
       <p id="logo-hint" className="text-[13px] leading-relaxed text-ink-500">
-        PNG, JPEG hoặc WebP, tối đa 2 MB. Hiện ở đầu trang đặt phòng của khách.
-        Không nhận SVG — định dạng đó chứa được mã, và trang này phục vụ người
-        lạ.
+        {t("PNG, JPEG hoặc WebP, tối đa 2 MB. Hiện ở đầu trang đặt phòng của khách. Không nhận SVG — định dạng đó chứa được mã, và trang này phục vụ người lạ.")}
       </p>
     </div>
   );

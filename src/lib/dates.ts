@@ -91,6 +91,17 @@ export function isWeekend(date: Date): boolean {
 }
 
 /** Formats minor currency units. VND has no subunit, so this is whole dong. */
-export function formatVnd(amount: number): string {
-  return `${amount.toLocaleString("vi-VN")} ₫`;
+export function formatVnd(amount: number, locale: "vi" | "en" = "vi"): string {
+  // The grouping separator is the whole point of the parameter. Vietnamese
+  // groups with a full stop — 1.200.000 — which an English reader parses as a
+  // decimal and reads as one and a bit. The currency itself is the same money
+  // either way, so the symbol does not move.
+  return `${amount.toLocaleString(locale === "en" ? "en-GB" : "vi-VN")} ₫`;
+}
+
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The board's column headers, in whichever language the reader is using. */
+export function weekday(date: Date, locale: "vi" | "en" = "vi"): string {
+  return (locale === "en" ? WEEKDAYS_EN : WEEKDAYS_VI)[date.getUTCDay()];
 }

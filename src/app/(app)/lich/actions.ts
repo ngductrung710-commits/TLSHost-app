@@ -13,6 +13,8 @@ import {
   withOrg,
 } from "@/lib/db";
 import { parseIsoDate, shortVi, toIsoDate } from "@/lib/dates";
+import { getT } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
 export type BookingState = { error: string | null };
 
@@ -45,21 +47,27 @@ const updateSchema = z.object({ ...bookingFields, id: z.string().min(1) });
  * "Đã có người giữ" alone leaves them to go hunting for who. Naming the guest
  * and the dates means the next click is the right one.
  */
-function conflictMessage(
+async function conflictMessage(
   conflicts: { label: string; from: Date; to: Date }[],
-): string {
+): Promise<string> {
+  const t = await getT();
   const parts = conflicts
     .slice(0, 3)
     .map((c) => `${c.label} (${shortVi(c.from)}–${shortVi(c.to)})`);
   const more =
-    conflicts.length > 3 ? ` và ${conflicts.length - 3} mục nữa` : "";
-  return `Những đêm này đã có người giữ: ${parts.join(", ")}${more}.`;
+    conflicts.length > 3
+      ? fill(t(" và {n} mục nữa"), { n: conflicts.length - 3 })
+      : "";
+  return fill(t("Những đêm này đã có người giữ: {ai}{them}."), {
+    ai: parts.join(", "),
+    them: more,
+  });
 }
 
 /** The two failures every calendar write shares, in one place. */
-function calendarError(error: unknown): BookingState | null {
+async function calendarError(error: unknown): Promise<BookingState | null> {
   if (error instanceof NightsTakenError) {
-    return { error: conflictMessage(error.conflicts) };
+    return { error: await conflictMessage(error.conflicts) };
   }
 
   const sqlstate = pgErrorCode(error);
@@ -105,19 +113,20 @@ export async function createBooking(
   _prev: BookingState,
   formData: FormData,
 ): Promise<BookingState> {
+  const t = await getT();
   const member = await requireMember();
 
   // Checked again here, not only in the page that renders the form. A server
   // action is a public endpoint: anyone who can reach the app can post to it,
   // whether or not they were ever shown the form.
   if (!canManageBookings(member)) {
-    return { error: "Bạn không có quyền tạo đặt phòng." };
+    return { error: t("Bạn không có quyền tạo đặt phòng.") };
   }
 
   const parsed = createSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ.",
+      error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ."),
     };
   }
 
@@ -125,9 +134,9 @@ export async function createBooking(
 
   const checkIn = parseIsoDate(data.checkIn);
   const checkOut = parseIsoDate(data.checkOut);
-  if (!checkIn || !checkOut) return { error: "Ngày chưa hợp lệ." };
+  if (!checkIn || !checkOut) return { error: t("Ngày chưa hợp lệ.") };
   if (checkOut <= checkIn) {
-    return { error: "Ngày trả phòng phải sau ngày nhận phòng." };
+    return { error: t("Ngày trả phòng phải sau ngày nhận phòng.") };
   }
 
   try {
@@ -167,7 +176,7 @@ export async function createBooking(
       });
     });
   } catch (error) {
-    const known = calendarError(error);
+    const known = await calendarError(error);
     if (known) return known;
     throw error;
   }
@@ -180,15 +189,16 @@ export async function updateBooking(
   _prev: BookingState,
   formData: FormData,
 ): Promise<BookingState> {
+  const t = await getT();
   const member = await requireMember();
   if (!canManageBookings(member)) {
-    return { error: "Bạn không có quyền sửa đặt phòng." };
+    return { error: t("Bạn không có quyền sửa đặt phòng.") };
   }
 
   const parsed = updateSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ.",
+      error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ."),
     };
   }
 
@@ -196,9 +206,9 @@ export async function updateBooking(
 
   const checkIn = parseIsoDate(data.checkIn);
   const checkOut = parseIsoDate(data.checkOut);
-  if (!checkIn || !checkOut) return { error: "Ngày chưa hợp lệ." };
+  if (!checkIn || !checkOut) return { error: t("Ngày chưa hợp lệ.") };
   if (checkOut <= checkIn) {
-    return { error: "Ngày trả phòng phải sau ngày nhận phòng." };
+    return { error: t("Ngày trả phòng phải sau ngày nhận phòng.") };
   }
 
   try {
@@ -245,7 +255,7 @@ export async function updateBooking(
       });
     });
   } catch (error) {
-    const known = calendarError(error);
+    const known = await calendarError(error);
     if (known) return known;
     throw error;
   }
@@ -300,15 +310,16 @@ export async function createBlock(
   _prev: BlockState,
   formData: FormData,
 ): Promise<BlockState> {
+  const t = await getT();
   const member = await requireMember();
   if (!canManageBookings(member)) {
-    return { error: "Bạn không có quyền khóa phòng." };
+    return { error: t("Bạn không có quyền khóa phòng.") };
   }
 
   const parsed = blockSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ.",
+      error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ."),
     };
   }
 
@@ -316,9 +327,9 @@ export async function createBlock(
 
   const dateFrom = parseIsoDate(data.dateFrom);
   const dateTo = parseIsoDate(data.dateTo);
-  if (!dateFrom || !dateTo) return { error: "Ngày chưa hợp lệ." };
+  if (!dateFrom || !dateTo) return { error: t("Ngày chưa hợp lệ.") };
   if (dateTo <= dateFrom) {
-    return { error: "Ngày kết thúc phải sau ngày bắt đầu." };
+    return { error: t("Ngày kết thúc phải sau ngày bắt đầu.") };
   }
 
   try {
@@ -347,7 +358,7 @@ export async function createBlock(
       });
     });
   } catch (error) {
-    const known = calendarError(error);
+    const known = await calendarError(error);
     if (known) return known;
     throw error;
   }

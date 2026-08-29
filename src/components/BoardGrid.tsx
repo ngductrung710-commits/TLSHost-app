@@ -2,7 +2,9 @@ import Link from "next/link";
 
 import type { Board } from "@/lib/board";
 import { SOURCE_LABELS } from "@/lib/board";
-import { dayOfMonth, isWeekend, toIsoDate, weekdayVi } from "@/lib/dates";
+import { dayOfMonth, isWeekend, toIsoDate, weekday } from "@/lib/dates";
+import { fill, makeT, type Locale, type T } from "@/lib/i18n";
+import { dictFor } from "@/lib/locale";
 
 /**
  * The board: rooms down, days across, stays drawn over the day cells.
@@ -17,7 +19,13 @@ import { dayOfMonth, isWeekend, toIsoDate, weekdayVi } from "@/lib/dates";
 const NAME_COL = "13rem";
 const DAY_COL = "3.25rem";
 
-function StayBar({ span }: { span: Board["rooms"][number]["spans"][number] }) {
+function StayBar({
+  span,
+  t,
+}: {
+  span: Board["rooms"][number]["spans"][number];
+  t: T;
+}) {
   const booking = span.kind === "booking";
 
   const inner = [
@@ -32,8 +40,8 @@ function StayBar({ span }: { span: Board["rooms"][number]["spans"][number] }) {
   // The bar shows a name; the tooltip carries what will not fit in a two-night
   // bar. Both are also in the visually hidden summary below the board, so this
   // is convenience rather than the only route to the information.
-  const tooltip = `${span.label} · ${span.nights} đêm${
-    span.source ? ` · ${SOURCE_LABELS[span.source] ?? span.source}` : ""
+  const tooltip = `${span.label} · ${fill(t("{n} đêm"), { n: span.nights })}${
+    span.source ? ` · ${t(SOURCE_LABELS[span.source] ?? span.source)}` : ""
   }`;
 
   return (
@@ -62,24 +70,34 @@ function StayBar({ span }: { span: Board["rooms"][number]["spans"][number] }) {
   );
 }
 
-export function BoardGrid({ board, today }: { board: Board; today: string }) {
+export function BoardGrid({
+  board,
+  today,
+  locale = "vi",
+}: {
+  board: Board;
+  today: string;
+  locale?: Locale;
+}) {
+  // Derived from the locale it was handed rather than read from the cookie:
+  // this is a component, not a page, and it renders once per calendar view.
+  const t = makeT(dictFor(locale));
   const todayIndex = board.days.findIndex((d) => toIsoDate(d) === today);
 
   if (board.rooms.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
         <p className="text-[15px] font-semibold text-ink-900">
-          Chưa có phòng nào
+          {t("Chưa có phòng nào")}
         </p>
         <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-          Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm chỗ nghỉ
-          đầu tiên rồi quay lại đây.
+          {t("Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm chỗ nghỉ đầu tiên rồi quay lại đây.")}
         </p>
         <Link
           href="/cho-nghi/moi"
           className="mt-5 inline-flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100"
         >
-          Thêm chỗ nghỉ
+          {t("Thêm chỗ nghỉ")}
         </Link>
       </div>
     );
@@ -102,7 +120,7 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
         >
           {/* Header ------------------------------------------------------ */}
           <div className="board__sticky border-b border-r border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
-            Phòng
+            {t("Phòng")}
           </div>
 
           {board.days.map((day, i) => (
@@ -118,7 +136,7 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
               ].join(" ")}
             >
               <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-ink-400">
-                {weekdayVi(day)}
+                {weekday(day, locale)}
               </div>
               <div
                 className={[
@@ -177,7 +195,7 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
                 </div>
 
                 {room.spans.map((span) => (
-                  <StayBar key={`${span.kind}-${span.id}`} span={span} />
+                  <StayBar key={`${span.kind}-${span.id}`} span={span} t={t} />
                 ))}
               </div>
             </div>
@@ -187,7 +205,7 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
               lands on it after scanning the grid, which is the order a host
               reads in: what is booked, then how full that leaves the night. */}
           <div className="board__sticky border-t border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
-            Lấp đầy
+            {t("Lấp đầy")}
           </div>
           {board.perDay.map((day, i) => (
             <div
@@ -216,7 +234,7 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
           anyone using a screen reader — for whom a grid of absolutely
           positioned bars is close to unreadable. */}
       <div className="sr-only">
-        <h2>Danh sách đặt phòng trong khoảng đang xem</h2>
+        <h2>{t("Danh sách đặt phòng trong khoảng đang xem")}</h2>
         <ul>
           {board.rooms.flatMap((room) =>
             room.spans.map((span) => (
@@ -224,15 +242,15 @@ export function BoardGrid({ board, today }: { board: Board; today: string }) {
                 {span.kind === "booking" ? (
                   <Link href={`/lich/dat-phong/${span.id}`}>
                     {room.propertyName} — {room.name}: {span.label},{" "}
-                    {span.nights} đêm
+                    {fill(t("{n} đêm"), { n: span.nights })}
                     {span.source
-                      ? `, ${SOURCE_LABELS[span.source] ?? span.source}`
+                      ? `, ${t(SOURCE_LABELS[span.source] ?? span.source)}`
                       : ""}
                   </Link>
                 ) : (
                   <>
                     {room.propertyName} — {room.name}: {span.label},{" "}
-                    {span.nights} đêm
+                    {fill(t("{n} đêm"), { n: span.nights })}
                   </>
                 )}
               </li>

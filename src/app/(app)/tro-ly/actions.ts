@@ -10,6 +10,7 @@ import { withOrg } from "@/lib/db";
 import { todayIn } from "@/lib/dates";
 import { LIMIT_MESSAGES } from "@/lib/plans";
 import { PROPOSAL_TTL_MS } from "@/lib/proposals";
+import { getT, readLocale } from "@/lib/locale";
 
 export type AssistantState = { error: string | null };
 
@@ -21,9 +22,10 @@ export async function ask(
   _prev: AssistantState,
   formData: FormData,
 ): Promise<AssistantState> {
+  const t = await getT();
   const member = await requireMember();
   if (!canManageBookings(member)) {
-    return { error: "Bạn không có quyền dùng trợ lý." };
+    return { error: t("Bạn không có quyền dùng trợ lý.") };
   }
   if (!member.limits.assistant) {
     return { error: LIMIT_MESSAGES.assistant };
@@ -31,13 +33,14 @@ export async function ask(
 
   const parsed = askSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const outcome = await draftProposal({
     member,
     today: todayIn(member.timezone),
     prompt: parsed.data.prompt,
+    locale: await readLocale(),
   });
 
   if (!outcome.ok) return { error: outcome.error };

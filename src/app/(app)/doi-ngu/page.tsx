@@ -7,8 +7,13 @@ import { withOrg } from "@/lib/db";
 
 import { InviteForm } from "./InviteForm";
 import { inviteMember, removeMember, updateMember } from "./actions";
+import { getT } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Đội ngũ" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Đội ngũ") };
+}
 
 const ROLE_LABELS: Record<string, string> = {
   OWNER: "Chủ nhà",
@@ -23,6 +28,7 @@ const ROLE_STYLES: Record<string, string> = {
 };
 
 export default async function TeamPage() {
+  const t = await getT();
   const member = await requireMember();
   // The team list carries everyone's email address.
   if (member.role === "HOUSEKEEPER") redirect("/buong-phong");
@@ -62,12 +68,16 @@ export default async function TeamPage() {
   return (
     <>
       <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
-        Đội ngũ & phân quyền
+        {t("Đội ngũ & phân quyền")}
       </h1>
       <p className="mt-1 text-[14px] text-ink-600">
-        {members.filter((m) => m.joinedAt).length} người đang hoạt động
+        {fill(t("{n} người đang hoạt động"), {
+          n: members.filter((m) => m.joinedAt).length,
+        })}
         {members.some((m) => !m.joinedAt)
-          ? ` · ${members.filter((m) => !m.joinedAt).length} lời mời đang chờ`
+          ? fill(t(" · {n} lời mời đang chờ"), {
+              n: members.filter((m) => !m.joinedAt).length,
+            })
           : ""}
       </p>
 
@@ -95,7 +105,7 @@ export default async function TeamPage() {
                 <p className="truncate text-[12.5px] text-ink-500">
                   {m.user.email} ·{" "}
                   {m.scopes.length === 0
-                    ? "Tất cả chỗ nghỉ"
+                    ? t("Tất cả chỗ nghỉ")
                     : m.scopes.map((s) => s.property.name).join(", ")}
                 </p>
               </div>
@@ -109,14 +119,14 @@ export default async function TeamPage() {
                         : "bg-warning-soft text-warning"
                     }`}
                   >
-                    {expired ? "Lời mời hết hạn" : "Đang chờ"}
+                    {expired ? t("Lời mời hết hạn") : t("Đang chờ")}
                   </span>
                 ) : null}
 
                 <span
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${ROLE_STYLES[m.role]}`}
                 >
-                  {ROLE_LABELS[m.role]}
+                  {t(ROLE_LABELS[m.role])}
                 </span>
               </div>
 
@@ -133,13 +143,13 @@ export default async function TeamPage() {
                       defaultChecked={m.canEditOthersBookings}
                       className="h-4 w-4 rounded border-line-strong"
                     />
-                    Sửa được đặt phòng của người khác
+                    {t("Sửa được đặt phòng của người khác")}
                   </label>
                   <button
                     type="submit"
                     className="flex min-h-11 items-center rounded-full border border-line px-3 text-[12.5px] font-medium text-ink-700 hover:bg-sand-50"
                   >
-                    Lưu
+                    {t("Lưu")}
                   </button>
                 </form>
               ) : null}
@@ -151,7 +161,7 @@ export default async function TeamPage() {
                     type="submit"
                     className="flex min-h-11 items-center rounded-full px-3 text-[12.5px] font-medium text-danger hover:bg-danger-soft"
                   >
-                    Gỡ khỏi đội
+                    {t("Gỡ khỏi đội")}
                   </button>
                 </form>
               ) : null}
@@ -161,18 +171,16 @@ export default async function TeamPage() {
       </ul>
 
       <p className="mt-3 text-[13px] leading-relaxed text-ink-500">
-        Gỡ một người có hiệu lực ngay ở request kế tiếp của họ — không phải chờ
-        phiên đăng nhập hết hạn.
+        {t("Gỡ một người có hiệu lực ngay ở request kế tiếp của họ — không phải chờ phiên đăng nhập hết hạn.")}
       </p>
 
       {isOwner ? (
         <section className="mt-12 border-t border-line pt-10">
           <h2 className="text-[1.25rem] font-semibold text-ink-900">
-            Mời người mới
+            {t("Mời người mới")}
           </h2>
           <p className="mb-6 mt-1 max-w-xl text-[14px] leading-relaxed text-ink-600">
-            Tạo lời mời rồi gửi link cho họ. Chưa có gửi email tự động, nên bạn
-            tự gửi qua Zalo hoặc tin nhắn.
+            {t("Tạo lời mời rồi gửi link cho họ. Chưa có gửi email tự động, nên bạn tự gửi qua Zalo hoặc tin nhắn.")}
           </p>
           <InviteForm action={inviteMember} properties={properties} origin={origin} />
         </section>

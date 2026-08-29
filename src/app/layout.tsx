@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 
+import { I18nProvider } from "@/components/I18nProvider";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { readAppearance } from "@/lib/appearance";
+import { getDict, readLocale } from "@/lib/locale";
 
 import "./globals.css";
 
@@ -33,10 +35,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // browser flashes the light theme on every navigation, which on a dark
   // setting is a white rectangle in a dark room.
   const appearance = await readAppearance();
+  const locale = await readLocale();
+  const dict = await getDict();
 
   return (
     <html
-      lang="vi"
+      lang={locale}
       // Nothing stamped for "system": the CSS follows prefers-color-scheme
       // when no attribute is present, which is the behaviour that setting
       // names.
@@ -44,7 +48,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sans.variable} h-full`}
     >
       <body className="flex min-h-full flex-col font-[family-name:var(--font-sans)]">
-        {children}
+        <I18nProvider dict={dict}>{children}</I18nProvider>
         <ServiceWorker />
       </body>
     </html>

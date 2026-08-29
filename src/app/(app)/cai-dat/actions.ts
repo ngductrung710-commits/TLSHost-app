@@ -14,6 +14,7 @@ import { createSession } from "@/lib/session";
 import { TIMEZONES } from "@/lib/timezones";
 import { brandColorProblem } from "@/lib/themes";
 import { deleteLogo, saveLogo } from "@/lib/uploads";
+import { getT } from "@/lib/locale";
 
 export type SettingsState = { error: string | null; notice?: string };
 
@@ -26,14 +27,15 @@ export async function updateOrg(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới đổi được cài đặt cơ sở." };
+    return { error: t("Chỉ chủ nhà mới đổi được cài đặt cơ sở.") };
   }
 
   const parsed = orgSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   await withOrg(member.orgId, (tx) =>
@@ -45,7 +47,7 @@ export async function updateOrg(
 
   // The timezone decides what "today" is on every screen that shows a date.
   revalidatePath("/", "layout");
-  return { error: null, notice: "Đã lưu." };
+  return { error: null, notice: t("Đã lưu.") };
 }
 
 const profileSchema = z.object({
@@ -56,11 +58,12 @@ export async function updateProfile(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
+  const t = await getT();
   const member = await requireMember();
 
   const parsed = profileSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   // Not scoped to an org: a user belongs to the person, not the tenant, and
@@ -72,7 +75,7 @@ export async function updateProfile(
   });
 
   revalidatePath("/", "layout");
-  return { error: null, notice: "Đã lưu." };
+  return { error: null, notice: t("Đã lưu.") };
 }
 
 const passwordSchema = z.object({
@@ -84,11 +87,12 @@ export async function changePassword(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
+  const t = await getT();
   const member = await requireMember();
 
   const parsed = passwordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const weak = passwordProblem(parsed.data.next);
@@ -103,10 +107,10 @@ export async function changePassword(
   // identity: a borrowed laptop with an open tab should not be enough to lock
   // the owner out of their own account.
   if (!user?.passwordHash) {
-    return { error: "Tài khoản này chưa đặt mật khẩu." };
+    return { error: t("Tài khoản này chưa đặt mật khẩu.") };
   }
   if (!(await verifyPassword(user.passwordHash, parsed.data.current))) {
-    return { error: "Mật khẩu hiện tại không đúng." };
+    return { error: t("Mật khẩu hiện tại không đúng.") };
   }
 
   const passwordHash = await hashPassword(parsed.data.next);
@@ -133,7 +137,7 @@ export async function changePassword(
   return {
     error: null,
     notice:
-      "Đã đổi mật khẩu. Mọi phiên đăng nhập khác đã bị đăng xuất; phiên này vẫn giữ.",
+      t("Đã đổi mật khẩu. Mọi phiên đăng nhập khác đã bị đăng xuất; phiên này vẫn giữ."),
   };
 }
 
@@ -151,9 +155,10 @@ export async function updateAppearance(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới đổi được giao diện." };
+    return { error: t("Chỉ chủ nhà mới đổi được giao diện.") };
   }
 
   const parsed = appearanceSchema.safeParse({
@@ -161,7 +166,7 @@ export async function updateAppearance(
     brandColor: formData.get("brandColor"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const { bookingTheme } = parsed.data;
@@ -186,20 +191,21 @@ export async function updateAppearance(
   );
 
   revalidatePath("/cai-dat");
-  return { error: null, notice: "Đã lưu giao diện trang đặt phòng." };
+  return { error: null, notice: t("Đã lưu giao diện trang đặt phòng.") };
 }
 
 export async function uploadLogo(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") {
-    return { error: "Chỉ chủ nhà mới đổi được logo." };
+    return { error: t("Chỉ chủ nhà mới đổi được logo.") };
   }
 
   const file = formData.get("logo");
-  if (!(file instanceof File)) return { error: "Chưa chọn tệp nào." };
+  if (!(file instanceof File)) return { error: t("Chưa chọn tệp nào.") };
 
   const saved = await saveLogo(file);
   if (!saved.ok) return { error: saved.error };
@@ -221,7 +227,7 @@ export async function uploadLogo(
   if (previous) await deleteLogo(previous);
 
   revalidatePath("/cai-dat");
-  return { error: null, notice: "Đã tải logo lên." };
+  return { error: null, notice: t("Đã tải logo lên.") };
 }
 
 export async function removeLogo(): Promise<void> {

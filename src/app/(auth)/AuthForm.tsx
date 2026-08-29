@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { AuthState } from "./actions";
+import { useT } from "@/components/I18nProvider";
 
 /**
  * The sign-in and sign-up forms. One component, because they differ by three
@@ -13,6 +14,7 @@ import type { AuthState } from "./actions";
  */
 
 function Submit({ label }: { label: string }) {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -20,7 +22,7 @@ function Submit({ label }: { label: string }) {
       disabled={pending}
       className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 transition-colors hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "Đang xử lý…" : label}
+      {pending ? t("Đang xử lý…") : label}
     </button>
   );
 }
@@ -71,6 +73,7 @@ export function AuthForm({
   mode: "signIn" | "signUp";
   action: (prev: AuthState, formData: FormData) => Promise<AuthState>;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<AuthState, FormData>(action, {
     error: null,
   });
@@ -88,17 +91,17 @@ export function AuthForm({
           tabIndex={-1}
           className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[14px] text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
 
       {signUp ? (
         <>
-          <Field label="Tên của bạn" name="name" autoComplete="name" />
+          <Field label={t("Tên của bạn")} name="name" autoComplete="name" />
           <Field
-            label="Tên cơ sở"
+            label={t("Tên cơ sở")}
             name="orgName"
-            hint="Tên bạn dùng để gọi chỗ nghỉ của mình. Đổi được sau."
+            hint={t("Tên bạn dùng để gọi chỗ nghỉ của mình. Đổi được sau.")}
           />
         </>
       ) : null}
@@ -106,22 +109,22 @@ export function AuthForm({
       <Field label="Email" name="email" type="email" autoComplete="email" />
 
       <Field
-        label="Mật khẩu"
+        label={t("Mật khẩu")}
         name="password"
         type="password"
         autoComplete={signUp ? "new-password" : "current-password"}
-        hint={signUp ? "Ít nhất 12 ký tự. Dài quan trọng hơn phức tạp." : undefined}
+        hint={signUp ? t("Ít nhất 12 ký tự. Dài quan trọng hơn phức tạp.") : undefined}
       />
 
-      <Submit label={signUp ? "Tạo tài khoản" : "Đăng nhập"} />
+      <Submit label={signUp ? t("Tạo tài khoản") : t("Đăng nhập")} />
 
       <p className="pt-2 text-center text-[14px] text-ink-500">
-        {signUp ? "Đã có tài khoản? " : "Chưa có tài khoản? "}
+        {signUp ? t("Đã có tài khoản? ") : t("Chưa có tài khoản? ")}
         <Link
           href={signUp ? "/dang-nhap" : "/dang-ky"}
           className="font-semibold text-ink-900 underline underline-offset-4"
         >
-          {signUp ? "Đăng nhập" : "Tạo tài khoản chủ nhà"}
+          {signUp ? t("Đăng nhập") : t("Tạo tài khoản chủ nhà")}
         </Link>
       </p>
     </form>

@@ -11,6 +11,7 @@ import {
   verifyPassword,
 } from "@/lib/passwords";
 import { createSession, destroySession } from "@/lib/session";
+import { getT } from "@/lib/locale";
 
 export type AuthState = { error: string | null };
 
@@ -76,6 +77,7 @@ export async function signUp(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const t = await getT();
   const parsed = signUpSchema.safeParse({
     name: formData.get("name"),
     orgName: formData.get("orgName"),
@@ -84,7 +86,7 @@ export async function signUp(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
   const { name, orgName, email, password } = parsed.data;
@@ -132,7 +134,7 @@ export async function signUp(
       error !== null &&
       (error as { code?: string }).code === "P2002"
     ) {
-      return { error: "Email này đã có tài khoản." };
+      return { error: t("Email này đã có tài khoản.") };
     }
     throw error;
   }

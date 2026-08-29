@@ -9,10 +9,16 @@ import { formatVnd } from "@/lib/dates";
 
 import { PublicPageForm } from "./PublicPageForm";
 import { publishProperty, setRoomPrice } from "./actions";
+import { getT } from "@/lib/locale";
+import { fill } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Chỗ nghỉ" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Chỗ nghỉ") };
+}
 
 export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
+  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") redirect("/cho-nghi");
 
@@ -52,7 +58,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         href="/cho-nghi"
         className="text-[14px] font-medium text-ink-500 hover:text-ink-900"
       >
-        ← Về danh sách
+        {t("← Về danh sách")}
       </Link>
 
       <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-ink-900">
@@ -65,11 +71,10 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
       {/* ---- rooms and prices ------------------------------------------- */}
       <section className="mt-10">
         <h2 className="text-[1.125rem] font-semibold text-ink-900">
-          Phòng và giá
+          {t("Phòng và giá")}
         </h2>
         <p className="mb-4 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
-          Giá mỗi đêm hiển thị trên trang đặt phòng. Phòng chưa có giá vẫn nhận
-          được đặt, chỉ là khách không thấy con số nào.
+          {t("Giá mỗi đêm hiển thị trên trang đặt phòng. Phòng chưa có giá vẫn nhận được đặt, chỉ là khách không thấy con số nào.")}
         </p>
 
         <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
@@ -83,7 +88,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
                   {room.name}
                 </p>
                 <p className="text-[12.5px] text-ink-500">
-                  Tối đa <span className="tnum">{room.capacity}</span> khách
+                  {t("Tối đa")} <span className="tnum">{room.capacity}</span> {t("khách")}
                 </p>
               </div>
 
@@ -94,7 +99,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
                     htmlFor={`price-${room.id}`}
                     className="block text-[12px] font-medium text-ink-600"
                   >
-                    Giá mỗi đêm (₫)
+                    {t("Giá mỗi đêm (₫)")}
                   </label>
                   <input
                     id={`price-${room.id}`}
@@ -110,7 +115,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
                   type="submit"
                   className="min-h-11 rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
                 >
-                  Lưu
+                  {t("Lưu")}
                 </button>
               </form>
             </li>
@@ -121,17 +126,20 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
       {/* ---- the public page -------------------------------------------- */}
       <section className="mt-12 border-t border-line pt-10">
         <h2 className="text-[1.125rem] font-semibold text-ink-900">
-          Trang đặt phòng của khách
+          {t("Trang đặt phòng của khách")}
         </h2>
         <p className="mb-6 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
-          Một trang công khai để khách tự chọn ngày và đặt. Đặt phòng từ đây vào
-          thẳng lịch này, khoá đêm trên mọi kênh, và không mất đồng hoa hồng nào.
+          {t("Một trang công khai để khách tự chọn ngày và đặt. Đặt phòng từ đây vào thẳng lịch này, khoá đêm trên mọi kênh, và không mất đồng hoa hồng nào.")}
         </p>
 
         {unpriced > 0 ? (
           <p className="mb-5 max-w-2xl rounded-xl border border-warning/25 bg-warning-soft px-4 py-3 text-[13.5px] leading-relaxed text-warning">
-            {unpriced} phòng chưa có giá. Khách vẫn đặt được, nhưng sẽ không
-            thấy giá nào cả — nên đặt giá trước khi chia sẻ link.
+            {fill(
+              t(
+                t("{n} phòng chưa có giá. Khách vẫn đặt được, nhưng sẽ không thấy giá nào cả — nên đặt giá trước khi chia sẻ link."),
+              ),
+              { n: unpriced },
+            )}
           </p>
         ) : null}
 
@@ -153,7 +161,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
               rel="noreferrer"
               className="text-[14px] font-semibold text-ink-900 underline underline-offset-4"
             >
-              Mở trang khách thấy →
+              {t("Mở trang khách thấy →")}
             </a>
           </p>
         ) : null}
@@ -161,19 +169,21 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
 
       {/* ---- feeds ------------------------------------------------------- */}
       <p className="mt-12 border-t border-line pt-6 text-[13px] text-ink-500">
-        Link xuất lịch cho từng phòng nằm ở{" "}
+        {t("Link xuất lịch cho từng phòng nằm ở")}{" "}
         <Link href="/kenh" className="font-medium text-ink-700 underline underline-offset-2">
-          Kênh bán
+          {t("Kênh bán")}
         </Link>
         .{" "}
         {property.rooms.some((r) => r.basePrice !== null)
-          ? `Giá thấp nhất đang đặt: ${formatVnd(
-              Math.min(
-                ...property.rooms
-                  .filter((r) => r.basePrice !== null)
-                  .map((r) => r.basePrice as number),
+          ? fill(t("Giá thấp nhất đang đặt: {gia}."), {
+              gia: formatVnd(
+                Math.min(
+                  ...property.rooms
+                    .filter((r) => r.basePrice !== null)
+                    .map((r) => r.basePrice as number),
+                ),
               ),
-            )}.`
+            })
           : ""}
       </p>
     </>

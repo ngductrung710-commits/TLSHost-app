@@ -4,6 +4,8 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { PaymentState } from "./paymentActions";
+import { useT } from "@/components/I18nProvider";
+import { fill } from "@/lib/i18n";
 
 const inputClass =
   "mt-1.5 block min-h-11 w-full rounded-xl border border-line-strong bg-white px-3.5 font-mono text-[14px] text-ink-900 outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15";
@@ -26,6 +28,7 @@ const COPY = {
 } as const;
 
 function Submit({ name }: { name: string }) {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -33,7 +36,7 @@ function Submit({ name }: { name: string }) {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink-900 px-6 text-[15px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
     >
-      {pending ? "Đang kiểm tra khoá…" : `Kết nối ${name}`}
+      {pending ? t("Đang kiểm tra khoá…") : fill(t("Kết nối {ten}"), { ten: name })}
     </button>
   );
 }
@@ -51,6 +54,7 @@ export function PaymentForm({
   live: boolean;
   publicId: string | null;
 }) {
+  const t = useT();
   const [state, formAction] = useActionState<PaymentState, FormData>(action, {
     error: null,
   });
@@ -65,19 +69,19 @@ export function PaymentForm({
           <p className="mt-0.5 text-[12.5px] text-ink-500">
             {connected ? (
               <>
-                Đã kết nối
-                {live ? "" : " · chế độ thử nghiệm"}
+                {t("Đã kết nối")}
+                {live ? "" : t(" · chế độ thử nghiệm")}
                 {publicId ? ` · ${publicId.slice(0, 12)}…` : ""}
               </>
             ) : (
-              "Chưa kết nối"
+              t("Chưa kết nối")
             )}
           </p>
         </div>
 
         {connected ? (
           <span className="rounded-full bg-positive-soft px-2.5 py-1 text-[11px] font-semibold text-positive">
-            Hoạt động
+            {t("Hoạt động")}
           </span>
         ) : null}
       </div>
@@ -88,7 +92,7 @@ export function PaymentForm({
           tabIndex={-1}
           className="mt-4 rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-[13.5px] leading-relaxed text-danger"
         >
-          {state.error}
+          {t(state.error)}
         </p>
       ) : null}
       {state.notice ? (
@@ -96,7 +100,7 @@ export function PaymentForm({
           role="status"
           className="mt-4 rounded-xl border border-positive/25 bg-positive-soft px-4 py-3 text-[13.5px] text-positive"
         >
-          {state.notice}
+          {t(state.notice)}
         </p>
       ) : null}
 
@@ -144,8 +148,10 @@ export function PaymentForm({
               id={`secret-hint-${provider}`}
               className="mt-1.5 text-[13px] leading-relaxed text-ink-500"
             >
-              {copy.secretHint} Khoá được mã hoá trước khi lưu và không bao giờ
-              hiện lại trên màn hình này.
+              {t(copy.secretHint)}{" "}
+              {t(
+                t("Khoá được mã hoá trước khi lưu và không bao giờ hiện lại trên màn hình này."),
+              )}
             </p>
           </div>
 
@@ -157,9 +163,9 @@ export function PaymentForm({
               className="mt-1 h-4 w-4 rounded border-line-strong"
             />
             <span className="text-[14px] leading-relaxed text-ink-700">
-              Chế độ thật
+              {t("Chế độ thật")}
               <span className="mt-0.5 block text-[13px] text-ink-500">
-                Bỏ trống để chạy sandbox. Khách sẽ không bị trừ tiền thật.
+                {t("Bỏ trống để chạy sandbox. Khách sẽ không bị trừ tiền thật.")}
               </span>
             </span>
           </label>
@@ -172,7 +178,7 @@ export function PaymentForm({
                 onClick={() => setOpen(false)}
                 className="min-h-11 px-3 text-[14px] font-medium text-ink-500 hover:text-ink-900"
               >
-                Hủy
+                {t("Hủy")}
               </button>
             ) : null}
           </div>
@@ -183,7 +189,7 @@ export function PaymentForm({
           onClick={() => setOpen(true)}
           className="mt-4 flex min-h-11 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
         >
-          Đổi khoá
+          {t("Đổi khoá")}
         </button>
       )}
     </div>

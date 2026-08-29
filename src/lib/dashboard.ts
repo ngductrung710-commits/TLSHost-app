@@ -311,23 +311,37 @@ export async function loadDashboard(
   });
 }
 
-/** "Thứ Sáu, 28 tháng 8" — the header on the dashboard. */
-export function longVi(date: Date): string {
-  const weekday = [
-    "Chủ Nhật",
-    "Thứ Hai",
-    "Thứ Ba",
-    "Thứ Tư",
-    "Thứ Năm",
-    "Thứ Sáu",
-    "Thứ Bảy",
-  ][date.getUTCDay()];
-  return `${weekday}, ${date.getUTCDate()} tháng ${date.getUTCMonth() + 1}`;
+/**
+ * "Thứ Sáu, 28 tháng 8" / "Friday, 28 August" — the header on the dashboard.
+ *
+ * Written out rather than handed to Intl: these dates are stored and compared
+ * in UTC, and toLocaleDateString would apply the server's zone and print
+ * yesterday for anyone east of it. The arrays are seven entries each.
+ */
+const WEEKDAYS_LONG = {
+  vi: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+};
+
+const MONTHS_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export function longDate(date: Date, locale: "vi" | "en" = "vi"): string {
+  const weekday = WEEKDAYS_LONG[locale][date.getUTCDay()];
+  return locale === "en"
+    ? `${weekday}, ${date.getUTCDate()} ${MONTHS_EN[date.getUTCMonth()]}`
+    : `${weekday}, ${date.getUTCDate()} tháng ${date.getUTCMonth() + 1}`;
 }
 
-/** "T6" — the forecast strip. */
-export function weekdayShortVi(date: Date): string {
-  return ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][date.getUTCDay()];
+/** "T6" / "Fri" — the forecast strip. */
+export function weekdayShort(date: Date, locale: "vi" | "en" = "vi"): string {
+  return (
+    locale === "en"
+      ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+      : ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
+  )[date.getUTCDay()];
 }
 
 export { toIsoDate };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 /**
  * Turning push notifications on, from this device.
@@ -45,6 +46,7 @@ export function PushControls({
   /** Endpoints the server already has, so we can tell "this device" apart. */
   knownEndpoints: string[];
 }) {
+  const t = useT();
   const [state, setState] = useState<State>({ kind: "checking" });
   const [busy, setBusy] = useState(false);
 
@@ -55,7 +57,7 @@ export function PushControls({
       if (typeof window === "undefined") return;
 
       if (!("serviceWorker" in navigator)) {
-        setState({ kind: "unsupported", why: "Trình duyệt này không hỗ trợ." });
+        setState({ kind: "unsupported", why: t("Trình duyệt này không hỗ trợ.") });
         return;
       }
       if (!("PushManager" in window)) {
@@ -66,8 +68,8 @@ export function PushControls({
         setState({
           kind: "unsupported",
           why: iOS
-            ? "Trên iPhone cần thêm TLSHost vào Màn hình chính trước, rồi mở từ đó."
-            : "Trình duyệt này không hỗ trợ thông báo đẩy.",
+            ? t("Trên iPhone cần thêm TLSHost vào Màn hình chính trước, rồi mở từ đó.")
+            : t("Trình duyệt này không hỗ trợ thông báo đẩy."),
         });
         return;
       }
@@ -79,7 +81,7 @@ export function PushControls({
       const reg = await navigator.serviceWorker.ready.catch(() => null);
       if (cancelled) return;
       if (!reg) {
-        setState({ kind: "unsupported", why: "Chưa cài được service worker." });
+        setState({ kind: "unsupported", why: t("Chưa cài được service worker.") });
         return;
       }
 
@@ -100,7 +102,7 @@ export function PushControls({
     return () => {
       cancelled = true;
     };
-  }, [knownEndpoints]);
+  }, [knownEndpoints, t]);
 
   async function enable() {
     setBusy(true);
@@ -131,7 +133,7 @@ export function PushControls({
       await subscribeAction(form);
       setState({ kind: "on", endpoint: sub.endpoint });
     } catch {
-      setState({ kind: "unsupported", why: "Không đăng ký được thông báo." });
+      setState({ kind: "unsupported", why: t("Không đăng ký được thông báo.") });
     } finally {
       setBusy(false);
     }
@@ -157,7 +159,7 @@ export function PushControls({
   }
 
   if (state.kind === "checking") {
-    return <p className="text-[14px] text-ink-500">Đang kiểm tra…</p>;
+    return <p className="text-[14px] text-ink-500">{t("Đang kiểm tra…")}</p>;
   }
 
   if (state.kind === "unsupported") {
@@ -171,9 +173,7 @@ export function PushControls({
   if (state.kind === "denied") {
     return (
       <p className="max-w-xl rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-[13.5px] leading-relaxed text-warning">
-        Thiết bị này đã chặn thông báo từ TLSHost. Mở cài đặt của trình duyệt,
-        cho phép lại rồi tải lại trang — nút ở đây không mở lại được, đó là
-        chủ ý của trình duyệt.
+        {t("Thiết bị này đã chặn thông báo từ TLSHost. Mở cài đặt của trình duyệt, cho phép lại rồi tải lại trang — nút ở đây không mở lại được, đó là chủ ý của trình duyệt.")}
       </p>
     );
   }
@@ -186,7 +186,7 @@ export function PushControls({
         disabled={busy}
         className="inline-flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-60"
       >
-        {busy ? "Đang bật…" : "Bật thông báo trên thiết bị này"}
+        {busy ? t("Đang bật…") : t("Bật thông báo trên thiết bị này")}
       </button>
     );
   }
@@ -194,14 +194,14 @@ export function PushControls({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="inline-flex items-center gap-2 rounded-full bg-positive-soft px-3 py-1.5 text-[13px] font-semibold text-positive">
-        Đang bật trên thiết bị này
+        {t("Đang bật trên thiết bị này")}
       </span>
       <form action={testAction}>
         <button
           type="submit"
           className="flex min-h-11 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
         >
-          Gửi thử một thông báo
+          {t("Gửi thử một thông báo")}
         </button>
       </form>
       <button
@@ -210,7 +210,7 @@ export function PushControls({
         disabled={busy}
         className="min-h-11 px-3 text-[13px] font-medium text-danger hover:underline disabled:opacity-60"
       >
-        Tắt
+        {t("Tắt")}
       </button>
     </div>
   );

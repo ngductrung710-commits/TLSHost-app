@@ -8,10 +8,15 @@ import { addDays, parseIsoDate, todayIn, toIsoDate } from "@/lib/dates";
 
 import { BlockForm } from "./BlockForm";
 import { createBlock } from "../actions";
+import { getT } from "@/lib/locale";
 
-export const metadata: Metadata = { title: "Khóa đêm" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Khóa đêm") };
+}
 
 export default async function NewBlockPage(props: PageProps<"/lich/khoa">) {
+  const t = await getT();
   const member = await requireMember();
   if (!canManageBookings(member)) redirect("/lich");
 
@@ -37,14 +42,13 @@ export default async function NewBlockPage(props: PageProps<"/lich/khoa">) {
   return (
     <>
       <Link href="/lich" className="text-[14px] font-medium text-ink-500 hover:text-ink-900">
-        ← Về lịch
+        {t("← Về lịch")}
       </Link>
       <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-ink-900">
-        Khóa đêm
+        {t("Khóa đêm")}
       </h1>
       <p className="mb-7 mt-1 max-w-xl text-[14px] leading-relaxed text-ink-600">
-        Giữ phòng lại cho bảo trì hoặc cho chính bạn ở. Đêm bị khóa không nhận
-        đặt phòng, và cũng không tính vào tỷ lệ lấp đầy.
+        {t("Giữ phòng lại cho bảo trì hoặc cho chính bạn ở. Đêm bị khóa không nhận đặt phòng, và cũng không tính vào tỷ lệ lấp đầy.")}
       </p>
 
       <BlockForm
