@@ -29,6 +29,16 @@ export default defineConfig({
     // Scratch database Prisma replays migrations into when it needs to know
     // what they add up to. It gets dropped and rebuilt on every use, so it must
     // never point at anything real.
-    shadowDatabaseUrl: env("SHADOW_DATABASE_URL"),
+    //
+    // Only `migrate dev` and `migrate diff` need it; `migrate deploy` replays
+    // a settled list of migrations and never shadows anything. Read from
+    // process.env rather than env(), because env() resolves eagerly and throws
+    // while the config file is still loading — which made every Prisma command
+    // on a production server fail with "Cannot resolve environment variable"
+    // before it could report what was actually wrong. A server has no reason
+    // to hold a second superuser database URL.
+    ...(process.env.SHADOW_DATABASE_URL
+      ? { shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL }
+      : {}),
   },
 });
