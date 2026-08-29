@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { AssistantTab } from "@/components/AssistantTab";
 import { SidebarNav, type NavItem } from "@/components/SidebarNav";
 import { requireMember } from "@/lib/dal";
 import { getT, readLocale } from "@/lib/locale";
@@ -47,8 +48,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   //   /ban-hang  — from the calendar toolbar, which is where someone is when
   //                a guest asks about dates.
   //   /doi-ngu   — it is the "Người dùng / Nhóm" tab of Settings.
+  //   /tro-ly    — the tab clipped to the right edge, below.
   //
-  // A rail that lists everything stops being a way to find anything.
+  // A rail that lists everything stops being a way to find anything. But every
+  // one of these has to be reachable from somewhere: the first cut of this
+  // list dropped the assistant and left nothing pointing at it.
 
   return (
     <div className="app-shell flex h-dvh overflow-hidden bg-canvas">
@@ -75,6 +79,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <main id="noi-dung" className="min-w-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
         {children}
       </main>
+
+      {/* Not for housekeepers: the assistant reads and writes bookings, and
+          the page turns them away anyway. */}
+      {member.role !== "HOUSEKEEPER" ? <AssistantTab /> : null}
     </div>
   );
 }

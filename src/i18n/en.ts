@@ -612,4 +612,6 @@ export const EN: Record<string, string> = {
   /* ---- Settings tabs ---- */
   Chung: "General",
   "Người dùng / Nhóm": "Users / Team",
+
+  "Mở trợ lý AI": "Open the AI assistant",
 };
