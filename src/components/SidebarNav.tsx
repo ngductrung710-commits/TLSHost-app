@@ -180,13 +180,34 @@ export function SidebarNav({
           <button
             type="button"
             onClick={toggle}
-            aria-label={t("Thu gọn thanh bên")}
+            aria-label={t("Thu gọn điều hướng")}
+            title={t("Thu gọn điều hướng")}
             className="ml-auto grid size-8 place-items-center rounded-lg text-ink-400 hover:bg-sand-100 hover:text-ink-700"
           >
             <Icon name="chevrons" />
           </button>
         ) : null}
       </div>
+
+      {/* Collapsed, the toggle sits here rather than at the foot of the rail.
+          It used to live below the sign-out button, which is nowhere anybody
+          looks for it — the button that closed the rail was at the top, so the
+          button that reopens it has to be at the top too. */}
+      {collapsed ? (
+        <div className="px-2 pb-1">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={t("Mở rộng điều hướng")}
+            title={t("Mở rộng điều hướng")}
+            className="flex h-10 w-full items-center justify-center rounded-xl text-ink-400 hover:bg-sand-100 hover:text-ink-700"
+          >
+            <span className="rotate-180">
+              <Icon name="chevrons" />
+            </span>
+          </button>
+        </div>
+      ) : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
         <ul className="grid gap-1">
@@ -257,19 +278,6 @@ export function SidebarNav({
             {!collapsed ? <span className="truncate">{t("Đăng xuất")}</span> : null}
           </button>
         </form>
-
-        {collapsed ? (
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={t("Mở thanh bên")}
-            className="mt-1 flex h-10 w-full items-center justify-center rounded-xl text-ink-400 hover:bg-sand-100 hover:text-ink-700"
-          >
-            <span className="rotate-180">
-              <Icon name="chevrons" />
-            </span>
-          </button>
-        ) : null}
       </div>
     </nav>
   );

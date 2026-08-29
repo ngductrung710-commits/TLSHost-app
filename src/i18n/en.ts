@@ -601,8 +601,8 @@ export const EN: Record<string, string> = {
     "Free here means free when this page loaded. If two people take the same room, whoever saves second is refused and told who holds it — that decision lives in the database, not on this screen.",
 
   /* ---- The rail, and the dashboard's activity panel ---- */
-  "Thu gọn thanh bên": "Collapse the sidebar",
-  "Mở thanh bên": "Expand the sidebar",
+  "Thu gọn điều hướng": "Collapse the navigation",
+  "Mở rộng điều hướng": "Expand the navigation",
   "Hoạt động đặt phòng": "Booking activity",
   "Không có khách đến hay khách lưu trú trong ngày này.":
     "No arrivals and nobody staying on this day.",
