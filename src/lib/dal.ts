@@ -4,8 +4,10 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { withUser } from "@/lib/db";
-import { limitsFor, type Plan, type PlanLimits } from "@/lib/plans";
+import { limitsFor } from "@/lib/plans";
 import { readSession } from "@/lib/session";
+
+import type { ActiveMember } from "@/lib/member";
 
 /**
  * The data access layer: the one place that answers "who is asking, and for
@@ -20,26 +22,6 @@ import { readSession } from "@/lib/session";
  * `cache()` memoises for the duration of one render pass, so a layout and the
  * three components inside it share a single pair of queries rather than four.
  */
-
-export type ActiveMember = {
-  userId: string;
-  userName: string;
-  email: string;
-  membershipId: string;
-  orgId: string;
-  orgName: string;
-  timezone: string;
-  role: "OWNER" | "COLLABORATOR" | "HOUSEKEEPER";
-  canEditOthersBookings: boolean;
-  /** Empty means every property in the org — see MembershipScope. */
-  scopedPropertyIds: string[];
-
-  /// What this organization is allowed to do. Resolved once here so no page
-  /// has to remember to check the expiry, and every gate reads the same
-  /// answer.
-  plan: Plan;
-  limits: PlanLimits;
-};
 
 /**
  * Resolves the signed-in user's membership, or null when there is none.
@@ -101,42 +83,11 @@ export async function requireMember(): Promise<ActiveMember> {
   return member;
 }
 
-/**
- * Guards the actions that write to the calendar.
- *
- * Housekeepers can see rooms but never bookings — the spec is explicit that
- * they should not see rates or guest payment details, and the simplest way to
- * keep that true is for them to have no path to a booking at all.
- */
-export function canManageBookings(member: ActiveMember): boolean {
-  return member.role === "OWNER" || member.role === "COLLABORATOR";
-}
-
-/**
- * Whether this member may touch a booking someone else created.
- *
- * Owners always may. Collaborators only if the owner turned it on. The check
- * takes the creator's membership id rather than the booking so it can be
- * called before or after loading the row.
- */
-export function canEditBooking(
-  member: ActiveMember,
-  createdByMembershipId: string | null,
-): boolean {
-  if (!canManageBookings(member)) return false;
-  if (member.role === "OWNER") return true;
-  if (createdByMembershipId === member.membershipId) return true;
-  return member.canEditOthersBookings;
-}
-
-/**
- * Narrows a property list to what this member is allowed to see.
- *
- * Row-level security already stops them reading another organization's rows.
- * This is the finer cut inside their own org, which RLS does not express —
- * it is per-membership, not per-tenant.
- */
-export function visiblePropertyFilter(member: ActiveMember) {
-  if (member.scopedPropertyIds.length === 0) return {};
-  return { id: { in: member.scopedPropertyIds } };
-}
+// Re-exported so every existing import of these keeps working: they are part
+// of the data-access surface conceptually, they just do not need a request.
+export {
+  canManageBookings,
+  canEditBooking,
+  visiblePropertyFilter,
+} from "@/lib/member";
+export type { ActiveMember } from "@/lib/member";

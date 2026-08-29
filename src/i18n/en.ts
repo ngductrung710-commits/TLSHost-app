@@ -577,4 +577,26 @@ export const EN: Record<string, string> = {
   "Nguồn": "Source",
   "Đêm cuối là đêm trước ngày này — phòng trống lại từ sáng hôm đó.":
     "The last night is the night before this date — the room is free again that morning.",
+
+  /* ---- Taking a booking over the phone ---- */
+  "Nhận đặt phòng": "Take a booking",
+  "Khách hỏi ngày nào, gõ ngày đó. Màn hình này trả lời còn phòng nào và bao nhiêu tiền cho cả kỳ — không phải dò trên lịch trong lúc khách đang chờ máy.":
+    "Type the dates the guest is asking about. This screen answers which rooms are free and what the whole stay costs — rather than hunting across the calendar while they wait on the line.",
+  "Tìm phòng trống": "Find free rooms",
+  "Ngày trả phòng phải sau ngày nhận phòng, và tối đa {n} đêm một lần.":
+    "The check-out date must be after the check-in date, and at most {n} nights at a time.",
+  "{trong} / {tong} phòng còn trống": "{trong} of {tong} rooms free",
+  "{tu} – {den}, {dem} đêm, {khach} khách":
+    "{tu} – {den}, {dem} nights, {khach} guests",
+  "Không có phòng nào nhận được {n} khách. Sức chứa đặt ở trang chỗ nghỉ.":
+    "No room takes {n} guests. Capacity is set on the property page.",
+  "Kín hết những đêm này. Thử lệch một đêm, hoặc mở lịch xem ai đang giữ.":
+    "Everything is taken on these nights. Try shifting by a night, or open the calendar to see who holds them.",
+  "Mở lịch": "Open the calendar",
+  "tối đa {n} khách": "up to {n} guests",
+  "chưa đặt giá": "no rate set",
+  "{gia} × {dem} đêm": "{gia} × {dem} nights",
+  "Đặt phòng này": "Book this room",
+  "Còn trống ở đây nghĩa là còn trống lúc bạn mở trang. Hai người cùng nhận một phòng thì người lưu sau bị từ chối, và được nói rõ ai đang giữ — chỗ đó do cơ sở dữ liệu quyết, không phải màn hình này.":
+    "Free here means free when this page loaded. If two people take the same room, whoever saves second is refused and told who holds it — that decision lives in the database, not on this screen.",
 };

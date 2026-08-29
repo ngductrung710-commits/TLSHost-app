@@ -42,6 +42,22 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
     typeof params.from === "string" ? parseIsoDate(params.from) : null;
   const checkIn = requested ?? today;
 
+  // The sales screen sends the whole enquiry through: dates and headcount as
+  // the guest gave them. Anything it does not send falls back to what this
+  // page used before — two nights for two people.
+  const requestedOut =
+    typeof params.to === "string" ? parseIsoDate(params.to) : null;
+  const checkOut =
+    requestedOut && requestedOut > checkIn ? requestedOut : addDays(checkIn, 2);
+
+  const askedGuests = Number(
+    typeof params.guests === "string" ? params.guests : NaN,
+  );
+  const guests =
+    Number.isInteger(askedGuests) && askedGuests > 0 && askedGuests <= 30
+      ? askedGuests
+      : 2;
+
   // The room named in the query string, but only if it is one this member can
   // actually see. A room id belonging to someone else is not an error worth
   // reporting — it is simply a value to ignore.
@@ -73,11 +89,11 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
         defaults={{
           roomId: defaultRoomId,
           checkIn: toIsoDate(checkIn),
-          checkOut: toIsoDate(addDays(checkIn, 2)),
+          checkOut: toIsoDate(checkOut),
           guestName: "",
           guestEmail: "",
           guestPhone: "",
-          guests: 2,
+          guests,
           totalCents: "",
           source: "DIRECT",
           notes: "",
