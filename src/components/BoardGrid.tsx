@@ -5,6 +5,7 @@ import { SOURCE_LABELS } from "@/lib/board";
 import { dayOfMonth, isWeekend, toIsoDate, weekday } from "@/lib/dates";
 import { fill, makeT, type Locale, type T } from "@/lib/i18n";
 import { dictFor } from "@/lib/locale";
+import { EmptyState } from "@/components/EmptyState";
 
 /**
  * The board: rooms down, days across, stays drawn over the day cells.
@@ -86,20 +87,12 @@ export function BoardGrid({
 
   if (board.rooms.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
-        <p className="text-[15px] font-semibold text-ink-900">
-          {t("Chưa có phòng nào")}
-        </p>
-        <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-          {t("Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm chỗ nghỉ đầu tiên rồi quay lại đây.")}
-        </p>
-        <Link
-          href="/cho-nghi/moi"
-          className="mt-5 inline-flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100"
-        >
-          {t("Thêm chỗ nghỉ")}
-        </Link>
-      </div>
+      <EmptyState
+        title={t("Chưa có phòng nào")}
+        description={t("Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm chỗ nghỉ đầu tiên rồi quay lại đây.")}
+        actionLabel={t("Thêm chỗ nghỉ")}
+        actionHref="/cho-nghi/moi"
+      />
     );
   }
 

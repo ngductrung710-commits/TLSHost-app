@@ -6,6 +6,7 @@ import { requireMember, visiblePropertyFilter } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { getT } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
+import { EmptyState } from "@/components/EmptyState";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -50,22 +51,33 @@ export default async function PropertiesPage() {
         {member.role === "OWNER" ? (
           <Link
             href="/cho-nghi/moi"
-            className="inline-flex min-h-11 items-center rounded-full bg-ink-900 px-5 text-[14px] font-semibold text-sand-100 hover:bg-ink-800"
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-[14px] font-semibold text-white transition-colors hover:bg-brand-dark"
           >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
             {t("Thêm chỗ nghỉ")}
           </Link>
         ) : null}
       </div>
 
       {properties.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
-          <p className="text-[15px] font-semibold text-ink-900">
-            {t("Chưa có chỗ nghỉ nào")}
-          </p>
-          <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-            {t("Thêm chỗ nghỉ đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.")}
-          </p>
-        </div>
+        <EmptyState
+          title={t("Chưa có chỗ nghỉ nào")}
+          description={t("Thêm chỗ nghỉ đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.")}
+          actionLabel={member.role === "OWNER" ? t("Thêm chỗ nghỉ") : undefined}
+          actionHref={member.role === "OWNER" ? "/cho-nghi/moi" : undefined}
+        />
       ) : (
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => (

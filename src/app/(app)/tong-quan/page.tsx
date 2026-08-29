@@ -7,6 +7,7 @@ import { loadDashboard, longDate, weekdayShort } from "@/lib/dashboard";
 import { formatVnd, todayIn } from "@/lib/dates";
 import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
+import { EmptyState } from "@/components/EmptyState";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -150,20 +151,12 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
         <h1 className="text-[18px] font-semibold text-ink-900">
           {t("Bảng điều khiển")}
         </h1>
-        <div className="mt-4 rounded-xl border border-dashed border-line-strong bg-surface p-10 text-center">
-          <p className="text-[15px] font-semibold text-ink-900">
-            {t("Chưa có cơ sở nào")}
-          </p>
-          <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-            {t("Thêm chỗ nghỉ đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.")}
-          </p>
-          <Link
-            href="/cho-nghi/moi"
-            className="mt-5 inline-flex min-h-10 items-center rounded-full bg-brand px-5 text-[14px] font-semibold text-white hover:bg-brand-dark"
-          >
-            {t("Thêm chỗ nghỉ")}
-          </Link>
-        </div>
+        <EmptyState
+          title={t("Chưa có cơ sở nào")}
+          description={t("Thêm chỗ nghỉ đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.")}
+          actionLabel={t("Thêm chỗ nghỉ")}
+          actionHref="/cho-nghi/moi"
+        />
       </>
     );
   }

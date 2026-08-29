@@ -7,6 +7,7 @@ import { shortVi, todayIn } from "@/lib/dates";
 import { markAllClean, markRoom } from "./actions";
 import { getT } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
+import { EmptyState } from "@/components/EmptyState";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -68,14 +69,10 @@ export default async function HousekeepingPage() {
       </div>
 
       {jobs.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-surface p-10 text-center">
-          <p className="text-[15px] font-semibold text-ink-900">
-            {t("Chưa có phòng nào")}
-          </p>
-          <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-ink-600">
-            {t("Bảng này dựng từ danh sách phòng. Thêm chỗ nghỉ rồi quay lại.")}
-          </p>
-        </div>
+        <EmptyState
+          title={t("Chưa có phòng nào")}
+          description={t("Bảng này dựng từ danh sách phòng. Thêm chỗ nghỉ rồi quay lại.")}
+        />
       ) : (
         <ul className="mt-6 space-y-3">
           {jobs.map((job) => (
