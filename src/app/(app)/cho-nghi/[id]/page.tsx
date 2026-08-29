@@ -61,7 +61,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         {t("← Về danh sách")}
       </Link>
 
-      <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-ink-900">
+      <h1 className="mt-3 text-[18px] font-semibold text-ink-900">
         {property.name}
       </h1>
       {property.address ? (

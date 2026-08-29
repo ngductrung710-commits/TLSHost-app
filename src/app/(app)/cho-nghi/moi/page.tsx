@@ -26,7 +26,7 @@ export default async function NewPropertyPage() {
       >
         {t("← Về danh sách")}
       </Link>
-      <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-ink-900">
+      <h1 className="mt-3 text-[18px] font-semibold text-ink-900">
         {t("Thêm chỗ nghỉ")}
       </h1>
       <p className="mb-7 mt-1 text-[14px] text-ink-600">

@@ -80,7 +80,7 @@ export default async function BookingPage(
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
+          <h1 className="text-[18px] font-semibold text-ink-900">
             {booking.guestName}
           </h1>
           <p className="mt-1 text-[14px] text-ink-600">

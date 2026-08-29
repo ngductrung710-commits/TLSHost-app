@@ -94,7 +94,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
+      <h1 className="text-[18px] font-semibold text-ink-900">
         {t("Cài đặt")}
       </h1>
       <p className="mt-1 text-[14px] text-ink-600">

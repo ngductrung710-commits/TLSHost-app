@@ -599,4 +599,11 @@ export const EN: Record<string, string> = {
   "Đặt phòng này": "Book this room",
   "Còn trống ở đây nghĩa là còn trống lúc bạn mở trang. Hai người cùng nhận một phòng thì người lưu sau bị từ chối, và được nói rõ ai đang giữ — chỗ đó do cơ sở dữ liệu quyết, không phải màn hình này.":
     "Free here means free when this page loaded. If two people take the same room, whoever saves second is refused and told who holds it — that decision lives in the database, not on this screen.",
+
+  /* ---- The rail, and the dashboard's activity panel ---- */
+  "Thu gọn thanh bên": "Collapse the sidebar",
+  "Mở thanh bên": "Expand the sidebar",
+  "Hoạt động đặt phòng": "Booking activity",
+  "Không có khách đến hay khách lưu trú trong ngày này.":
+    "No arrivals and nobody staying on this day.",
 };

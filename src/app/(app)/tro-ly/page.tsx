@@ -120,7 +120,7 @@ export default async function AssistantPage() {
 
   return (
     <>
-      <h1 className="text-[1.75rem] font-semibold leading-tight text-ink-900">
+      <h1 className="text-[18px] font-semibold text-ink-900">
         {t("Trợ lý")}
       </h1>
       <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">

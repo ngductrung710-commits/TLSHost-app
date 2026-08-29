@@ -157,6 +157,51 @@
   --color-danger-soft: #2f1c1a;
 }
 
+/* ==========================================================================
+   Aliases for the new shell.
+
+   The sidebar and the dashboard tiles were written against `brand`, which is
+   what the app they were modelled on calls its accent. Pointing those names at
+   the existing clay scale keeps the original palette exactly as it was while
+   letting the new components stay readable — one rename here instead of forty
+   className edits, and nothing else in the app changes colour.
+   ========================================================================== */
+
+@theme {
+  --color-brand: var(--color-clay-500);
+  --color-brand-dark: var(--color-clay-600);
+  --color-brand-deep: var(--color-ink-900);
+}
+
+@layer components {
+  /* The panel every screen is built from. Radius, border and the exact two
+     shadows measured off the app this was matched against — a single soft
+     shadow reads flat next to it, and the second, wider one is what gives the
+     card its lift without a visible edge. */
+  .card {
+    border-radius: 12px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow:
+      0 1px 2px rgb(16 16 16 / 0.04),
+      0 12px 32px rgb(16 16 16 / 0.08);
+  }
+
+  /* On a dark ground a drop shadow is invisible; the border does the work.
+     The system arm has to sit inside the media query: with no data-theme
+     stamped, :root:not([data-theme="light"]) also matches a light page, and
+     writing it flat here stripped the shadow from every card in light mode. */
+  :root[data-theme="dark"] .card {
+    box-shadow: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card {
+    box-shadow: none;
+  }
+}
+
 @layer base {
   body {
     background-color: var(--color-canvas);

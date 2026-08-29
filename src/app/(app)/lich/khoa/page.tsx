@@ -44,7 +44,7 @@ export default async function NewBlockPage(props: PageProps<"/lich/khoa">) {
       <Link href="/lich" className="text-[14px] font-medium text-ink-500 hover:text-ink-900">
         {t("← Về lịch")}
       </Link>
-      <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-ink-900">
+      <h1 className="mt-3 text-[18px] font-semibold text-ink-900">
         {t("Khóa đêm")}
       </h1>
       <p className="mb-7 mt-1 max-w-xl text-[14px] leading-relaxed text-ink-600">
