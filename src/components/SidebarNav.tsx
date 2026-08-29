@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
@@ -153,13 +154,19 @@ export function SidebarNav({
           href={items[0]?.href ?? "/"}
           className="flex min-w-0 items-center gap-2.5 rounded-lg p-1"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-brand-deep text-white">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path
-                d="M5 11.5 12 5l7 6.5V19a1 1 0 0 1-1 1h-4v-5h-4v5H6a1 1 0 0 1-1-1v-7.5Z"
-                fill="currentColor"
-              />
-            </svg>
+          {/* The plate in the artwork is #311817, which is exactly ink-800 —
+              the logo was drawn against this palette. Giving the frame the
+              same colour means the 52×50 source can be cropped square without
+              a seam showing. */}
+          <span className="size-9 shrink-0 overflow-hidden rounded-[10px] bg-ink-800">
+            <Image
+              src="/logo.png"
+              alt=""
+              width={52}
+              height={50}
+              priority
+              className="size-full object-cover"
+            />
           </span>
           {!collapsed ? (
             <span className="truncate text-[16px] tracking-tight text-ink-900">
