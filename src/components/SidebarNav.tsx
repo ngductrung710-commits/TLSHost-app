@@ -170,8 +170,8 @@ export function SidebarNav({
           </span>
           {!collapsed ? (
             <span className="truncate text-[16px] tracking-tight text-ink-900">
-              <span className="italic">TLS</span>
-              <span className="font-bold">Host</span>
+              <span className="font-bold">TLS</span>
+              <span className="font-normal">Host</span>
             </span>
           ) : null}
         </Link>
