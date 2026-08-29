@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template. `.env*` swallows it, and a repo whose README and
+# DEPLOY.md both say "theo mẫu .env.example" while not shipping that file
+# sends the next person hunting for a file that was never pushed.
+!.env.example
 
 # vercel
 .vercel
