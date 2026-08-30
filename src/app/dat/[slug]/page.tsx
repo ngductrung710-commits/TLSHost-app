@@ -12,6 +12,7 @@ import {
   toIsoDate,
 } from "@/lib/dates";
 
+import { PROPERTY_TYPE_LABELS } from "@/lib/propertyTypes";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
 
 import { BookingWidget } from "./BookingWidget";
@@ -31,6 +32,7 @@ type Loaded = {
   orgId: string;
   name: string;
   address: string | null;
+  type: string | null;
   intro: string | null;
   currency: string;
   timezone: string;
@@ -47,7 +49,14 @@ async function load(slug: string): Promise<Loaded | null> {
   const found = await withPublicSlug(slug, async (tx) => {
     const property = await tx.property.findFirst({
       where: { publicSlug: slug, published: true },
-      select: { id: true, orgId: true, name: true, address: true, intro: true },
+      select: {
+        id: true,
+        orgId: true,
+        name: true,
+        type: true,
+        address: true,
+        intro: true,
+      },
     });
     if (!property) return null;
 
@@ -80,6 +89,7 @@ async function load(slug: string): Promise<Loaded | null> {
     orgId: found.property.orgId,
     name: found.property.name,
     address: found.property.address,
+    type: found.property.type,
     intro: found.property.intro,
     currency: org?.currency ?? "VND",
     timezone: org?.timezone ?? "Asia/Ho_Chi_Minh",
@@ -187,8 +197,18 @@ export default async function PublicBookingPage(
           >
             {property.name}
           </h1>
-          {property.address ? (
-            <p className="mt-1 text-[15px] text-[var(--ink-soft)]">{property.address}</p>
+          {property.type || property.address ? (
+            <p className="mt-1 text-[15px] text-[var(--ink-soft)]">
+              {/* Type first: "Homestay" and "Resort" set different
+                  expectations before a guest reads a word of the description. */}
+              {property.type
+                ? PROPERTY_TYPE_LABELS[
+                    property.type as keyof typeof PROPERTY_TYPE_LABELS
+                  ]
+                : null}
+              {property.type && property.address ? " · " : null}
+              {property.address}
+            </p>
           ) : null}
           {property.intro ? (
             <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-[var(--ink-soft)]">

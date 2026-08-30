@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { requireMember } from "@/lib/dal";
 
-import { PropertyForm } from "./PropertyForm";
+import { PropertyWizard } from "./PropertyWizard";
 import { createProperty } from "../actions";
 import { getT } from "@/lib/locale";
 
@@ -29,11 +29,11 @@ export default async function NewPropertyPage() {
       <h1 className="mt-3 text-[18px] font-semibold text-ink-900">
         {t("Thêm chỗ nghỉ")}
       </h1>
-      <p className="mb-7 mt-1 text-[14px] text-ink-600">
+      <p className="mb-7 mt-1 max-w-2xl text-[14px] text-ink-600">
         {t("Phòng là thứ nhận đặt. Liệt kê đủ phòng ở đây thì lịch sẽ có đủ hàng.")}
       </p>
 
-      <PropertyForm action={createProperty} />
+      <PropertyWizard action={createProperty} />
     </>
   );
 }

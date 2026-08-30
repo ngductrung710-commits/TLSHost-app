@@ -167,8 +167,6 @@ export const EN: Record<string, string> = {
   "Hội An, Đà Nẵng": "Hoi An, Da Nang",
   "(không bắt buộc)": "(optional)",
   "Phòng và giá": "Rooms and rates",
-  "Cần ít nhất một phòng — mỗi dòng một phòng.":
-    "At least one room is needed — one per line.",
   "Mỗi dòng một phòng. Nếu cho thuê nguyên căn, viết một dòng duy nhất — cả căn villa là một phòng.":
     "One room per line. If you rent the whole place, write a single line — the entire villa is one room.",
   "Phòng là thứ nhận đặt. Liệt kê đủ phòng ở đây thì lịch sẽ có đủ hàng.":
@@ -614,4 +612,34 @@ export const EN: Record<string, string> = {
   "Người dùng / Nhóm": "Users / Team",
 
   "Mở trợ lý AI": "Open the AI assistant",
+
+  /* ---- The add-property wizard, and the property types ---- */
+  "Thông tin cơ sở": "About the property",
+  "Mô tả cho khách": "What guests read",
+  "Xem lại và tạo": "Review and create",
+  "Chỗ nghỉ mới": "New property",
+  "Các bước": "Steps",
+  "Bước {n} / {tong}": "Step {n} of {tong}",
+  "Tiếp tục": "Continue",
+  "Quay lại": "Back",
+  "Xóa": "Remove",
+  "Loại hình": "Kind of place",
+  "Chưa chọn": "Not set",
+  "Hiện cạnh địa chỉ trên trang đặt phòng. Khách đọc “Homestay” và “Resort” với hai kỳ vọng khác nhau.":
+    "Shown beside the address on the booking page. A guest reads “Homestay” and “Resort” with two different sets of expectations.",
+  "Tên phòng": "Room name",
+  "Thêm phòng": "Add a room",
+  "Cần ít nhất một phòng.": "At least one room is needed.",
+  "Để trống giá cũng được — phòng vẫn nhận đặt, chỉ là khách không thấy con số nào.":
+    "Leaving the rate empty is fine — the room still takes bookings, the guest just sees no figure.",
+  "Tạo xong, chỗ nghỉ hiện ngay trên lịch. Trang đặt phòng cho khách vẫn tắt cho tới khi bạn bật.":
+    "Once created it appears on the calendar straight away. The guest booking page stays off until you turn it on.",
+
+  "Khách sạn": "Hotel",
+  "Khách sạn boutique": "Boutique hotel",
+  /* Homestay, Resort and Hostel are the same word in both languages, so
+     they have no entry here — t() returns the key unchanged. */
+  "Biệt thự": "Villa",
+  "Căn hộ": "Apartment",
+  "Nhà nghỉ": "Guesthouse",
 };

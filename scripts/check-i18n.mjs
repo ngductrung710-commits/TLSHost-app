@@ -51,6 +51,7 @@ const LABEL_MODULES = [
   "src/lib/themes.ts",
   "src/lib/plans.ts",
   "src/lib/availability.ts",
+  "src/lib/propertyTypes.ts",
 ];
 
 function walk(dir, out = []) {

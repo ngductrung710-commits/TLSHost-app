@@ -190,10 +190,27 @@ model Session {
 /* Inventory                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/// What kind of place this is. Shown to guests beside the address, because
+/// "Homestay" and "Resort" set different expectations before anyone reads a
+/// word of the description.
+enum PropertyType {
+  HOTEL
+  BOUTIQUE_HOTEL
+  HOMESTAY
+  VILLA
+  APARTMENT
+  GUESTHOUSE
+  RESORT
+  HOSTEL
+}
+
 model Property {
   id    String @id @default(cuid())
   orgId String
   name  String
+  /// Nullable: every property created before this column existed has none, and
+  /// a host who does not care should not have to pick one.
+  type  PropertyType?
   /// Free text. Shown to guests on the booking page as written.
   address String?
 
