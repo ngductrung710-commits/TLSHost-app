@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { BoardGrid } from "@/components/BoardGrid";
-import { loadBoard } from "@/lib/board";
+import { SOURCE_LABELS, loadBoard } from "@/lib/board";
+import { findBookings } from "@/lib/search";
 import { requireMember } from "@/lib/dal";
 import {
   addDays,
@@ -43,6 +44,12 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
   const requested =
     typeof params.tu === "string" ? parseIsoDate(params.tu) : null;
   const from = requested ?? today;
+
+  // A search replaces the board rather than filtering it. The board is laid
+  // out by room and date; a list of three guests laid out that way is three
+  // rows of mostly empty grid.
+  const query = typeof params.tim === "string" ? params.tim : "";
+  const hits = query.trim() ? await findBookings(member, query) : null;
 
   const board = await loadBoard(member, from, WINDOW_DAYS);
 
@@ -103,6 +110,34 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
         </p>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {/* A GET form, so a search is a URL: it survives a refresh, it can be
+              sent to someone, and the back button leaves it. */}
+          <form method="get" className="relative">
+            <label htmlFor="tim" className="sr-only">
+              {t("Tìm khách hoặc mã đặt")}
+            </label>
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
+            >
+              <path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-4-4" />
+            </svg>
+            <input
+              id="tim"
+              name="tim"
+              type="search"
+              defaultValue={query}
+              placeholder={t("Tìm khách hoặc mã đặt")}
+              className="h-9 w-56 rounded-full border border-line bg-white pl-9 pr-3 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus-visible:border-ink-900"
+            />
+          </form>
           <Link
             href="/ban-hang"
             className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
@@ -125,13 +160,69 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
         </div>
       </div>
 
-      <div>
-        <BoardGrid board={board} today={toIsoDate(today)} locale={locale} />
-      </div>
+      {hits ? (
+        <section aria-live="polite">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-[15px] font-semibold text-ink-900">
+              {fill(t("{n} kết quả cho “{tim}”"), { n: hits.length, tim: query })}
+            </h2>
+            <Link
+              href="/lich"
+              className="text-[13px] font-medium text-ink-600 hover:text-ink-900"
+            >
+              {t("Xóa tìm kiếm")}
+            </Link>
+          </div>
 
-      <p className="mt-4 text-[13px] text-ink-500">
-        {t("Bấm vào một ô trống để thêm đặt phòng, bấm vào một lượt đặt để sửa.")}
-      </p>
+          {hits.length === 0 ? (
+            <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-ink-500">
+              {t("Không tìm thấy lượt đặt nào. Thử tên khách, số điện thoại, hoặc vài ký tự cuối của mã đặt.")}
+            </p>
+          ) : (
+            <ul className="mt-3 card divide-y divide-line">
+              {hits.map((hit) => (
+                <li key={hit.id}>
+                  <Link
+                    href={`/lich/dat-phong/${hit.id}`}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3.5 hover:bg-sand-50"
+                  >
+                    <span className="min-w-40 flex-1">
+                      <span className="block text-[14px] font-medium text-ink-900">
+                        {hit.guestName}
+                        {hit.status === "CANCELLED" ? (
+                          <span className="ml-2 rounded-full bg-sand-200 px-2 py-0.5 text-[11px] font-semibold text-ink-600">
+                            {t("Đã hủy")}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="block text-[12.5px] text-ink-500">
+                        {hit.propertyName} · {hit.roomName}
+                        {hit.guestPhone ? ` · ${hit.guestPhone}` : ""}
+                      </span>
+                    </span>
+                    <span className="text-[13px] text-ink-600 tnum">
+                      {shortVi(hit.checkIn)} – {shortVi(hit.checkOut)}
+                    </span>
+                    <span className="text-[12.5px] text-ink-500">
+                      {t(SOURCE_LABELS[hit.source] ?? hit.source)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : (
+        <>
+          <div>
+            <BoardGrid board={board} today={toIsoDate(today)} locale={locale} />
+          </div>
+
+          <p className="mt-4 text-[13px] text-ink-500">
+            {t("Bấm vào một ô trống để thêm đặt phòng, bấm vào một lượt đặt để sửa.")}
+          </p>
+        </>
+      )}
 
       {/* Blocks have no page of their own — there is nothing to edit on one
           beyond removing it. Rather than a route for that, they are listed

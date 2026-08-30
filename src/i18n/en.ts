@@ -642,4 +642,11 @@ export const EN: Record<string, string> = {
   "Biệt thự": "Villa",
   "Căn hộ": "Apartment",
   "Nhà nghỉ": "Guesthouse",
+
+  /* ---- Finding a booking from the calendar toolbar ---- */
+  "Tìm khách hoặc mã đặt": "Find a guest or booking code",
+  "{n} kết quả cho “{tim}”": "{n} results for “{tim}”",
+  "Xóa tìm kiếm": "Clear the search",
+  "Không tìm thấy lượt đặt nào. Thử tên khách, số điện thoại, hoặc vài ký tự cuối của mã đặt.":
+    "No bookings found. Try the guest's name, their phone number, or the last few characters of the booking code.",
 };
