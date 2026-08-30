@@ -156,14 +156,14 @@ export function SidebarNav({
         >
           {/* The plate in the artwork is #311817, which is exactly ink-800 —
               the logo was drawn against this palette. Giving the frame the
-              same colour means the 45×47 source can be cropped square without
+              same colour means the 255×250 source can be cropped square without
               a seam showing. */}
           <span className="size-9 shrink-0 overflow-hidden rounded-[10px] bg-ink-800">
             <Image
               src="/logo.png"
               alt=""
-              width={45}
-              height={47}
+              width={255}
+              height={250}
               priority
               className="size-full object-cover"
             />
