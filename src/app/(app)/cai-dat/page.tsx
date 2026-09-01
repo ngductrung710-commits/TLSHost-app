@@ -321,31 +321,41 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
                     ) : null}
                   </div>
 
+                  {/* The free plan is now called "Miễn phí", so printing
+                      "Miễn phí" again as its price said the same word twice
+                      and gave the reader no number to compare against the
+                      two beside it. */}
                   <p className="mt-2 text-[1.375rem] font-semibold text-ink-900 tnum">
-                    {plan.price === 0 ? t("Miễn phí") : formatVnd(plan.price, locale)}
-                    {plan.price > 0 ? (
-                      <span className="text-[13px] font-normal text-ink-500">
-                        {" "}
-                        {t("/ tháng")}
-                      </span>
-                    ) : null}
+                    {formatVnd(plan.price, locale)}
+                    <span className="text-[13px] font-normal text-ink-500">
+                      {" "}
+                      {plan.price === 0 ? t("/ vĩnh viễn") : t("/ tháng")}
+                    </span>
                   </p>
 
-                  <ul className="mt-4 space-y-1.5 border-t border-line pt-4 text-[13px] text-ink-700">
-                    <li>
-                      {plan.maxProperties === null
-                        ? t("Không giới hạn chỗ nghỉ")
-                        : fill(t("{n} chỗ nghỉ"), { n: plan.maxProperties })}
-                    </li>
-                    <li className={plan.channels ? "" : "text-ink-400"}>
-                      {plan.channels ? t("Đồng bộ kênh OTA") : t("Chưa có đồng bộ kênh")}
-                    </li>
-                    <li className={plan.assistant ? "" : "text-ink-400"}>
-                      {plan.assistant ? t("Trợ lý AI") : t("Chưa có trợ lý AI")}
-                    </li>
-                    <li className={plan.team ? "" : "text-ink-400"}>
-                      {plan.team ? t("Đội ngũ & phân quyền") : t("Chưa có đội ngũ")}
-                    </li>
+                  {/* The plan's own list, the same words the pricing page
+                      uses. A card generated from the feature flags reads like
+                      a permissions matrix, and lists what a plan does *not*
+                      have — which is an odd thing to print on the thing you
+                      are asking someone to buy. */}
+                  <ul className="mt-4 space-y-2 border-t border-line pt-4 text-[13px] text-ink-700">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-2">
+                        <svg
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                          className="mt-0.5 size-4 shrink-0 text-brand"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m5 13 4 4L19 7" />
+                        </svg>
+                        <span>{t(feature)}</span>
+                      </li>
+                    ))}
                   </ul>
 
                   {/* Only on the paid plans, and only for an owner. There is

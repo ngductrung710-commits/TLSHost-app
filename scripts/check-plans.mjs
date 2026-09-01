@@ -89,9 +89,14 @@ if (!existsSync(marketing)) {
   });
 
   // The features the page advertises, and the flag each one implies here.
+  //
+  // "Nhiều chỗ nghỉ" is a weaker promise than the null it maps to: the page
+  // says "several" and the software gives unlimited. Under-promising is safe
+  // in a way the reverse is not, so this passes — but it is the one row here
+  // where page and code are not saying the same size.
   const claims = [
-    ["Đồng bộ iCal hai chiều", "CHANNELS", "channels"],
-    ["Không giới hạn số chỗ nghỉ", "CHANNELS", "unlimited"],
+    ["Đồng bộ kênh OTA hai chiều", "CHANNELS", "channels"],
+    ["Nhiều chỗ nghỉ", "CHANNELS", "unlimited"],
     ["Trợ lý AI vận hành", "PRO", "assistant"],
     ["Thành viên và phân quyền theo phạm vi", "PRO", "team"],
   ];
@@ -112,6 +117,23 @@ if (!existsSync(marketing)) {
   const ok = oneProperty && PLANS.FREE.maxProperties === 1;
   if (!ok) failures += 1;
   console.log(`${ok ? "PASS" : "FAIL"}  free plan's one-property promise matches`);
+
+  /* ------------------------------------------------------------------ */
+  console.log("\n-- the two plan cards list the same things, word for word");
+
+  // The workspace shows a plan card and so does the pricing page, and until
+  // now they were written separately: the page sold "Tự động đồng bộ tình
+  // trạng phòng từng giờ" while the workspace listed "Đồng bộ kênh OTA". Both
+  // true, neither the same sentence, and the host reading one and then the
+  // other has to work out whether they are looking at the same product.
+  const lists = [...block.matchAll(/features:\s*\[([^\]]*)\]/g)].map((m) =>
+    [...m[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((x) => x[1]),
+  );
+
+  check("a list per plan", lists.length, PLAN_ORDER.length);
+  PLAN_ORDER.forEach((plan, i) => {
+    check(`${plan} lists the same features as the page`, PLANS[plan].features, lists[i]);
+  });
 }
 
 console.log(failures === 0 ? "\nall checks passed" : `\n${failures} FAILED`);

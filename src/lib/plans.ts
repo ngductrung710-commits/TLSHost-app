@@ -24,32 +24,74 @@ export type PlanLimits = {
   assistant: boolean;
   /** Inviting collaborators and housekeepers with scoped access. */
   team: boolean;
+  /**
+   * What the plan card lists, in the plan's own words.
+   *
+   * Written out rather than derived from the flags above. The flags say what
+   * the software allows; this says what a host is being sold, and the two are
+   * not the same sentence — "channels: true" is not "Airbnb, Booking.com,
+   * Agoda & nhiều kênh khác", and a card generated from booleans reads like a
+   * permissions matrix.
+   *
+   * Identical to the marketing site's list, word for word, and check:plans
+   * fails when they drift. Two places describing the same purchase in
+   * different words is how a host ends up feeling misled by a product that is
+   * doing exactly what it said.
+   *
+   * Each paid plan opens by naming the one below it, so the list is read as
+   * cumulative rather than as a replacement.
+   */
+  features: readonly string[];
 };
 
 export const PLANS: Record<Plan, PlanLimits> = {
   FREE: {
-    name: "Khởi đầu",
+    name: "Miễn phí",
     price: 0,
     maxProperties: 1,
     channels: false,
     assistant: false,
     team: false,
+    features: [
+      "Một chỗ nghỉ",
+      "Lịch đặt phòng và kho phòng",
+      "Trang đặt phòng trực tiếp của bạn",
+      "Không hoa hồng đặt phòng",
+    ],
   },
   CHANNELS: {
-    name: "Kênh bán",
+    // English, on purpose: this is the name hosts already use for the thing.
+    // "Kênh bán" is what the sidebar calls the screen, and the sidebar is
+    // about a feature — the plan is a product, and every host who has
+    // shopped for one has read "channel manager".
+    name: "Channel Manager",
     price: 290_000,
     maxProperties: null,
     channels: true,
     assistant: false,
     team: false,
+    features: [
+      "Mọi thứ trong gói Miễn phí",
+      "Đồng bộ kênh OTA hai chiều",
+      "Airbnb, Booking.com, Agoda và nhiều kênh khác",
+      "Tự động đồng bộ tình trạng phòng từng giờ",
+      "Nhiều chỗ nghỉ",
+    ],
   },
   PRO: {
-    name: "Chuyên nghiệp",
+    name: "Professional",
     price: 690_000,
     maxProperties: null,
     channels: true,
     assistant: true,
     team: true,
+    features: [
+      "Mọi thứ trong gói Channel Manager",
+      "Trợ lý AI vận hành",
+      "Thành viên và phân quyền theo phạm vi",
+      "Theo dõi người tạo đặt phòng",
+      "Dọn phòng và số liệu tổng quan",
+    ],
   },
 };
 

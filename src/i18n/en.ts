@@ -397,13 +397,7 @@ export const EN: Record<string, string> = {
   "Đang dùng": "Current",
   "Đang dùng:": "Current plan:",
   "Miễn phí": "Free",
-  "Không giới hạn chỗ nghỉ": "Unlimited properties",
-  "Đồng bộ kênh OTA": "OTA channel sync",
-  "Trợ lý AI": "AI assistant",
   "Đội ngũ & phân quyền": "Team and permissions",
-  "Chưa có đồng bộ kênh": "No channel sync",
-  "Chưa có trợ lý AI": "No AI assistant",
-  "Chưa có đội ngũ": "No team",
 
   /* ---- Settings: notifications ---- */
   "Thông báo đặt phòng": "Booking notifications",
@@ -454,7 +448,7 @@ export const EN: Record<string, string> = {
   " · duyệt {ngay}": " · approved {ngay}",
   " · đến {ngay}": " · until {ngay}",
   "/ tháng": "/ month",
-  "{n} chỗ nghỉ": "{n} properties",
+  "/ vĩnh viễn": "/ forever",
   "Kết nối {ten}": "Connect {ten}",
   "Đã kết nối {ten}{chedo}.": "{ten} connected{chedo}.",
   "Giá thấp nhất đang đặt: {gia}.": "Lowest rate set: {gia}.",
@@ -534,8 +528,6 @@ export const EN: Record<string, string> = {
   "Tối giản": "Minimal",
   "Ấm áp": "Warm",
   "Nổi bật": "Bold",
-  "Khởi đầu": "Free",
-  "Chuyên nghiệp": "Professional",
   "Không đọc được mã màu này.": "That colour code could not be read.",
   "Màu phải ở dạng #rrggbb, ví dụ #a05436.":
     "The colour must be in #rrggbb form, for example #a05436.",
@@ -697,6 +689,24 @@ export const EN: Record<string, string> = {
      "allows 1 properties" is what a literal translation produces. */
   "Gói hiện tại cho tối đa {n} cơ sở. Nâng cấp để thêm cơ sở mới.":
     "This plan's limit is {n}. Upgrade to add another property.",
+
+  /* ---- What each plan lists, word for word with the pricing page ---- */
+  "Một chỗ nghỉ": "One property",
+  "Lịch đặt phòng và kho phòng": "Booking calendar and inventory",
+  "Trang đặt phòng trực tiếp của bạn": "Your direct booking page",
+  "Không hoa hồng đặt phòng": "No booking commission",
+  "Mọi thứ trong gói Miễn phí": "Everything in Free",
+  "Đồng bộ kênh OTA hai chiều": "Two-way OTA channel sync",
+  "Airbnb, Booking.com, Agoda và nhiều kênh khác":
+    "Airbnb, Booking.com, Agoda and more channels",
+  "Tự động đồng bộ tình trạng phòng từng giờ":
+    "Availability synced automatically, hourly",
+  "Nhiều chỗ nghỉ": "Multiple properties",
+  "Mọi thứ trong gói Channel Manager": "Everything in Channel Manager",
+  "Trợ lý AI vận hành": "AI operations assistant",
+  "Thành viên và phân quyền theo phạm vi": "Members and scoped permissions",
+  "Theo dõi người tạo đặt phòng": "Booking creator tracking",
+  "Dọn phòng và số liệu tổng quan": "Housekeeping and the metrics overview",
 
   /* ---- Buying a month of a plan ---- */
   "Mua 1 tháng · {gia}": "Buy one month · {gia}",
