@@ -25,6 +25,8 @@ export type BankAccount = {
   accountNumber: string;
   accountName: string;
   bankName: string;
+  /** Tag 60. Optional — a QR without one is better than one with a guess. */
+  city: string | null;
 };
 
 /**
@@ -43,7 +45,13 @@ export function bankAccount(): BankAccount | null {
   // All four or none. A QR built from three of them is a QR that scans into a
   // transfer nobody receives.
   if (!bin || !accountNumber || !accountName || !bankName) return null;
-  return { bin, accountNumber, accountName, bankName };
+  return {
+    bin,
+    accountNumber,
+    accountName,
+    bankName,
+    city: process.env.TLSHOST_BANK_CITY || null,
+  };
 }
 
 const REFERENCE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -196,5 +204,7 @@ export function qrPayloadFor(
     accountNumber: account.accountNumber,
     amount: purchase.amount,
     memo: purchase.reference,
+    merchantName: account.accountName,
+    merchantCity: account.city ?? undefined,
   });
 }
