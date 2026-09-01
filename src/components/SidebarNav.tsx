@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 
 import { useT } from "@/components/I18nProvider";
+import { fill } from "@/lib/i18n";
 
 /**
  * The workspace's left rail.
@@ -119,6 +120,7 @@ export function SidebarNav({
   items,
   userName,
   orgName,
+  plan,
   signOut,
   setLocale,
   locale,
@@ -126,6 +128,7 @@ export function SidebarNav({
   items: NavItem[];
   userName: string;
   orgName: string;
+  plan: PlanBadge;
   signOut: () => Promise<void>;
   setLocale: (formData: FormData) => Promise<void>;
   locale: "vi" | "en";
@@ -219,6 +222,7 @@ export function SidebarNav({
           <div className="mb-1 px-3 py-1">
             <p className="truncate text-[13px] font-semibold text-ink-900">{userName}</p>
             <p className="truncate text-[11px] text-ink-500">{orgName}</p>
+            <PlanTag plan={plan} />
           </div>
         ) : null}
 
@@ -278,5 +282,73 @@ export function SidebarNav({
         </form>
       </div>
     </nav>
+  );
+}
+
+/**
+ * Which plan this workspace is on, in the rail's footer.
+ *
+ * Beside the organization's name rather than buried in settings, because
+ * "why can I not add another property" is a question the answer to should be
+ * visible from wherever it gets asked — which is anywhere.
+ *
+ * It names the plan *in force*, not the one stored. A subscription that ran
+ * out on Tuesday says "Miễn phí", because that is what the software is
+ * actually giving; saying "Professional" while refusing everything
+ * Professional includes is how a host concludes the product is broken rather
+ * than that their month ended.
+ *
+ * The warning tone is the whole point of the expiry half. A plan quietly
+ * lapsing is the one state where the badge has something urgent to say, and
+ * a badge that looks the same on the last day as on the first has nothing to
+ * say at all.
+ */
+export type PlanBadge = {
+  /** The plan in force, already resolved for lapse. */
+  name: string;
+  /**
+   * Is this a plan somebody is paying for?
+   *
+   * Its own field rather than `name !== "Miễn phí"`: the tone is a fact about
+   * the plan, and reading it off a display string means the badge turns the
+   * wrong colour the day that string is rewritten. The first version keyed the
+   * tone off whether the badge had a link, which made a free plan look paid
+   * for every owner and muted for everyone else — two wrong answers from a
+   * field that was never about money.
+   */
+  paid: boolean;
+  /** Days until it runs out. Null when it does not. */
+  daysLeft: number | null;
+  /** A paid plan that has already run out. */
+  lapsed: boolean;
+  /** Only an owner has anywhere to go from here. */
+  href: string | null;
+};
+
+function PlanTag({ plan }: { plan: PlanBadge }) {
+  const t = useT();
+
+  const urgent = plan.lapsed || (plan.daysLeft !== null && plan.daysLeft <= 7);
+  const tone = urgent
+    ? "border-warning/30 bg-warning-soft text-warning"
+    : plan.paid
+      ? "border-clay-200 bg-clay-50 text-brand-dark"
+      : "border-line bg-sand-100 text-ink-500";
+
+  const label = plan.lapsed
+    ? fill(t("{ten} · đã hết hạn"), { ten: t(plan.name) })
+    : plan.daysLeft !== null && plan.daysLeft <= 7
+      ? fill(t("{ten} · còn {n} ngày"), { ten: t(plan.name), n: plan.daysLeft })
+      : t(plan.name);
+
+  const className = `mt-1.5 inline-flex max-w-full items-center gap-1 truncate rounded-full border px-2 py-0.5 text-[10.5px] font-semibold ${tone}`;
+
+  if (plan.href === null) {
+    return <span className={className}>{label}</span>;
+  }
+  return (
+    <Link href={plan.href} className={`${className} hover:brightness-95`}>
+      {label}
+    </Link>
   );
 }

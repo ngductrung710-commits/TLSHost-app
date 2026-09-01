@@ -26,6 +26,16 @@ export type ActiveMember = {
   /// has to remember to check the expiry, and every gate reads the same
   /// answer.
   plan: Plan;
+  /**
+   * When the paid plan runs out. Null on FREE, and on a plan granted with no
+   * end date.
+   *
+   * Beside `plan` because every question worth asking needs both: "PRO" alone
+   * cannot say whether it lapsed last week, and `limits` has already resolved
+   * that away. A caller with one of the three will quietly answer a different
+   * question from the one it meant to ask.
+   */
+  planUntil: Date | null;
   limits: PlanLimits;
 };
 

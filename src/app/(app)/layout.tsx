@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 
 import { AssistantTab } from "@/components/AssistantTab";
 import { SidebarNav, type NavItem } from "@/components/SidebarNav";
+import { daysUntil } from "@/lib/billing";
 import { requireMember } from "@/lib/dal";
+import { effectivePlan } from "@/lib/plans";
 import { getT, readLocale } from "@/lib/locale";
 
 import { signOut } from "../(auth)/actions";
@@ -54,6 +56,28 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // one of these has to be reachable from somewhere: the first cut of this
   // list dropped the assistant and left nothing pointing at it.
 
+  /**
+   * What the rail's plan badge says.
+   *
+   * `limits.name` is the plan *in force* — limitsFor() has already resolved a
+   * lapsed subscription down to FREE — so the badge cannot claim a plan the
+   * software is refusing to honour. Whether it lapsed is a separate fact, and
+   * the badge says that too, because "Miễn phí" on its own reads like a choice
+   * rather than like something that ran out.
+   *
+   * Only an owner gets a link: the plan section of settings is theirs alone,
+   * so for anyone else this is a label and clicking it would land on a screen
+   * with nothing on it.
+   */
+  const active = effectivePlan(member.plan, member.planUntil);
+  const planBadge = {
+    name: member.limits.name,
+    paid: active !== "FREE",
+    daysLeft: active === "FREE" ? null : daysUntil(member.planUntil),
+    lapsed: member.plan !== "FREE" && active === "FREE",
+    href: member.role === "OWNER" ? "/cai-dat?muc=goi" : null,
+  };
+
   return (
     <div className="app-shell flex h-dvh overflow-hidden bg-canvas">
       <a
@@ -67,6 +91,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         items={items}
         userName={member.userName}
         orgName={member.orgName}
+        plan={planBadge}
         signOut={signOut}
         setLocale={setLocale}
         locale={locale}

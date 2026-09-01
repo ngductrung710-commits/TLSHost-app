@@ -72,6 +72,11 @@ export const getActiveMember = cache(async (): Promise<ActiveMember | null> => {
     canEditOthersBookings: membership.canEditOthersBookings,
     scopedPropertyIds: membership.scopes.map((s) => s.propertyId),
     plan: membership.org.plan,
+    /// When the paid plan runs out. Null on FREE, and on a plan granted with
+    /// no end date. Exposed alongside `plan` because every question worth
+    /// asking about a plan — has it lapsed, is it about to — needs both, and
+    /// a caller with only one of them will quietly answer the wrong question.
+    planUntil: membership.org.planUntil,
     limits: limitsFor(membership.org.plan, membership.org.planUntil),
   };
 });

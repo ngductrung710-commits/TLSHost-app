@@ -708,6 +708,9 @@ export const EN: Record<string, string> = {
   "Theo dõi người tạo đặt phòng": "Booking creator tracking",
   "Dọn phòng và số liệu tổng quan": "Housekeeping and the metrics overview",
 
+  "{ten} · còn {n} ngày": "{ten} · {n} days left",
+  "{ten} · đã hết hạn": "{ten} · expired",
+
   /* ---- Buying a month of a plan ---- */
   "Mua 1 tháng · {gia}": "Buy one month · {gia}",
   "Mua 1 tháng gói {ten}": "One month of {ten}",

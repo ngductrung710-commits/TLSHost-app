@@ -10,6 +10,7 @@
 import {
   PURCHASE_MONTHS,
   addMonths,
+  daysUntil,
   periodFor,
   priceFor,
   wouldShorten,
@@ -89,6 +90,22 @@ console.log("\n-- price");
 check("one month of PRO is one month of the monthly price", priceFor(690_000), 690_000);
 check("three months multiplies", priceFor(690_000, 3), 2_070_000);
 check("a purchase buys one month", PURCHASE_MONTHS, 1);
+
+console.log("\n-- days left, as the rail's badge counts them");
+
+const clock = at("2026-06-10");
+check("no end date, no count", daysUntil(null, clock), null);
+check("a month out", daysUntil(at("2026-07-10"), clock), 30);
+check("tomorrow", daysUntil(at("2026-06-11"), clock), 1);
+check("today is zero, not negative", daysUntil(clock, clock), 0);
+check("already past is floored at zero", daysUntil(at("2026-01-01"), clock), 0);
+// Rounded up, so something still working never reads as zero days: a badge
+// saying "còn 0 ngày" on a plan that is fine sends a host looking for a bug.
+check(
+  "four hours left still reads as a day",
+  daysUntil(new Date("2026-06-10T04:00:00.000Z"), new Date("2026-06-10T00:00:00.000Z")),
+  1,
+);
 
 console.log(failures === 0 ? "\nall checks passed" : `\n${failures} FAILED`);
 process.exit(failures === 0 ? 0 : 1);

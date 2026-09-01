@@ -91,3 +91,21 @@ export function priceFor(monthlyPrice: number, months: number = PURCHASE_MONTHS)
 export function wouldShorten(plan: string, planUntil: Date | null): boolean {
   return plan !== "FREE" && planUntil === null;
 }
+
+/**
+ * Whole days from now until `end`, or null when there is no end.
+ *
+ * Rounded up and floored at zero, so a plan with four hours left reads as one
+ * day rather than as zero — "còn 0 ngày" on something still working is a
+ * sentence that makes a host go looking for a bug.
+ *
+ * `now` defaults rather than being required because the callers are server
+ * components rendering per request, and the alternative is every one of them
+ * reading the clock in its own render body — which the react-hooks purity rule
+ * refuses, correctly, since a component is not the place to decide what time
+ * it is. See todayIn() in src/lib/dates.ts for the same shape.
+ */
+export function daysUntil(end: Date | null, now: Date = new Date()): number | null {
+  if (end === null) return null;
+  return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86_400_000));
+}
