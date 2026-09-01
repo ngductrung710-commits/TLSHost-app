@@ -19,7 +19,8 @@
     "check:payments": "esbuild scripts/payments-entry.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/payments.mjs && node scripts/check-payments.mjs",
     "check:i18n": "esbuild src/i18n/en.ts --bundle --format=esm --platform=node --outfile=.tmp/en.mjs && node scripts/check-i18n.mjs",
     "check:sales": "esbuild src/lib/sales.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/sales.mjs && node --env-file=.env scripts/check-sales.mjs",
-    "check:links": "node scripts/check-links.mjs"
+    "check:links": "node scripts/check-links.mjs",
+    "plan": "node --env-file=.env scripts/set-plan.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

@@ -694,6 +694,12 @@ export const EN: Record<string, string> = {
   "Căn hộ": "Apartment",
   "Nhà nghỉ": "Guesthouse",
 
+  /* Worded around the plural rather than into it. Vietnamese does not inflect
+     for number, so the key reads correctly at any {n}; English does, and
+     "allows 1 properties" is what a literal translation produces. */
+  "Gói hiện tại cho tối đa {n} cơ sở. Nâng cấp để thêm cơ sở mới.":
+    "This plan's limit is {n}. Upgrade to add another property.",
+
   /* ---- Deleting a property ---- */
   "Xóa cơ sở": "Delete this property",
   "Xóa cơ sở này": "Delete this property…",

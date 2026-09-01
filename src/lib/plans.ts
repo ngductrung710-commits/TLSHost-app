@@ -78,10 +78,20 @@ export function cheapestWith(feature: "channels" | "assistant" | "team"): Plan {
   return PLAN_ORDER.find((p) => PLANS[p][feature]) ?? "PRO";
 }
 
-/** Reasons a limit stopped something, in words a host can act on. */
+/**
+ * Reasons a limit stopped something, in words a host can act on.
+ *
+ * Keys, not finished sentences. The property one used to be a function
+ * returning a template literal, which meant the one message with a number in
+ * it was the one message that could never be translated: t() looks the string
+ * up after the number is already in it, so nothing matched, and an English
+ * workspace showed a Vietnamese sentence. check:i18n did not see it either —
+ * it reads quoted literals, and a backtick is not a quote.
+ *
+ * So the number goes in with fill() at the call site, after translation.
+ */
 export const LIMIT_MESSAGES = {
-  properties: (max: number) =>
-    `Gói hiện tại cho tối đa ${max} chỗ nghỉ. Nâng cấp để thêm chỗ nghỉ mới.`,
+  properties: "Gói hiện tại cho tối đa {n} cơ sở. Nâng cấp để thêm cơ sở mới.",
   channels: "Đồng bộ kênh OTA có từ gói Kênh bán trở lên.",
   assistant: "Trợ lý AI có ở gói Chuyên nghiệp.",
   team: "Mời cộng tác viên và phân quyền có ở gói Chuyên nghiệp.",

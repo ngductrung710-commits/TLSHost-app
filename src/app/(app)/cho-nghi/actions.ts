@@ -10,6 +10,7 @@ import { isCountryCode } from "@/lib/countries";
 import { CURRENCY_CODES } from "@/lib/currencies";
 import { withOrg } from "@/lib/db";
 import { LIMIT_MESSAGES } from "@/lib/plans";
+import { fill } from "@/lib/i18n";
 import { getT } from "@/lib/locale";
 import { PROPERTY_TYPES } from "@/lib/propertyTypes";
 
@@ -145,7 +146,7 @@ export async function createProperty(
   if (max !== null) {
     const existing = await withOrg(member.orgId, (tx) => tx.property.count());
     if (existing >= max) {
-      return { error: LIMIT_MESSAGES.properties(max) };
+      return { error: fill(t(LIMIT_MESSAGES.properties), { n: max }) };
     }
   }
 
