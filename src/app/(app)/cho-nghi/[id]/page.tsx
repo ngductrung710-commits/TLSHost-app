@@ -6,10 +6,11 @@ import { notFound, redirect } from "next/navigation";
 import { requireMember } from "@/lib/dal";
 import { amenityNames } from "@/lib/amenities";
 import { withOrg } from "@/lib/db";
-import { formatVnd } from "@/lib/dates";
+import { formatVnd, todayIn } from "@/lib/dates";
 
 import { PublicPageForm } from "./PublicPageForm";
-import { publishProperty, setRoomPrice } from "./actions";
+import { DeletePropertyForm } from "./DeletePropertyForm";
+import { deleteProperty, publishProperty, setRoomPrice } from "./actions";
 import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
 
@@ -54,6 +55,25 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
   const origin = `${proto}://${host}`;
 
   const unpriced = property.rooms.filter((r) => r.basePrice === null).length;
+
+  // Counted for the delete confirmation. Read here rather than passed down
+  // from a cached figure: the number a host is asked to accept has to be the
+  // number that is actually there.
+  const roomIds = property.rooms.map((r) => r.id);
+  const today = todayIn(member.timezone);
+  const [bookings, upcoming] = roomIds.length
+    ? await withOrg(member.orgId, async (tx) => [
+        await tx.booking.count({ where: { roomId: { in: roomIds } } }),
+        await tx.booking.count({
+          where: {
+            roomId: { in: roomIds },
+            status: "CONFIRMED",
+            // checkOut is exclusive, so a stay ending today has already ended.
+            checkOut: { gt: today },
+          },
+        }),
+      ])
+    : [0, 0];
 
   const amenities = amenityNames(property.amenities, await readLocale());
   const houseRules = (property.houseRules ?? "")
@@ -232,6 +252,24 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
             })
           : ""}
       </p>
+
+      {/* ---- deleting ---------------------------------------------------- */}
+      <section className="mt-12 rounded-2xl border border-danger/25 bg-danger-soft/40 p-6">
+        <h2 className="text-[1.125rem] font-semibold text-ink-900">
+          {t("Xóa cơ sở")}
+        </h2>
+        <p className="mb-4 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+          {t("Cơ sở, các phòng bên trong và toàn bộ lượt đặt của chúng sẽ mất. Không có thùng rác và không khôi phục được.")}
+        </p>
+        <DeletePropertyForm
+          action={deleteProperty}
+          propertyId={property.id}
+          name={property.name}
+          rooms={property.rooms.length}
+          bookings={bookings}
+          upcoming={upcoming}
+        />
+      </section>
     </>
   );
 }

@@ -694,6 +694,25 @@ export const EN: Record<string, string> = {
   "Căn hộ": "Apartment",
   "Nhà nghỉ": "Guesthouse",
 
+  /* ---- Deleting a property ---- */
+  "Xóa cơ sở": "Delete this property",
+  "Xóa cơ sở này": "Delete this property…",
+  "Xóa vĩnh viễn": "Delete permanently",
+  "Đang xóa…": "Deleting…",
+  "Cơ sở, các phòng bên trong và toàn bộ lượt đặt của chúng sẽ mất. Không có thùng rác và không khôi phục được.":
+    "The property, the rooms inside it and every booking they hold all go. There is no bin and no undo.",
+  "Xóa xong không lấy lại được. Những thứ sau đây mất cùng cơ sở:":
+    "This cannot be undone. These go with the property:",
+  "{n} lượt đặt": "{n} bookings",
+  "— trong đó {n} lượt chưa trả phòng": "— {n} of them have not checked out",
+  "Có khách đang ở hoặc sắp đến. Báo cho họ trước khi xóa — lịch của bạn sẽ không còn chỗ nào để nhắc bạn về họ.":
+    "Someone is staying or about to arrive. Tell them before you delete this — afterwards your calendar has nowhere left to remind you about them.",
+  "Gõ “{ten}” để xác nhận": "Type “{ten}” to confirm",
+  "Tên chưa khớp. Gõ đúng tên cơ sở để xác nhận.":
+    "That name does not match. Type the property's name exactly to confirm.",
+  "Không tìm thấy cơ sở này.": "That property could not be found.",
+  "Chỉ chủ nhà mới xóa được cơ sở.": "Only an owner can delete a property.",
+
   /* ---- Finding a booking from the calendar toolbar ---- */
   "Tìm khách hoặc mã đặt": "Find a guest or booking code",
   "{n} kết quả cho “{tim}”": "{n} results for “{tim}”",
