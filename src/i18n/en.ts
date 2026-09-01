@@ -455,8 +455,6 @@ export const EN: Record<string, string> = {
   " · đến {ngay}": " · until {ngay}",
   "/ tháng": "/ month",
   "{n} chỗ nghỉ": "{n} properties",
-  ". Chưa có thanh toán trong ứng dụng — nhắn cho chúng tôi để đổi gói.":
-    ". There is no in-app payment yet — message us to change plan.",
   "Kết nối {ten}": "Connect {ten}",
   "Đã kết nối {ten}{chedo}.": "{ten} connected{chedo}.",
   "Giá thấp nhất đang đặt: {gia}.": "Lowest rate set: {gia}.",
@@ -699,6 +697,36 @@ export const EN: Record<string, string> = {
      "allows 1 properties" is what a literal translation produces. */
   "Gói hiện tại cho tối đa {n} cơ sở. Nâng cấp để thêm cơ sở mới.":
     "This plan's limit is {n}. Upgrade to add another property.",
+
+  /* ---- Buying a month of a plan ---- */
+  "Mua 1 tháng · {gia}": "Buy one month · {gia}",
+  "Mua 1 tháng gói {ten}": "One month of {ten}",
+  "Đang mở đơn…": "Opening…",
+  ". Mỗi lần mua là một tháng, không tự động gia hạn.":
+    ". Each purchase is one month, and nothing renews on its own.",
+  "← Về gói dịch vụ": "← Back to plans",
+  "Quét mã bằng app ngân hàng, hoặc chuyển khoản thủ công theo thông tin bên dưới. Nội dung chuyển khoản phải đúng — đó là thứ khớp giao dịch của bạn với đơn này.":
+    "Scan the code in your banking app, or transfer manually using the details below. The transfer reference has to be exact — it is what matches your payment to this purchase.",
+  "VietQR · quét bằng app ngân hàng": "VietQR · scan in your banking app",
+  "Ngân hàng": "Bank",
+  "Số tài khoản": "Account number",
+  "Chủ tài khoản": "Account name",
+  "Số tiền": "Amount",
+  "Nội dung chuyển khoản": "Transfer reference",
+  "Chép": "Copy",
+  "Đã chép": "Copied",
+  "Chuyển xong, gói được mở sau khi chúng tôi đối chiếu sao kê — thường trong vài giờ làm việc. Trang này không tự cập nhật; bạn sẽ thấy gói mới ở màn hình Gói dịch vụ.":
+    "Once you have transferred, the plan opens after we match it against the bank statement — usually within a few working hours. This page does not update itself; the new plan appears on the Plans screen.",
+  "Đã nhận thanh toán.": "Payment received.",
+  "Đã nhận thanh toán. Gói chạy tới {ngay}.": "Payment received. The plan runs until {ngay}.",
+  "Đơn này đã hủy. Tạo đơn mới nếu bạn vẫn muốn mua.":
+    "This purchase was cancelled. Start a new one if you still want to buy.",
+  "Chưa cấu hình tài khoản nhận tiền, nên chưa hiện được mã QR. Đơn đã ghi nhận — liên hệ chúng tôi để thanh toán.":
+    "No receiving account is configured, so there is no QR code to show. The purchase is recorded — contact us to pay.",
+  "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
+  "Gói này không mua được.": "That plan is not for sale.",
+  "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":
+    "Your current plan has no end date, so buying a month would shorten it rather than extend it. Contact us instead of buying here.",
 
   /* ---- Deleting a property ---- */
   "Xóa cơ sở": "Delete this property",

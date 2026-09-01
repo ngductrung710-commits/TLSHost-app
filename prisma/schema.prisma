@@ -74,6 +74,7 @@ model Organization {
 
   memberships Membership[]
   properties  Property[]
+  purchases   PlanPurchase[]
   rooms       Room[]
   bookings    Booking[]
   blocks      Block[]
@@ -556,6 +557,73 @@ model Payment {
   @@index([orgId])
   @@index([bookingId])
   @@map("payment")
+}
+
+/// One purchase of one month of a paid plan.
+///
+/// Not a subscription: there is no stored credential to charge again and
+/// nothing recurs. A row here is a host saying "I want another month", and it
+/// does nothing to their plan until the money is confirmed.
+///
+/// Kept as its own table rather than as columns on the organization because a
+/// purchase is an event with a history — what was paid, when, for which
+/// period — and an organization only ever has room for the latest one. The
+/// day a host asks why their plan ended on the 12th, this is the answer.
+model PlanPurchase {
+  id    String @id @default(cuid())
+  orgId String
+
+  /// What was bought. Stored on the row rather than read from the org later:
+  /// the org's plan changes, and this has to keep saying what was sold.
+  plan   Plan
+  months Int  @default(1)
+  /// Whole dong, at the price on the day. A later price change must not
+  /// rewrite what someone already paid.
+  amount Int
+
+  /// What the host writes in the transfer memo, and what we match on.
+  ///
+  /// Unique, and enforced here rather than by whatever generates it. A
+  /// generator can be subtly bad — a hash with the wrong multiplier collides
+  /// on inputs that look nothing alike — and two purchases sharing a memo
+  /// means one host's transfer settles another host's month.
+  reference String @unique
+
+  status PurchaseStatus @default(PENDING)
+
+  /// Set once, when the money is confirmed and the plan is extended.
+  ///
+  /// This is the idempotency guard. Confirming twice — a double click, a
+  /// retried job, a webhook delivered again — must not buy two months, so the
+  /// update that sets it is conditional on it still being null.
+  paidAt      DateTime?
+  /// The window this purchase bought, written when it is applied. Stored
+  /// rather than recomputed, because recomputing it later would use today's
+  /// planUntil, which this purchase itself moved.
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  /// Free text from whoever confirmed it — a bank reference, a note.
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([status])
+  @@map("plan_purchase")
+}
+
+enum PurchaseStatus {
+  /// Created, waiting for the money to arrive.
+  PENDING
+  /// Confirmed and applied. Terminal.
+  PAID
+  /// Abandoned or refused. Terminal, and keeps the row so the reference is
+  /// never handed out again.
+  CANCELLED
 }
 
 enum Plan {

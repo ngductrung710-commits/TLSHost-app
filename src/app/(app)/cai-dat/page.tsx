@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { readAppearance } from "@/lib/appearance";
 import { PLANS, PLAN_ORDER, effectivePlan } from "@/lib/plans";
+import { BuyButton } from "./mua/BuyButton";
+import { startPurchase } from "./mua/actions";
 import { pushConfigured } from "@/lib/push";
 import { secretsConfigured } from "@/lib/secrets";
 import { formatVnd } from "@/lib/dates";
@@ -345,6 +347,19 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
                       {plan.team ? t("Đội ngũ & phân quyền") : t("Chưa có đội ngũ")}
                     </li>
                   </ul>
+
+                  {/* Only on the paid plans, and only for an owner. There is
+                      nothing to buy on FREE, and a collaborator committing the
+                      organization to a payment is not their call. */}
+                  {p !== "FREE" ? (
+                    <BuyButton
+                      action={startPurchase}
+                      plan={p}
+                      label={fill(t("Mua 1 tháng · {gia}"), {
+                        gia: formatVnd(plan.price, locale),
+                      })}
+                    />
+                  ) : null}
                 </li>
               );
             })}
@@ -362,7 +377,7 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
                   ),
                 })
               : ""}
-            {t(". Chưa có thanh toán trong ứng dụng — nhắn cho chúng tôi để đổi gói.")}
+            {t(". Mỗi lần mua là một tháng, không tự động gia hạn.")}
           </p>
         </section>
       ) : null}
