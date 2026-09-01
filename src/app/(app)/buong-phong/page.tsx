@@ -71,7 +71,7 @@ export default async function HousekeepingPage() {
       {jobs.length === 0 ? (
         <EmptyState
           title={t("Chưa có phòng nào")}
-          description={t("Bảng này dựng từ danh sách phòng. Thêm chỗ nghỉ rồi quay lại.")}
+          description={t("Bảng này dựng từ danh sách phòng. Thêm cơ sở rồi quay lại.")}
         />
       ) : (
         <ul className="mt-6 space-y-3">

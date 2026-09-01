@@ -66,16 +66,16 @@ export default async function PropertiesPage() {
               <path d="M5 12h14" />
               <path d="M12 5v14" />
             </svg>
-            {t("Thêm chỗ nghỉ")}
+            {t("Thêm cơ sở")}
           </Link>
         ) : null}
       </div>
 
       {properties.length === 0 ? (
         <EmptyState
-          title={t("Chưa có chỗ nghỉ nào")}
-          description={t("Thêm chỗ nghỉ đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.")}
-          actionLabel={member.role === "OWNER" ? t("Thêm chỗ nghỉ") : undefined}
+          title={t("Chưa có cơ sở nào")}
+          description={t("Thêm cơ sở đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.")}
+          actionLabel={member.role === "OWNER" ? t("Thêm cơ sở") : undefined}
           actionHref={member.role === "OWNER" ? "/cho-nghi/moi" : undefined}
         />
       ) : (

@@ -35,7 +35,7 @@ export const EN: Record<string, string> = {
   "Đăng nhập": "Sign in",
   "Tạo tài khoản chủ nhà": "Create a host account",
   "Tạo tài khoản": "Create account",
-  "Một tài khoản, một cơ sở. Thêm chỗ nghỉ và mời người sau.":
+  "Một tài khoản, một doanh nghiệp. Thêm cơ sở và mời người sau.":
     "One account, one business. Add properties and invite people afterwards.",
   "Đã có tài khoản? ": "Already have an account? ",
   "Chưa có tài khoản? ": "No account yet? ",
@@ -73,9 +73,9 @@ export const EN: Record<string, string> = {
   "Đơn đặt": "Bookings",
   "Cột cao theo doanh thu, con số theo tỷ lệ lấp đầy. Hai thứ này tách nhau khi phòng rẻ kín mà phòng đắt trống — đó chính là tuần đáng để ý. Lượt đặt chưa nhập giá tính theo giá niêm yết của phòng; phòng chưa có giá không đóng góp gì.":
     "Bar height is revenue, the number is occupancy. The two come apart when the cheap rooms fill and the expensive ones sit empty — that is the week worth looking at. Bookings with no price entered are counted at the room's listed rate; rooms with no rate contribute nothing.",
-  "Bảng này dựng từ danh sách phòng. Thêm chỗ nghỉ rồi quay lại.":
+  "Bảng này dựng từ danh sách phòng. Thêm cơ sở rồi quay lại.":
     "This board is built from your rooms. Add a property and come back.",
-  "Thêm chỗ nghỉ đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.":
+  "Thêm cơ sở đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.":
     "Add your first property and its rooms. The calendar, the housekeeping board and the booking page are all built from them.",
   khách: "guests",
 
@@ -153,33 +153,19 @@ export const EN: Record<string, string> = {
     "You see the rooms to clean. You do not see room rates or guests' payment details.",
 
   /* ---- Properties ---- */
-  "Thêm chỗ nghỉ": "Add a property",
-  "Chưa có chỗ nghỉ nào": "No properties yet",
+  "Thêm cơ sở": "Add a property",
+  "Chưa có cơ sở nào": "No properties yet",
   "Chưa có phòng nào": "No rooms yet",
-  "Chưa có cơ sở nào": "No business yet",
-  "Tạo chỗ nghỉ": "Create property",
-  "Tên chỗ nghỉ": "Property name",
-  "Đặt tên cho chỗ nghỉ.": "Give the property a name.",
   "Tên bạn dùng để gọi chỗ nghỉ của mình. Đổi được sau.":
     "What you call this place yourself. You can change it later.",
-  "An Bàng Villa": "An Bang Villa",
-  "Địa chỉ": "Address",
-  "Hội An, Đà Nẵng": "Hoi An, Da Nang",
   "(không bắt buộc)": "(optional)",
   "Phòng và giá": "Rooms and rates",
-  "Mỗi dòng một phòng. Nếu cho thuê nguyên căn, viết một dòng duy nhất — cả căn villa là một phòng.":
-    "One room per line. If you rent the whole place, write a single line — the entire villa is one room.",
-  "Phòng là thứ nhận đặt. Liệt kê đủ phòng ở đây thì lịch sẽ có đủ hàng.":
-    "Rooms are what take bookings. List them all here and the calendar has a row for each.",
-  "Có tên phòng bị trùng. Mỗi phòng cần một tên riêng.":
-    "Two rooms have the same name. Each room needs its own.",
   "Giá mỗi đêm (₫)": "Rate per night (₫)",
   "Giá mỗi đêm hiển thị trên trang đặt phòng. Phòng chưa có giá vẫn nhận được đặt, chỉ là khách không thấy con số nào.":
     "The nightly rate shown on the booking page. A room with no rate still takes bookings, the guest just sees no figure.",
   "bỏ giá": "clear the rate",
-  "Thêm chỗ nghỉ đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.":
+  "Thêm cơ sở đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.":
     "Add your first property and list the rooms inside it. The calendar is built from them.",
-  "Chỉ chủ nhà mới thêm được chỗ nghỉ.": "Only the host can add properties.",
 
   /* ---- The public booking page ---- */
   "Trang đặt phòng của khách": "Guest booking page",
@@ -328,9 +314,9 @@ export const EN: Record<string, string> = {
     "Password changed. Every other session has been signed out; this one is still yours.",
 
   /* ---- Settings: business ---- */
-  "Cơ sở": "Business",
-  "Tên cơ sở": "Business name",
-  "Tên cơ sở không được để trống.": "The business name cannot be empty.",
+  "Doanh nghiệp": "Business",
+  "Tên doanh nghiệp": "Business name",
+  "Tên doanh nghiệp không được để trống.": "The business name cannot be empty.",
   "Múi giờ": "Time zone",
   "Quyết định “hôm nay” là ngày nào trên lịch và bảng buồng phòng. Đổi múi giờ có thể làm một phòng chuyển sang cần dọn sớm hoặc muộn hơn một ngày.":
     "Decides which day counts as today on the calendar and the housekeeping board. Changing it can move a room into needing a clean a day earlier or later.",
@@ -563,7 +549,7 @@ export const EN: Record<string, string> = {
   "Ngày phải theo dạng YYYY-MM-DD": "Dates must be in YYYY-MM-DD form",
 
   /* ---- The calendar and the booking form ---- */
-  "Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm chỗ nghỉ đầu tiên rồi quay lại đây.":
+  "Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm cơ sở đầu tiên rồi quay lại đây.":
     "The calendar needs at least one room before it has anything to show. Add your first property and come back.",
   "Danh sách đặt phòng trong khoảng đang xem":
     "Bookings in the range currently shown",
@@ -614,25 +600,90 @@ export const EN: Record<string, string> = {
   "Mở trợ lý AI": "Open the AI assistant",
 
   /* ---- The add-property wizard, and the property types ---- */
-  "Thông tin cơ sở": "About the property",
-  "Mô tả cho khách": "What guests read",
-  "Xem lại và tạo": "Review and create",
-  "Chỗ nghỉ mới": "New property",
+  "Cơ sở mới": "New property",
   "Các bước": "Steps",
-  "Bước {n} / {tong}": "Step {n} of {tong}",
+  "Đóng": "Close",
   "Tiếp tục": "Continue",
   "Quay lại": "Back",
-  "Xóa": "Remove",
+  "Tạo cơ sở": "Create property",
+
+  /* Step 1 — about the property */
+  "Thông tin cơ sở": "About the property",
+  "Tên cơ sở": "Property name",
+  "Homestay Vườn Hội An": "Hoi An Garden Homestay",
   "Loại hình": "Kind of place",
-  "Chưa chọn": "Not set",
-  "Hiện cạnh địa chỉ trên trang đặt phòng. Khách đọc “Homestay” và “Resort” với hai kỳ vọng khác nhau.":
-    "Shown beside the address on the booking page. A guest reads “Homestay” and “Resort” with two different sets of expectations.",
-  "Tên phòng": "Room name",
-  "Thêm phòng": "Add a room",
-  "Cần ít nhất một phòng.": "At least one room is needed.",
-  "Để trống giá cũng được — phòng vẫn nhận đặt, chỉ là khách không thấy con số nào.":
-    "Leaving the rate empty is fine — the room still takes bookings, the guest just sees no figure.",
-  "Tạo xong, chỗ nghỉ hiện ngay trên lịch. Trang đặt phòng cho khách vẫn tắt cho tới khi bạn bật.":
+  "Tiền tệ": "Currency",
+  "Tìm địa chỉ cơ sở": "Find the property address",
+  "Nhập địa chỉ, tên đường hoặc thành phố": "Enter an address, street or city",
+  "Dán cả địa chỉ rồi nhấn Enter — các ô bên dưới tự điền theo dấu phẩy.":
+    "Paste the whole address and press Enter — the fields below fill themselves from the commas.",
+  "Số nhà và tên đường": "Street address",
+  "12 Trần Phú": "12 Tran Phu",
+  "Tòa nhà, tầng, căn (không bắt buộc)": "Building, floor, unit (optional)",
+  "Tên tòa nhà, tầng, căn": "Building name, floor, unit",
+  "Thành phố": "City",
+  "Tỉnh / thành / khu vực": "Province / state / region",
+  "Mã bưu chính": "Postal code",
+  "Quốc gia / khu vực": "Country / region",
+  "Đặt tên cho cơ sở.": "Give the property a name.",
+  "Điền số nhà và tên đường.": "Fill in the street address.",
+  "Điền thành phố.": "Fill in the city.",
+  "Chưa chọn được tiền tệ.": "That currency is not one we support.",
+  "Chỉ chủ nhà mới thêm được cơ sở.": "Only an owner can add a property.",
+
+  /* Step 2 — the first room */
+  "Phòng đầu tiên và giá": "First room and rate",
+  "Tên loại phòng": "Room type name",
+  "Phòng Tiêu chuẩn": "Standard Room",
+  "Mô tả phòng": "Room description",
+  "Mô tả phòng, giường, tầm nhìn, sự riêng tư và phòng tắm.":
+    "Describe the room, the beds, the view, the privacy and the bathroom.",
+  "Số lượng phòng": "How many rooms",
+  "Giá mỗi đêm": "Rate per night",
+  "Tối đa người lớn": "Maximum adults",
+  "Tối đa trẻ em": "Maximum children",
+  "Đặt tên cho loại phòng.": "Give the room type a name.",
+  "Cho thuê nguyên căn thì để 1 — cả căn là một phòng.":
+    "Renting the whole place? Leave it at 1 — the whole place is one room.",
+  "Tạo {n} phòng, đánh số từ 1 đến {n}. Đổi tên từng phòng được sau.":
+    "Creates {n} rooms, numbered 1 to {n}. You can rename each one later.",
+  "Sức chứa mỗi phòng: {n} khách. Để trống giá cũng được — phòng vẫn nhận đặt, chỉ là khách không thấy con số nào.":
+    "Each room sleeps {n}. Leaving the rate empty is fine — the room still takes bookings, the guest just sees no figure.",
+
+  /* Step 3 — amenities */
+  "Tiện nghi": "Amenities",
+  "Tiện nghi cơ sở": "Property amenities",
+  "Tiện nghi phòng đầu tiên": "First room's amenities",
+  "Đã chọn {n}": "{n} selected",
+  "Bỏ chọn": "Clear",
+  "Bỏ {ten}": "Remove {ten}",
+  "Tìm tiện nghi": "Search amenities",
+  "Không có tiện nghi nào khớp.": "Nothing matches that.",
+
+  /* Step 4 — what a guest reads */
+  "Mô tả và chính sách": "Description and policies",
+  "Mô tả listing": "Listing description",
+  "Mô tả không gian, khu vực xung quanh, trải nghiệm của khách và điểm đặc biệt của chỗ nghỉ.":
+    "Describe the space, the neighbourhood, what a stay is like and what makes the place itself.",
+  "Hiện trên trang đặt phòng, ngay dưới tên cơ sở. Không bắt buộc.":
+    "Shown on the booking page, right under the property name. Optional.",
+  "Nội quy lưu trú": "House rules",
+  "Mỗi dòng một điều. Khách đọc đúng như bạn viết.":
+    "One rule per line. Guests read them exactly as you write them.",
+
+  /* Step 5 — review */
+  "Xem lại và tạo": "Review and create",
+  "Phòng đầu tiên": "First room",
+  "Sức chứa mỗi phòng": "Sleeps per room",
+  "Tiện nghi cơ sở / phòng": "Amenities, property / room",
+  "Nội quy": "House rules",
+  "{gia} / đêm": "{gia} / night",
+  "{nl} người lớn · {te} trẻ em": "{nl} adults · {te} children",
+  "Sửa thông tin cơ sở": "Edit the property details",
+  "Sửa phòng đầu tiên": "Edit the first room",
+  "Sửa tiện nghi": "Edit the amenities",
+  "Sửa mô tả và chính sách": "Edit the description and policies",
+  "Tạo xong, cơ sở hiện ngay trên lịch. Trang đặt phòng cho khách vẫn tắt cho tới khi bạn bật.":
     "Once created it appears on the calendar straight away. The guest booking page stays off until you turn it on.",
 
   "Khách sạn": "Hotel",

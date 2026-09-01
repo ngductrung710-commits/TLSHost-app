@@ -89,8 +89,8 @@ export function BoardGrid({
     return (
       <EmptyState
         title={t("Chưa có phòng nào")}
-        description={t("Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm chỗ nghỉ đầu tiên rồi quay lại đây.")}
-        actionLabel={t("Thêm chỗ nghỉ")}
+        description={t("Bảng lịch cần ít nhất một phòng để có gì mà hiển thị. Thêm cơ sở đầu tiên rồi quay lại đây.")}
+        actionLabel={t("Thêm cơ sở")}
         actionHref="/cho-nghi/moi"
       />
     );

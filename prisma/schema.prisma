@@ -211,8 +211,48 @@ model Property {
   /// Nullable: every property created before this column existed has none, and
   /// a host who does not care should not have to pick one.
   type  PropertyType?
-  /// Free text. Shown to guests on the booking page as written.
+  /// The one-line address, composed from the structured parts below when the
+  /// wizard writes it. Kept as its own column because every place that shows an
+  /// address — the property list, the property page, the guest booking page —
+  /// wants exactly one line, and re-composing it in three places would let the
+  /// three drift. Still free text: properties created before the structured
+  /// columns existed have only this.
   address String?
+
+  /// The address, in the pieces an OTA asks for.
+  ///
+  /// Booking.com and Airbnb both want street, city, region, postal code and
+  /// country as separate fields; a single free-text line cannot be split back
+  /// apart reliably enough to send. All nullable — the free-text column above
+  /// carries the older rows, and a host mid-setup should not be blocked.
+  addressLine1 String?
+  /// Building, floor, unit. Optional even in the wizard.
+  addressLine2 String?
+  city         String?
+  region       String?
+  postalCode   String?
+  /// ISO 3166-1 alpha-2. Defaults to Vietnam, which is where every host is
+  /// today; storing it rather than assuming it is what lets that stop being
+  /// true without a migration.
+  countryCode  String? @default("VN")
+
+  /// ISO 4217. Prices on this property's rooms are in this currency.
+  ///
+  /// On the property, not the organization: a host with a place in Hoi An and
+  /// one in Bangkok prices them differently, and the guest booking page shows
+  /// one property at a time.
+  currency String @default("VND")
+
+  /// House rules, one per line, shown to guests verbatim.
+  houseRules String?
+
+  /// Amenity ids from src/lib/amenities.ts.
+  ///
+  /// Ids, not labels: the label is Vietnamese today and translated tomorrow,
+  /// and a row that stored "Bãi đỗ xe máy" would have to be rewritten for that.
+  /// Unknown ids are dropped on read rather than shown raw, so removing an
+  /// amenity from the catalogue cannot break a page.
+  amenities String[] @default([])
 
   /// The guest-facing booking page lives at /dat/<slug>.
   ///
@@ -256,7 +296,22 @@ model Room {
   orgId      String
   propertyId String
   name       String
+  /// Total heads, and the number the calendar and the booking page use.
+  ///
+  /// Kept as maxAdults + maxChildren at write time rather than derived on read:
+  /// every occupancy check in the app already reads this one column, and a
+  /// derived value would mean auditing all of them to be sure none compares
+  /// against a stale total.
   capacity   Int    @default(2)
+  /// The split behind capacity. OTAs price adults and children differently and
+  /// ask for the two separately, so the pair is stored even though the app
+  /// itself only ever needs the sum.
+  maxAdults   Int @default(2)
+  maxChildren Int @default(0)
+  /// Shown to guests under the room name on the booking page.
+  description String?
+  /// Amenity ids from src/lib/amenities.ts, same as Property.amenities.
+  amenities   String[] @default([])
   /// Minor units, so VND is stored whole. Nullable because a room can exist
   /// before it has been priced.
   basePrice  Int?

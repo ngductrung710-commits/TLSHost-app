@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { amenityNames } from "@/lib/amenities";
 import { withOrg, withPublicSlug } from "@/lib/db";
 import {
   addDays,
@@ -34,13 +35,22 @@ type Loaded = {
   address: string | null;
   type: string | null;
   intro: string | null;
+  houseRules: string | null;
+  amenities: string[];
   currency: string;
   timezone: string;
   theme: BookingTheme;
   brandColor: string | null;
   logoFile: string | null;
   orgName: string;
-  rooms: { id: string; name: string; capacity: number; basePrice: number | null }[];
+  rooms: {
+    id: string;
+    name: string;
+    capacity: number;
+    basePrice: number | null;
+    description: string | null;
+    amenities: string[];
+  }[];
 };
 
 async function load(slug: string): Promise<Loaded | null> {
@@ -56,13 +66,22 @@ async function load(slug: string): Promise<Loaded | null> {
         type: true,
         address: true,
         intro: true,
+        houseRules: true,
+        amenities: true,
       },
     });
     if (!property) return null;
 
     const rooms = await tx.room.findMany({
       where: { propertyId: property.id },
-      select: { id: true, name: true, capacity: true, basePrice: true },
+      select: {
+        id: true,
+        name: true,
+        capacity: true,
+        basePrice: true,
+        description: true,
+        amenities: true,
+      },
       orderBy: { name: "asc" },
     });
 
@@ -91,6 +110,8 @@ async function load(slug: string): Promise<Loaded | null> {
     address: found.property.address,
     type: found.property.type,
     intro: found.property.intro,
+    houseRules: found.property.houseRules,
+    amenities: found.property.amenities,
     currency: org?.currency ?? "VND",
     timezone: org?.timezone ?? "Asia/Ho_Chi_Minh",
     theme: (org?.bookingTheme ?? "CLASSIC") as BookingTheme,
@@ -165,6 +186,14 @@ export default async function PublicBookingPage(
   });
 
   const available = property.rooms.filter((r) => free.has(r.id));
+
+  // A guest page is always in the property's language, never in whatever the
+  // staff member who last touched it was reading. See src/lib/locale.ts.
+  const propertyAmenities = amenityNames(property.amenities, "vi");
+  const houseRules = (property.houseRules ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
 
   const vars = themeVars(property.theme, property.brandColor);
   const tokens = THEMES[property.theme];
@@ -297,6 +326,11 @@ export default async function PublicBookingPage(
                       <p className="mt-0.5 text-[14px] text-[var(--ink-soft)]">
                         Tối đa <span className="tnum">{room.capacity}</span> khách
                       </p>
+                      {room.description ? (
+                        <p className="mt-2 max-w-xl whitespace-pre-line text-[14px] leading-relaxed text-[var(--ink-soft)]">
+                          {room.description}
+                        </p>
+                      ) : null}
                     </div>
                     {room.basePrice !== null ? (
                       <p className="text-right">
@@ -319,6 +353,14 @@ export default async function PublicBookingPage(
                     </p>
                   ) : null}
 
+                  {room.amenities.length > 0 ? (
+                    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[var(--ink-soft)]">
+                      {amenityNames(room.amenities, "vi").map((name) => (
+                        <li key={name}>· {name}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+
                   <BookingWidget
                     action={requestBooking}
                     slug={slug}
@@ -332,6 +374,32 @@ export default async function PublicBookingPage(
             </ul>
           )}
         </section>
+
+        {propertyAmenities.length > 0 ? (
+          <section className="mt-10">
+            <h2 className="text-[1.125rem] font-semibold">Tiện nghi</h2>
+            <ul className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+              {propertyAmenities.map((name) => (
+                <li key={name} className="text-[15px] text-[var(--ink-soft)]">
+                  · {name}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {houseRules.length > 0 ? (
+          <section className="mt-10">
+            <h2 className="text-[1.125rem] font-semibold">Nội quy lưu trú</h2>
+            <ul className="mt-4 space-y-1.5">
+              {houseRules.map((rule) => (
+                <li key={rule} className="text-[15px] leading-relaxed text-[var(--ink-soft)]">
+                  · {rule}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <footer className="mt-14 border-t border-[var(--line)] pt-6 text-[13px] leading-relaxed text-[var(--ink-soft)]">
           Đặt trực tiếp với chủ nhà. Không phí nền tảng, không hoa hồng — số tiền

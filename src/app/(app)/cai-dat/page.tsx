@@ -135,7 +135,7 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
       {/* ---- the business ------------------------------------------------ */}
       {isOwner ? (
         <section className="mt-12 border-t border-line pt-10">
-          <h2 className="text-[1.125rem] font-semibold text-ink-900">{t("Cơ sở")}</h2>
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">{t("Doanh nghiệp")}</h2>
           <div className="mt-5">
             <OrgForm
               action={updateOrg}
@@ -151,7 +151,7 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
         </section>
       ) : (
         <section className="mt-12 border-t border-line pt-10">
-          <h2 className="text-[1.125rem] font-semibold text-ink-900">{t("Cơ sở")}</h2>
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">{t("Doanh nghiệp")}</h2>
           <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-ink-600">
             {t("Bạn đang ở trong")} <span className="font-medium">{org?.name}</span>{t(". Chỉ chủ nhà đổi được tên và múi giờ.")}
           </p>

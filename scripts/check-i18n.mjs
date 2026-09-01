@@ -9,11 +9,13 @@
 // speaker gets a page of English with three Vietnamese sentences in it and
 // nothing anywhere reports a problem.
 //
-// So completeness is checked here instead. Three rules:
+// So completeness is checked here instead. Five rules:
 //
 //   1. Every Vietnamese string in the signed-in routes has an English one.
-//   2. Every English entry still corresponds to something the app says.
-//   3. Nothing "translates" to itself.
+//   2. Rendered text is wrapped in t(), not merely present in the dictionary.
+//   3. Every English entry still corresponds to something the app says.
+//   4. No key is written twice.
+//   5. Nothing "translates" to itself.
 //
 // Rule 2 matters more than it looks. The key is the Vietnamese sentence, so
 // editing the Vietnamese orphans its translation silently — the app keeps
@@ -198,6 +200,32 @@ for (const key of stale) fail("src/i18n/en.ts", `no longer in the app: ${JSON.st
 if (stale.length === 0) {
   console.log(`PASS  ${Object.keys(EN).length} entries, all still in use`);
 }
+
+console.log("\n-- no key is written twice");
+// A duplicate key is invisible to every other rule in this file: the bundler
+// keeps the last one and the rules above all read the bundled object, so seven
+// duplicates sat in en.ts while all four checks reported a pass. The later
+// entry silently wins, which is how a carefully written translation gets
+// replaced by a hurried one in an edit that touched neither of them.
+//
+// Read from the source text, because by the time it is an object the
+// duplicates are already gone.
+const source = readFileSync("src/i18n/en.ts", "utf8");
+const seenKeys = new Map();
+const duplicates = [];
+for (const m of source.matchAll(/^ {2}(?:"((?:[^"\\]|\\.)*)"|([^\s:"/*][^:"]*)):/gm)) {
+  const key = m[1] !== undefined ? m[1].replaceAll('\\"', '"') : m[2].trim();
+  const line = source.slice(0, m.index).split("\n").length;
+  if (seenKeys.has(key)) duplicates.push([key, seenKeys.get(key), line]);
+  else seenKeys.set(key, line);
+}
+for (const [key, first, again] of duplicates) {
+  fail(
+    "src/i18n/en.ts",
+    `written twice, line ${first} and line ${again}: ${JSON.stringify(key)}`,
+  );
+}
+if (duplicates.length === 0) console.log(`PASS  ${seenKeys.size} keys, none repeated`);
 
 console.log("\n-- nothing translates to itself");
 // A copied-across value reads as done and is not. Proper nouns are the honest

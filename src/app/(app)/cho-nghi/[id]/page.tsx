@@ -4,12 +4,13 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { requireMember } from "@/lib/dal";
+import { amenityNames } from "@/lib/amenities";
 import { withOrg } from "@/lib/db";
 import { formatVnd } from "@/lib/dates";
 
 import { PublicPageForm } from "./PublicPageForm";
 import { publishProperty, setRoomPrice } from "./actions";
-import { getT } from "@/lib/locale";
+import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,6 +33,8 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         name: true,
         address: true,
         intro: true,
+        houseRules: true,
+        amenities: true,
         publicSlug: true,
         published: true,
         rooms: {
@@ -52,6 +55,12 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
 
   const unpriced = property.rooms.filter((r) => r.basePrice === null).length;
 
+  const amenities = amenityNames(property.amenities, await readLocale());
+  const houseRules = (property.houseRules ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+
   return (
     <>
       <Link
@@ -66,6 +75,43 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
       </h1>
       {property.address ? (
         <p className="mt-1 text-[14px] text-ink-600">{property.address}</p>
+      ) : null}
+
+      {/* What the wizard collected, shown back. Read-only for now: changing an
+          amenity after creation needs an editor this page does not have yet,
+          and a list that looks editable and is not is worse than a plain one. */}
+      {amenities.length > 0 || houseRules.length > 0 ? (
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {amenities.length > 0 ? (
+            <section>
+              <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-500">
+                {t("Tiện nghi cơ sở")}
+              </h2>
+              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {amenities.map((name) => (
+                  <li key={name} className="text-[14px] text-ink-700">
+                    · {name}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {houseRules.length > 0 ? (
+            <section>
+              <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-500">
+                {t("Nội quy lưu trú")}
+              </h2>
+              <ul className="mt-2 space-y-1">
+                {houseRules.map((rule) => (
+                  <li key={rule} className="text-[14px] text-ink-700">
+                    · {rule}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
       ) : null}
 
       {/* ---- rooms and prices ------------------------------------------- */}

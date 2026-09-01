@@ -153,8 +153,8 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
         </h1>
         <EmptyState
           title={t("Chưa có cơ sở nào")}
-          description={t("Thêm chỗ nghỉ đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.")}
-          actionLabel={t("Thêm chỗ nghỉ")}
+          description={t("Thêm cơ sở đầu tiên và các phòng của nó. Lịch, buồng phòng và trang đặt phòng đều dựng lên từ đó.")}
+          actionLabel={t("Thêm cơ sở")}
           actionHref="/cho-nghi/moi"
         />
       </>

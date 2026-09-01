@@ -99,7 +99,7 @@ export function AuthForm({
         <>
           <Field label={t("Tên của bạn")} name="name" autoComplete="name" />
           <Field
-            label={t("Tên cơ sở")}
+            label={t("Tên doanh nghiệp")}
             name="orgName"
             hint={t("Tên bạn dùng để gọi chỗ nghỉ của mình. Đổi được sau.")}
           />

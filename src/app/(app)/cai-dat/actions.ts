@@ -19,7 +19,7 @@ import { getT } from "@/lib/locale";
 export type SettingsState = { error: string | null; notice?: string };
 
 const orgSchema = z.object({
-  name: z.string().trim().min(1, "Tên cơ sở không được để trống."),
+  name: z.string().trim().min(1, "Tên doanh nghiệp không được để trống."),
   timezone: z.enum(TIMEZONES),
 });
 

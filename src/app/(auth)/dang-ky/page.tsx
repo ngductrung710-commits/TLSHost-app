@@ -24,7 +24,7 @@ export default async function SignUpPage() {
         {t("Tạo tài khoản chủ nhà")}
       </h1>
       <p className="mt-2 mb-7 text-[15px] text-ink-600">
-        {t("Một tài khoản, một cơ sở. Thêm chỗ nghỉ và mời người sau.")}
+        {t("Một tài khoản, một doanh nghiệp. Thêm cơ sở và mời người sau.")}
       </p>
 
       <AuthForm mode="signUp" action={signUp} />

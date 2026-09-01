@@ -1,39 +1,30 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { requireMember } from "@/lib/dal";
+import { getT, readLocale } from "@/lib/locale";
 
 import { PropertyWizard } from "./PropertyWizard";
 import { createProperty } from "../actions";
-import { getT } from "@/lib/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
-  return { title: t("Thêm chỗ nghỉ") };
+  return { title: t("Thêm cơ sở") };
 }
 
+/**
+ * The wizard covers the viewport, so this page has no heading of its own —
+ * the panel carries its own header, rail and footer.
+ *
+ * The language is read here and handed down as a prop. Client components get
+ * the dictionary through I18nProvider, but the dictionary cannot answer "which
+ * language is this" — it is an empty object for Vietnamese — and the amenity
+ * catalogue and country list are keyed by language rather than translated
+ * through it.
+ */
 export default async function NewPropertyPage() {
-  const t = await getT();
   const member = await requireMember();
   if (member.role !== "OWNER") redirect("/cho-nghi");
 
-  return (
-    <>
-      <Link
-        href="/cho-nghi"
-        className="text-[14px] font-medium text-ink-500 hover:text-ink-900"
-      >
-        {t("← Về danh sách")}
-      </Link>
-      <h1 className="mt-3 text-[18px] font-semibold text-ink-900">
-        {t("Thêm chỗ nghỉ")}
-      </h1>
-      <p className="mb-7 mt-1 max-w-2xl text-[14px] text-ink-600">
-        {t("Phòng là thứ nhận đặt. Liệt kê đủ phòng ở đây thì lịch sẽ có đủ hàng.")}
-      </p>
-
-      <PropertyWizard action={createProperty} />
-    </>
-  );
+  return <PropertyWizard action={createProperty} lang={await readLocale()} />;
 }

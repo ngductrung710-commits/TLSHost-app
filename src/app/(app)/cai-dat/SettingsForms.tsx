@@ -78,7 +78,7 @@ export function OrgForm({
 
       <div>
         <label htmlFor="orgName" className="block text-[14px] font-medium text-ink-700">
-          {t("Tên cơ sở")}
+          {t("Tên doanh nghiệp")}
         </label>
         <input
           id="orgName"
