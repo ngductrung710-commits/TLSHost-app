@@ -119,6 +119,26 @@ if (!existsSync(marketing)) {
   console.log(`${ok ? "PASS" : "FAIL"}  free plan's one-property promise matches`);
 
   /* ------------------------------------------------------------------ */
+  console.log("\n-- the page does not sell something that does not exist");
+
+  // The Channel Manager card used to say "Dùng thử 14 ngày". There is no trial
+  // anywhere in this codebase — signing up creates an organization on FREE and
+  // that is all — so the button promised a thing the software has never been
+  // able to give. It went unnoticed because it pointed at a waitlist: nothing
+  // happened when you clicked it, so nothing could be wrong. Wiring the button
+  // to the real application is what made the claim testable.
+  //
+  // If a trial is ever built, this is the check to change rather than delete.
+  const trialWords = ["Dùng thử", "dùng thử", "miễn phí 14", "14 ngày"];
+  const sold = trialWords.filter((w) => block.includes(w));
+  const noTrial = sold.length === 0;
+  if (!noTrial) failures += 1;
+  console.log(
+    noTrial
+      ? "PASS  no trial advertised, and none implemented"
+      : `FAIL  the page offers a trial (${sold.join(", ")}) that PLANS has no concept of`,
+  );
+
   console.log("\n-- the two plan cards list the same things, word for word");
 
   // The workspace shows a plan card and so does the pricing page, and until
