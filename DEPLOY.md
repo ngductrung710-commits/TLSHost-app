@@ -201,6 +201,29 @@ Không gian làm việc — nhắc lại: `.env` phải đầy đủ **trước*
 cd /var/www/tlshost-app && npm run build
 ```
 
+### Hai thư mục Next KHÔNG tự chép
+
+Cả hai dự án bật `output: "standalone"`: Next viết ra một thư mục
+`.next/standalone` chứa `server.js` và đúng những gói mà mã thật sự nạp — 102 MB
+cho ứng dụng thay vì 782 MB `node_modules`, 30 MB cho trang giới thiệu thay vì
+449 MB.
+
+Nhưng nó **không** chép `.next/static` và `public/` vào đó, và không cảnh báo gì.
+Bỏ hai lệnh dưới đây thì máy chủ vẫn khởi động, vẫn trả HTML, và **404 mọi file
+CSS, JavaScript, ảnh** — trang hiện ra trần trụi chứ không phải trang báo lỗi,
+nên rất dễ tưởng là lỗi CSS.
+
+```bash
+cd /var/www/tlshost && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
+```
+
+```bash
+cd /var/www/tlshost-app && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
+```
+
+Chạy lại hai lệnh này **sau mỗi lần build**. `.next/standalone` bị xoá và tạo
+lại mỗi lần, nên bản chép cũ biến mất cùng nó.
+
 Build worker đồng bộ. Bước này bắt buộc và dễ quên: `scripts/sync-worker.mjs`
 nạp `.tmp/sync.mjs`, mà `.tmp/` nằm trong `.gitignore` nên không có trong repo.
 Thiếu bước này, cron chạy và fail mỗi giờ:
@@ -221,17 +244,23 @@ npm run check
 ## 6. PM2
 
 ```bash
-cd /var/www/tlshost && pm2 start npm --name tlshost-web -- start
+pm2 start /var/www/tlshost/.next/standalone/server.js --name tlshost-web --cwd /var/www/tlshost/.next/standalone
 ```
 
 ```bash
-cd /var/www/tlshost-app && PORT=3001 pm2 start npm --name tlshost-app -- start
+PORT=3001 pm2 start /var/www/tlshost-app/.next/standalone/server.js --name tlshost-app --cwd /var/www/tlshost-app/.next/standalone
 ```
 
-`next start` đọc `PORT` từ môi trường. Truyền cổng qua `npm start -- --port`
-cũng chạy, nhưng nó phải đi qua hai lớp `--` liên tiếp và im lặng rơi mất cổng
-nếu một lớp bị viết sai — lúc đó ứng dụng chiếm cổng 3000 và đè lên trang giới
-thiệu.
+Chạy thẳng `server.js`, không phải `npm start`. Với `output: "standalone"`,
+`next start` vẫn chạy nhưng nó cần cả `node_modules` — tức là bỏ đi toàn bộ
+điểm lợi của standalone.
+
+`server.js` đọc `PORT` và `HOSTNAME` từ môi trường. Không có cách nào truyền
+cổng bằng tham số dòng lệnh, nên không có cái bẫy `--` hai lớp mà `npm start`
+từng có; đổi lại, quên `PORT` thì nó chiếm cổng 3000 và đè lên trang giới thiệu.
+
+`--cwd` bắt buộc: `server.js` tìm `.next/`, `public/` và `.env` theo đường dẫn
+tương đối so với thư mục làm việc.
 
 Đồng bộ kênh mỗi giờ. Đây là cron một lần rồi thoát, không phải tiến trình chạy
 mãi — không có gì cần giữ trong bộ nhớ giữa hai lần chạy, và một lần fail chỉ
@@ -399,12 +428,15 @@ kết nối Stripe/PayPal đã lưu đều thành rác. Cất `.env` ở nơi kh
 ## 10. Cập nhật về sau
 
 ```bash
-cd /var/www/tlshost-app && git pull && npm install && npx prisma migrate deploy && npm run build && npm run build:worker && pm2 restart tlshost-app
+cd /var/www/tlshost-app && git pull && npm install && npx prisma migrate deploy && npm run build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && npm run build:worker && pm2 restart tlshost-app
 ```
 
 ```bash
-cd /var/www/tlshost && git pull && npm install && npm run build && pm2 restart tlshost-web
+cd /var/www/tlshost && git pull && npm install && npm run build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && pm2 restart tlshost-web
 ```
+
+Hai lệnh `cp` nằm giữa `build` và `restart` là bắt buộc, không phải tuỳ chọn —
+xem mục 5.
 
 ---
 
