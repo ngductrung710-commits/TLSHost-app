@@ -131,6 +131,12 @@ VAPID_PRIVATE_KEY="..."
 VAPID_SUBJECT="mailto:ban@tlshost.vn"
 
 SECRET_KEY="..."
+
+TLSHOST_BANK_BIN="970423"
+TLSHOST_BANK_ACCOUNT="..."
+TLSHOST_BANK_ACCOUNT_NAME="NGUYEN VAN A"
+TLSHOST_BANK_NAME="TPBank"
+TLSHOST_BANK_CITY="Ha Noi"
 ```
 
 Ghi chú về từng biến:
@@ -142,6 +148,15 @@ Ghi chú về từng biến:
 - **`SECRET_KEY` không được đổi sau khi có chủ nhà kết nối cổng thanh toán.**
   Đổi nó làm mọi khoá Stripe/PayPal đã lưu không giải mã được nữa, và từng chủ
   nhà phải tự kết nối lại.
+- **Bốn biến `TLSHOST_BANK_*` là tài khoản *bạn* nhận tiền thuê bao**, không
+  liên quan gì tới Stripe/PayPal mà chủ nhà kết nối để thu tiền khách. Phải có
+  đủ bốn, hoặc không có cái nào: thiếu một cái thì trang thanh toán nói chưa
+  cấu hình thay vì hiện một mã QR chuyển tiền đi đâu không ai nhận.
+  `TLSHOST_BANK_CITY` là tuỳ chọn.
+- **`TLSHOST_BANK_BIN` là mã Napas sáu chữ số, không phải mã SWIFT.** Đừng gõ
+  theo trí nhớ — sai một chữ số là tiền sang ngân hàng khác. Lấy nó ra khỏi
+  chính mã VietQR mà app ngân hàng của bạn sinh: mở app, lưu ảnh mã QR, rồi
+  giải mã nó. Số tài khoản trong mã phải khớp với dãy số in trên đó.
 
 Khoá quyền đọc file, vì nó chứa mật khẩu cơ sở dữ liệu và khoá giải mã:
 
@@ -393,12 +408,50 @@ cd /var/www/tlshost && git pull && npm install && npm run build && pm2 restart t
 
 ---
 
+## Hai lệnh vận hành
+
+Không có thanh toán thuê bao tự động và không có trang quản trị. Hai việc dưới
+đây làm bằng dòng lệnh, trên máy chủ, trong thư mục `tlshost-app`.
+
+**Đổi gói cho một tổ chức.** Dùng khi cấp tay, khi hoàn tiền, hoặc khi thử.
+
+```bash
+npm run plan -- chu-nha@vi-du.vn PRO 12
+```
+
+Bỏ tên gói thì chỉ xem, không đổi gì. Bỏ số tháng thì gói không có hạn kết
+thúc — và một gói trả phí không hạn sẽ *chặn* nút mua, vì mua thêm một tháng
+đè lên "vô thời hạn" là rút ngắn chứ không phải gia hạn.
+
+**Xác nhận đã nhận tiền chuyển khoản.** Sao kê ngân hàng chưa nối vào đâu cả,
+nên phải có người đọc rồi xác nhận.
+
+```bash
+npm run purchases
+```
+
+```bash
+npm run purchases -- TLSABC1234
+```
+
+Xác nhận hai lần là an toàn: lần thứ hai báo đơn đã xử lý và không cộng thêm
+tháng nào. Đó là ràng buộc ở tầng cơ sở dữ liệu, không phải ở tầng nút bấm.
+
+---
+
 ## Những việc còn lại, không thuộc phần triển khai
 
-- **Năm file SVG logo kênh** cần lưu vào `tlshost/public/channels/`. Không có
-  chúng thì dải logo trên trang giới thiệu hiện tên chữ thay cho hình.
+- **Bảy file logo kênh trong `tlshost/public/channels/` lấy từ trang sưu tầm,
+  không phải bộ nhận diện chính thức.** Chỉ Airbnb và Booking.com là bản gốc.
+  Màu của bốn cái còn lại có thể lệch. Đối chiếu trước khi chạy thật.
 - **`tlshost-app/README.md` vẫn là bản mẫu mặc định của Next.js.** Không ảnh
   hưởng gì đến vận hành, nhưng đó là thứ đầu tiên người tiếp theo đọc.
+- **Mã VietQR chưa từng được quét bằng app ngân hàng thật.** Khối định danh
+  tài khoản trong mã do ứng dụng sinh ra giống từng byte với mã mà chính app
+  TPBank tạo cho cùng tài khoản đó, và một bộ giải mã độc lập đọc lại đúng số
+  tài khoản, số tiền và nội dung chuyển khoản. Nhưng chỉ app ngân hàng mới trả
+  lời được là Napas có chấp nhận hay không. Mở trang thanh toán, quét, kiểm bốn
+  thứ hiện lên — đừng chuyển tiền thật.
 - **Các lệnh gọi thật tới Stripe và PayPal chưa được kiểm** — chưa từng có khoá
   thật trong môi trường phát triển. Kết nối bằng khoá `sk_test_` trước và chạy
   thử một lượt thanh toán. Chỗ đáng nghi nhất đã ghi chú sẵn trong
