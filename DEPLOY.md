@@ -397,6 +397,13 @@ chưa phải `production`:
 curl -si https://app.tlshost.vn/dang-nhap | grep -i "set-cookie"
 ```
 
+Và endpoint sức khoẻ phải nói được chuyện với Postgres — `200` kèm
+`{"status":"ok"}`, không phải `503`:
+
+```bash
+curl -s https://app.tlshost.vn/suc-khoe
+```
+
 Rồi trên trình duyệt:
 
 1. Tạo tài khoản chủ nhà đầu tiên tại `https://app.tlshost.vn/dang-ky`.
@@ -465,6 +472,45 @@ cd /var/www/tlshost && git pull && npm install && npm run build && cp -r .next/s
 
 Hai lệnh `cp` nằm giữa `build` và `restart` là bắt buộc, không phải tuỳ chọn —
 xem mục 5.
+
+---
+
+## Giám sát
+
+Máy chủ chết lúc 2 giờ sáng thì không có gì báo cho bạn. Cách rẻ nhất để biết
+là một dịch vụ bên ngoài gọi vào mỗi vài phút.
+
+Ứng dụng có sẵn một endpoint cho việc đó:
+
+```bash
+curl -i https://app.tlshost.vn/suc-khoe
+```
+
+Khoẻ thì `200` và `{"status":"ok","ms":12}`. Không nói được chuyện với Postgres
+thì `503` và `{"status":"down"}`.
+
+**Đừng trỏ giám sát vào trang đăng nhập.** Đó là sai lầm mặc định, và nó im
+lặng: khi Postgres chết, `/dang-nhap` vẫn trả `200` vì trang đó không đọc cơ sở
+dữ liệu — trong khi lịch trống trơn với mọi chủ nhà và không lượt đặt nào lưu
+được. Đã thử đúng tình huống đó: `/suc-khoe` trả 503 còn `/dang-nhap` trả 200.
+
+Thân trả về cố tình gần như không nói gì. Đây là URL công khai, ai cũng gọi
+được, và một endpoint sức khoẻ kể ra thành phần nào hỏng với lỗi gì là một
+endpoint do thám. Chi tiết nằm trong log của PM2.
+
+Dựng cảnh báo, khoảng năm phút:
+
+1. Tạo tài khoản ở uptimerobot.com — gói miễn phí đủ dùng.
+2. **Add New Monitor** → loại **HTTP(s)**.
+3. URL: `https://app.tlshost.vn/suc-khoe`
+4. **Monitoring interval**: 5 phút.
+5. Bật thông báo qua email, và cả Telegram nếu bạn muốn biết ngay.
+6. Thêm một monitor nữa cho `https://tlshost.vn/vi` — trang giới thiệu không
+   đụng cơ sở dữ liệu nên nó là một tín hiệu khác: máy chủ và Nginx còn sống
+   hay không.
+
+Tắt máy chủ một phút rồi xem có nhận được cảnh báo không. Một hệ thống giám sát
+chưa từng báo động là một hệ thống chưa biết có chạy hay không.
 
 ---
 

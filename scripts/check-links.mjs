@@ -36,6 +36,7 @@ const ENTRY_POINTS = new Set([
   "/buong-phong", // where housekeepers are sent, and their rail's first entry
   "/tham-gia/[token]", // sent to someone over Zalo as an absolute URL
   "/feed/[token]", // pasted into an OTA's calendar import, not clicked
+  "/suc-khoe", // polled by an uptime monitor; a link to it would be the bug
 ]);
 
 const isGroup = (segment) => segment.startsWith("(") && segment.endsWith(")");
