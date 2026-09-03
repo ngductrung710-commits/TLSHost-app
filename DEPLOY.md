@@ -476,8 +476,8 @@ tháng nào. Đó là ràng buộc ở tầng cơ sở dữ liệu, không phả
 - **Bảy file logo kênh trong `tlshost/public/channels/` lấy từ trang sưu tầm,
   không phải bộ nhận diện chính thức.** Chỉ Airbnb và Booking.com là bản gốc.
   Màu của bốn cái còn lại có thể lệch. Đối chiếu trước khi chạy thật.
-- **`tlshost-app/README.md` vẫn là bản mẫu mặc định của Next.js.** Không ảnh
-  hưởng gì đến vận hành, nhưng đó là thứ đầu tiên người tiếp theo đọc.
+- **`ANTHROPIC_API_KEY` chưa có.** Trang Trợ lý tự giải thích và tắt đi, mọi
+  thứ khác chạy bình thường. Tuỳ chọn, không chặn triển khai.
 - **Mã VietQR chưa từng được quét bằng app ngân hàng thật.** Khối định danh
   tài khoản trong mã do ứng dụng sinh ra giống từng byte với mã mà chính app
   TPBank tạo cho cùng tài khoản đó, và một bộ giải mã độc lập đọc lại đúng số
