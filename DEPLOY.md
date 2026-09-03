@@ -293,6 +293,13 @@ Trỏ DNS của `tlshost.vn` và `app.tlshost.vn` về IP của VPS trước, r�
 
 ```bash
 sudo tee /etc/nginx/sites-available/tlshost > /dev/null <<'CONF'
+# Vùng đếm cho form đăng nhập. Phải khai ở cấp http, ngoài mọi server block —
+# đặt bên trong một server block là Nginx từ chối nạp cấu hình.
+#
+# $binary_remote_addr là địa chỉ TCP thật của kết nối, không phải header do
+# client gửi, nên không giả mạo được. 10m đủ cho khoảng 160.000 địa chỉ.
+limit_req_zone $binary_remote_addr zone=dangnhap:10m rate=10r/m;
+
 server {
     listen 80;
     server_name tlshost.vn www.tlshost.vn;
@@ -313,6 +320,27 @@ server {
     server_name app.tlshost.vn;
     # Trang khách tự đặt phòng có thể tải logo, nên nới hơn mặc định 1M.
     client_max_body_size 4M;
+    # Lớp thứ hai cho đăng nhập, trước cả khi request chạm tới ứng dụng.
+    #
+    # Ứng dụng đã tự đếm (src/lib/rateLimit.ts): 5 lần sai một email, 30 lần
+    # một địa chỉ, trong 15 phút. Lớp này khác ở chỗ nó chặn sớm hơn — kẻ tấn
+    # công không tiêu được CPU băm mật khẩu của máy chủ, và bộ đếm trong bộ nhớ
+    # của ứng dụng không phình theo lưu lượng rác.
+    #
+    # burst=5 nodelay cho phép năm request dồn tức thời rồi mới siết, nên một
+    # người gõ nhầm vài lần liên tiếp không bị 503.
+    location = /dang-nhap {
+        limit_req zone=dangnhap burst=5 nodelay;
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
@@ -476,6 +504,11 @@ tháng nào. Đó là ràng buộc ở tầng cơ sở dữ liệu, không phả
 - **Bảy file logo kênh trong `tlshost/public/channels/` lấy từ trang sưu tầm,
   không phải bộ nhận diện chính thức.** Chỉ Airbnb và Booking.com là bản gốc.
   Màu của bốn cái còn lại có thể lệch. Đối chiếu trước khi chạy thật.
+- **Giới hạn đăng nhập chỉ chặn được kẻ tấn công, không chặn được kẻ kiên
+  nhẫn.** Năm lần sai một email trong mười lăm phút là đủ để dập một cuộc dò
+  mật khẩu tự động, nhưng ai đó thử năm mật khẩu mỗi mười lăm phút suốt một
+  tuần thì vẫn thử được vài trăm lần. Chống điều đó cần mật khẩu mạnh và xác
+  thực hai lớp, cả hai đều chưa có.
 - **`ANTHROPIC_API_KEY` chưa có.** Trang Trợ lý tự giải thích và tắt đi, mọi
   thứ khác chạy bình thường. Tuỳ chọn, không chặn triển khai.
 - **Mã VietQR chưa từng được quét bằng app ngân hàng thật.** Khối định danh

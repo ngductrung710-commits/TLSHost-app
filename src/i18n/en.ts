@@ -711,6 +711,9 @@ export const EN: Record<string, string> = {
   "{ten} · còn {n} ngày": "{ten} · {n} days left",
   "{ten} · đã hết hạn": "{ten} · expired",
 
+  "Sai quá nhiều lần. Thử lại sau {n} phút.":
+    "Too many failed attempts. Try again in {n} minutes.",
+
   /* ---- Buying a month of a plan ---- */
   "Mua 1 tháng · {gia}": "Buy one month · {gia}",
   "Mua 1 tháng gói {ten}": "One month of {ten}",

@@ -12,7 +12,7 @@
     "build:worker": "esbuild src/lib/sync.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/sync.mjs",
     "sync": "npm run build:worker && node --env-file=.env scripts/sync-worker.mjs",
     "check:proposals": "esbuild src/lib/applyProposal.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/applyProposal.mjs && node --env-file=.env scripts/check-proposals.mjs",
-    "check": "npm run check:ical && npm run check:sync && npm run check:proposals && npm run check:themes && npm run check:appearance && npm run check:plans && npm run check:payments && npm run check:i18n && npm run check:sales && npm run check:billing && npm run check:vietqr && npm run check:qr && npm run check:purchases && npm run check:links",
+    "check": "npm run check:ical && npm run check:sync && npm run check:proposals && npm run check:themes && npm run check:appearance && npm run check:plans && npm run check:payments && npm run check:i18n && npm run check:sales && npm run check:billing && npm run check:vietqr && npm run check:qr && npm run check:purchases && npm run check:ratelimit && npm run check:links",
     "check:themes": "esbuild src/lib/themes.ts --bundle --format=esm --platform=node --outfile=.tmp/themes.mjs --alias:@=./src && node scripts/check-themes.mjs",
     "check:appearance": "node scripts/check-appearance.mjs",
     "check:plans": "esbuild src/lib/plans.ts --bundle --format=esm --platform=node --outfile=.tmp/plans.mjs --alias:@=./src && node scripts/check-plans.mjs",
@@ -25,7 +25,8 @@
     "check:vietqr": "esbuild src/lib/vietqr.ts --bundle --format=esm --platform=node --outfile=.tmp/vietqr.mjs --alias:@=./src && node scripts/check-vietqr.mjs",
     "check:qr": "esbuild src/lib/qr.ts --bundle --format=esm --platform=node --outfile=.tmp/qr.mjs --alias:@=./src && node scripts/check-qr.mjs",
     "check:purchases": "esbuild src/lib/purchases.ts --bundle --format=esm --platform=node --packages=external --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/purchases.mjs && node --env-file=.env scripts/check-purchases.mjs",
-    "purchases": "node --env-file=.env scripts/purchases.mjs"
+    "purchases": "node --env-file=.env scripts/purchases.mjs",
+    "check:ratelimit": "esbuild src/lib/rateLimit.ts --bundle --format=esm --platform=node --alias:@=./src --alias:server-only=./scripts/server-only-stub.js --outfile=.tmp/ratelimit.mjs && node scripts/check-ratelimit.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
