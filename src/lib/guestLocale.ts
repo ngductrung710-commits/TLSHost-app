@@ -85,9 +85,19 @@ export function withLocale(
     if (typeof value === "string") next.set(key, value);
     else if (Array.isArray(value)) for (const v of value) next.append(key, v);
   }
-  // Vietnamese is the default, so it is the absence of the parameter — the
-  // same rule the staff cookie follows.
-  if (locale === "en") next.set(GUEST_LOCALE_PARAM, "en");
+  // Always written, for both languages — and this is where the staff cookie's
+  // rule does not carry over.
+  //
+  // A missing cookie means "this person has not chosen", and there is nothing
+  // else it could mean. A missing parameter here means the same thing, but
+  // "has not chosen" resolves to Accept-Language rather than to Vietnamese —
+  // so leaving it off is not a way of saying Vietnamese, it is a way of
+  // saying nothing. A guest on an English browser who pressed "Tiếng Việt"
+  // got a link to a URL with no parameter, which the header then answered in
+  // English: a switcher that navigated and changed nothing.
+  //
+  // An explicit choice has to be representable.
+  next.set(GUEST_LOCALE_PARAM, locale);
   const query = next.toString();
   return query === "" ? "" : `?${query}`;
 }

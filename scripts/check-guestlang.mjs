@@ -70,14 +70,39 @@ console.log("\n-- the switcher keeps the guest where they were");
 
 const dates = { tu: "2026-09-10", den: "2026-09-12" };
 
+// These four used to expect no parameter for Vietnamese, on the grounds that
+// Vietnamese is the default — the rule the staff cookie follows. They passed,
+// and they were wrong, and what they were protecting was a switcher that did
+// nothing.
+//
+// A missing cookie can only mean "has not chosen". A missing parameter here
+// means that too, but "has not chosen" is answered by Accept-Language rather
+// than by Vietnamese. So on an English browser the "Tiếng Việt" link pointed
+// at a URL the header then answered in English: it navigated, the page came
+// back identical, and the button looked broken because it was.
 check("to English, dates kept", withLocale(dates, "en"), "?tu=2026-09-10&den=2026-09-12&ng=en");
-// Vietnamese is the default, so it is the absence of the parameter — the
-// same rule the staff cookie follows.
-check("to Vietnamese, no parameter", withLocale(dates, "vi"), "?tu=2026-09-10&den=2026-09-12");
-check("an existing ng is replaced, not doubled", withLocale({ ...dates, ng: "en" }, "vi"), "?tu=2026-09-10&den=2026-09-12");
+check("to Vietnamese, dates kept and said out loud", withLocale(dates, "vi"), "?tu=2026-09-10&den=2026-09-12&ng=vi");
+check("an existing ng is replaced, not doubled", withLocale({ ...dates, ng: "en" }, "vi"), "?tu=2026-09-10&den=2026-09-12&ng=vi");
 check("nothing to keep, English", withLocale({}, "en"), "?ng=en");
-check("nothing to keep, Vietnamese", withLocale({}, "vi"), "");
-check("undefined values are dropped", withLocale({ tu: undefined, den: "2026-09-12" }, "vi"), "?den=2026-09-12");
+check("nothing to keep, Vietnamese", withLocale({}, "vi"), "?ng=vi");
+check("undefined values are dropped", withLocale({ tu: undefined, den: "2026-09-12" }, "vi"), "?den=2026-09-12&ng=vi");
+
+/* -------------------------------------------------------------------- */
+console.log("\n-- and the round trip: a choice outlives the browser it was made on");
+
+// The invariant the switcher actually needs, tested end to end rather than in
+// two halves that each look fine. Build the link, read the parameter back out
+// of it, and resolve it against the *opposite* browser language — which is
+// precisely the guest the switcher exists for.
+const roundTrip = (chosen, header) => {
+  const query = new URLSearchParams(withLocale(dates, chosen).slice(1));
+  return guestLocaleFrom(query.get("ng") ?? undefined, header);
+};
+
+check("chose Vietnamese on an English browser", roundTrip("vi", "en-US,en;q=0.9"), "vi");
+check("chose English on a Vietnamese browser", roundTrip("en", "vi-VN,vi;q=0.9"), "en");
+check("chose Vietnamese on a German browser", roundTrip("vi", "de-DE,de;q=0.9"), "vi");
+check("chose English on a German browser", roundTrip("en", "de-DE,de;q=0.9"), "en");
 
 /* -------------------------------------------------------------------- */
 console.log(failures === 0 ? "\nall checks passed" : `\n${failures} FAILED`);

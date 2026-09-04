@@ -47,10 +47,16 @@ function localeOf(formData: FormData): "vi" | "en" {
   return formData.get("ng") === "en" ? "en" : "vi";
 }
 
-/** Carry the language across a redirect, or a guest lands in the other one. */
+/**
+ * Carry the language across a redirect, or a guest lands in the other one.
+ *
+ * Written for Vietnamese too, not only English. Omitting it leaves the
+ * destination to Accept-Language, which sends a Vietnamese-reading guest on
+ * an English phone to an English confirmation page for the booking they just
+ * made in Vietnamese.
+ */
 function suffix(locale: "vi" | "en", first: boolean): string {
-  if (locale !== "en") return "";
-  return first ? "?ng=en" : "&ng=en";
+  return `${first ? "?" : "&"}ng=${locale}`;
 }
 
 export async function requestBooking(

@@ -107,18 +107,20 @@ export async function startPayment(
   //
   // A first draft sent an empty `?tt=` to both, which would have taken money
   // and then reported it unpaid.
-  const lang = locale === "en" ? "ng=en" : "";
+  // Both languages, for the reason in ../actions.ts: an absent parameter
+  // is not "Vietnamese", it is "ask the browser".
+  const lang = `ng=${locale}`;
   const successUrl =
     provider === "STRIPE"
-      ? `${base}/dat/${slug}/xong?tt={CHECKOUT_SESSION_ID}${lang ? `&${lang}` : ""}`
-      : `${base}/dat/${slug}/xong${lang ? `?${lang}` : ""}`;
+      ? `${base}/dat/${slug}/xong?tt={CHECKOUT_SESSION_ID}&${lang}`
+      : `${base}/dat/${slug}/xong?${lang}`;
 
   const checkout = await createCheckout(data.account, {
     amount: data.booking.totalCents,
     currency: data.currency,
     description: `${found.name} — ${data.booking.guestName}`,
     successUrl,
-    cancelUrl: `${base}/dat/${slug}/thanh-toan?dat=${data.booking.id}&huy=1${lang ? `&${lang}` : ""}`,
+    cancelUrl: `${base}/dat/${slug}/thanh-toan?dat=${data.booking.id}&huy=1&${lang}`,
   });
 
   if (!checkout.ok) return { error: t(checkout.error) };
