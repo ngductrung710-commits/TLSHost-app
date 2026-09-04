@@ -174,21 +174,25 @@ export async function loadDashboard(
 
     // Created and cancelled *on* this day. Only meaningful looking backwards,
     // so tomorrow reports zero rather than a number that cannot exist yet.
-    const [bookedOn, cancelledOn] =
-      dayOffset === 0
-        ? await Promise.all([
-            tx.booking.count({
-              where: { roomId: { in: roomIds }, createdAt: { gte: date, lt: next } },
-            }),
-            tx.booking.count({
-              where: {
-                roomId: { in: roomIds },
-                status: "CANCELLED",
-                updatedAt: { gte: date, lt: next },
-              },
-            }),
-          ])
-        : [0, 0];
+    //
+    // Sequential, not Promise.all — see the same note in src/lib/availability.ts.
+    // A transaction holds one connection, so these two could never have run at
+    // the same time; pg serialised them and warned that doing it this way is
+    // deprecated and breaks in pg@9. There was no parallelism to lose.
+    let bookedOn = 0;
+    let cancelledOn = 0;
+    if (dayOffset === 0) {
+      bookedOn = await tx.booking.count({
+        where: { roomId: { in: roomIds }, createdAt: { gte: date, lt: next } },
+      });
+      cancelledOn = await tx.booking.count({
+        where: {
+          roomId: { in: roomIds },
+          status: "CANCELLED",
+          updatedAt: { gte: date, lt: next },
+        },
+      });
+    }
 
     /* ---- the fortnight ------------------------------------------------ */
 

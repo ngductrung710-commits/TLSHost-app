@@ -80,20 +80,21 @@ export async function findVacancies(
     // direction of caution would refuse perfectly sellable nights.
     const overlap = { checkIn: { lt: to }, checkOut: { gt: from } };
 
-    const [bookings, blocks] = await Promise.all([
-      tx.booking.findMany({
-        where: { roomId: { in: ids }, status: { not: "CANCELLED" }, ...overlap },
-        select: { roomId: true },
-      }),
-      tx.block.findMany({
-        where: {
-          roomId: { in: ids },
-          dateFrom: { lt: to },
-          dateTo: { gt: from },
-        },
-        select: { roomId: true },
-      }),
-    ]);
+    // Sequential, not Promise.all — see the same note in src/lib/availability.ts.
+    // One transaction is one connection, so pg serialises these anyway and
+    // warns that the parallel form is deprecated and breaks in pg@9.
+    const bookings = await tx.booking.findMany({
+      where: { roomId: { in: ids }, status: { not: "CANCELLED" }, ...overlap },
+      select: { roomId: true },
+    });
+    const blocks = await tx.block.findMany({
+      where: {
+        roomId: { in: ids },
+        dateFrom: { lt: to },
+        dateTo: { gt: from },
+      },
+      select: { roomId: true },
+    });
 
     const busy = new Set([
       ...bookings.map((b) => b.roomId),
