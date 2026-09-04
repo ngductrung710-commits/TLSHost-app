@@ -14,6 +14,15 @@
 // the ones Napas wants, because both sides of the test are this repository.
 // The decisive test for that is a banking app scanning it, and no script here
 // can stand in for one.
+//
+// That test has been run once, by hand, on 2026-09-04: the TPBank app scanned
+// a payload built by qrPayloadFor() from the live TLSHOST_BANK_* values and
+// resolved it to the right bank, the right account number, the right holder,
+// with the amount and the memo both prefilled. So the tag layout below is
+// known-good against Napas, not merely self-consistent.
+//
+// It is worth re-running by hand whenever tag 38 changes — the account, the
+// BIN, or the service code — because that is the part this file cannot check.
 
 import {
   crc16,
