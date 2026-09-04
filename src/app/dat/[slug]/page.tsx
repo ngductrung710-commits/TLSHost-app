@@ -13,9 +13,10 @@ import {
   toIsoDate,
 } from "@/lib/dates";
 import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
+import { shownPrice, vndPerUsd } from "@/lib/exchange";
 import { fill } from "@/lib/i18n";
-import { dictFor } from "@/lib/locale";
 import { I18nProvider } from "@/components/I18nProvider";
+import { guestClientDict } from "./guestDict";
 
 import { PROPERTY_TYPE_LABELS } from "@/lib/propertyTypes";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
@@ -206,6 +207,14 @@ export default async function PublicBookingPage(
     .map((line) => line.trim())
     .filter((line) => line !== "");
 
+  // Whether anything on this page is a conversion, so the note below the
+  // room list appears exactly when it is true and never when it is not.
+  const converted = available.some(
+    (r) =>
+      r.basePrice !== null &&
+      shownPrice(r.basePrice, property.currency, locale).converted,
+  );
+
   const vars = themeVars(property.theme, property.brandColor);
   const tokens = THEMES[property.theme];
 
@@ -213,7 +222,7 @@ export default async function PublicBookingPage(
     // Every colour on this page comes from these variables. The host picks one
     // of four presets and optionally one accent; nothing else here is theirs to
     // set, which is what keeps the page readable whatever they choose.
-    <I18nProvider dict={dictFor(locale)}>
+    <I18nProvider dict={guestClientDict(locale)}>
     <div style={vars as React.CSSProperties} className="min-h-dvh bg-[var(--bg)] text-[var(--ink)]">
       <main className="mx-auto w-full max-w-3xl px-5 py-12">
         <header>
@@ -372,7 +381,14 @@ export default async function PublicBookingPage(
                     {room.basePrice !== null ? (
                       <p className="text-right">
                         <span className="text-[18px] font-semibold tnum">
-                          {formatMoney(room.basePrice, property.currency, locale)}
+                          {(() => {
+                            const shown = shownPrice(
+                              room.basePrice,
+                              property.currency,
+                              locale,
+                            );
+                            return formatMoney(shown.amount, shown.currency, locale);
+                          })()}
                         </span>
                         <span className="block text-[13px] text-[var(--ink-soft)]">
                           {t("mỗi đêm")}
@@ -385,11 +401,14 @@ export default async function PublicBookingPage(
                     <p className="mt-3 border-t border-[var(--line)] pt-3 text-[14px]">
                       {fill(t("{n} đêm"), { n: nights })} ·{" "}
                       <span className="font-semibold tnum">
-                        {formatMoney(
-                          room.basePrice * nights,
-                          property.currency,
-                          locale,
-                        )}
+                        {(() => {
+                          const shown = shownPrice(
+                            room.basePrice * nights,
+                            property.currency,
+                            locale,
+                          );
+                          return formatMoney(shown.amount, shown.currency, locale);
+                        })()}
                       </span>
                     </p>
                   ) : null}
@@ -416,6 +435,18 @@ export default async function PublicBookingPage(
             </ul>
           )}
         </section>
+
+        {converted ? (
+          <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)]">
+            {fill(
+              t("Giá trên là quy đổi để bạn dễ hình dung. Khoản thực thu là {tien}, theo tỷ giá {ty} ₫ = 1 $."),
+              {
+                tien: property.currency,
+                ty: vndPerUsd().toLocaleString(locale === "en" ? "en-GB" : "vi-VN"),
+              },
+            )}
+          </p>
+        ) : null}
 
         {propertyAmenities.length > 0 ? (
           <section className="mt-10">

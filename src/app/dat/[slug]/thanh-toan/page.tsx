@@ -5,9 +5,10 @@ import { notFound } from "next/navigation";
 import { withOrg, withPublicSlug } from "@/lib/db";
 import { formatMoney, shortDate } from "@/lib/dates";
 import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
+import { shownPrice } from "@/lib/exchange";
 import { fill } from "@/lib/i18n";
-import { dictFor } from "@/lib/locale";
 import { I18nProvider } from "@/components/I18nProvider";
+import { guestClientDict } from "../guestDict";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
 
 import { PayForm } from "./PayForm";
@@ -95,7 +96,7 @@ export default async function PaymentPage(
     !data.paid && providers.length > 0 && (data.booking.totalCents ?? 0) > 0;
 
   return (
-    <I18nProvider dict={dictFor(locale)}>
+    <I18nProvider dict={guestClientDict(locale)}>
     <div
       style={vars as React.CSSProperties}
       className="min-h-dvh bg-[var(--bg)] text-[var(--ink)]"
@@ -126,12 +127,29 @@ export default async function PaymentPage(
           {data.booking.totalCents !== null ? (
             <div className="flex justify-between gap-4 pt-1">
               <dt className="text-[var(--ink-soft)]">{t("Tổng cộng")}</dt>
-              <dd className="text-[17px] font-semibold tnum">
-                {formatMoney(
-                  data.booking.totalCents,
-                  data.org?.currency ?? "VND",
-                  locale,
-                )}
+              <dd className="text-right">
+                <span className="text-[17px] font-semibold tnum">
+                  {formatMoney(
+                    data.booking.totalCents,
+                    data.org?.currency ?? "VND",
+                    locale,
+                  )}
+                </span>
+                {(() => {
+                  const shown = shownPrice(
+                    data.booking.totalCents!,
+                    data.org?.currency ?? "VND",
+                    locale,
+                  );
+                  if (!shown.converted) return null;
+                  return (
+                    <span className="block text-[13px] font-normal text-[var(--ink-soft)] tnum">
+                      {fill(t("khoảng {gia}"), {
+                        gia: formatMoney(shown.amount, shown.currency, locale),
+                      })}
+                    </span>
+                  );
+                })()}
               </dd>
             </div>
           ) : null}

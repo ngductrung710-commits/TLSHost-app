@@ -3,6 +3,7 @@
 // a test proves nothing about what a guest is charged.
 export { __testing, paypalSupports } from "@/lib/payments";
 export { formatMoney, formatPlanPrice } from "@/lib/dates";
+export { shownPrice, vndPerUsd, displayCurrencyFor } from "@/lib/exchange";
 export {
   decryptSecret,
   encryptSecret,

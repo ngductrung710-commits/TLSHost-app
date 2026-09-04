@@ -24,6 +24,9 @@ const {
   paypalSupports,
   formatMoney,
   formatPlanPrice,
+  shownPrice,
+  vndPerUsd,
+  displayCurrencyFor,
   decryptSecret,
   encryptSecret,
   maskSecret,
@@ -32,7 +35,11 @@ const {
 
 let failures = 0;
 const check = (label, got, want) => {
-  const ok = Object.is(got, want);
+  // Structural, not Object.is. Two objects holding the same fields are never
+  // the same object, so an Object.is comparison failed every assertion about
+  // one — and printed two identical JSON lines while doing it, which reads as
+  // a bug in the code under test rather than in the comparison.
+  const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) failures += 1;
   console.log(`${ok ? "PASS" : "FAIL"}  ${label}`);
   if (!ok) console.log(`      got  ${JSON.stringify(got)}\n      want ${JSON.stringify(want)}`);
@@ -66,12 +73,10 @@ check("TWD has none", paypalAmount(15_000, "TWD"), "15000");
 check("USD has two", paypalAmount(120, "USD"), "120.00");
 check("usd, lowercase, same", paypalAmount(120, "usd"), "120.00");
 check("EUR has two", paypalAmount(85.5, "EUR"), "85.50");
-// Joined, because check() compares with Object.is and two arrays holding the
-// same strings are still two arrays.
 check(
   "the no-decimals set is exactly those three",
-  [...PAYPAL_NO_DECIMALS].sort().join(" "),
-  "HUF JPY TWD",
+  [...PAYPAL_NO_DECIMALS].sort(),
+  ["HUF", "JPY", "TWD"],
 );
 
 console.log("\n-- PayPal: currencies it will not take");
@@ -105,6 +110,64 @@ check("an unknown currency shows its code", formatMoney(50, "XYZ", "vi"), "50 XY
 // rooms in dollars still pays us in đồng, by Vietnamese bank transfer.
 check("a plan price stays in dong", formatPlanPrice(690_000, "vi"), "690.000 ₫");
 check("…even for an English reader", formatPlanPrice(690_000, "en"), "690,000 ₫");
+
+/* -------------------------------------------------------------------- */
+console.log("\n-- a guest sees their own currency, and is told when it is a conversion");
+
+// The rule that matters more than the arithmetic: converted is a claim
+// about the number, and the page shows a "you will actually be charged in
+// X" line exactly when it is true. Get the flag wrong in the safe-looking
+// direction — always false — and every price on the Vietnamese page is a
+// conversion presented as the price.
+const R = vndPerUsd();
+check("the rate has a sane default", R, 26_300);
+
+check("Vietnamese reader wants dong", displayCurrencyFor("vi"), "VND");
+check("English reader wants dollars", displayCurrencyFor("en"), "USD");
+
+// $34 is 894.200 ₫ exactly, and 894.000 ₫ is what a host would quote.
+check("dollars to dong, rounded to something sayable", shownPrice(34, "USD", "vi"), {
+  amount: 894_000,
+  currency: "VND",
+  converted: true,
+});
+check("dong to dollars", shownPrice(894_000, "VND", "en"), {
+  amount: 34,
+  currency: "USD",
+  converted: true,
+});
+
+// Same currency both sides: the true price, and no note.
+check("dollars to an English reader are not converted", shownPrice(34, "USD", "en"), {
+  amount: 34,
+  currency: "USD",
+  converted: false,
+});
+check("dong to a Vietnamese reader are not converted", shownPrice(1_200_000, "VND", "vi"), {
+  amount: 1_200_000,
+  currency: "VND",
+  converted: false,
+});
+check("lowercase settlement is still the same currency", shownPrice(34, "usd", "en"), {
+  amount: 34,
+  currency: "USD",
+  converted: false,
+});
+
+// A pair with no rate shows the true price rather than a guess. Wrong
+// money is worse than unfamiliar money — the same rule formatMoney follows
+// for an unknown symbol.
+check("an unconvertible pair is left alone", shownPrice(85, "EUR", "vi"), {
+  amount: 85,
+  currency: "EUR",
+  converted: false,
+});
+
+check("zero converts to zero", shownPrice(0, "USD", "vi"), {
+  amount: 0,
+  currency: "VND",
+  converted: true,
+});
 
 /* -------------------------------------------------------------------- */
 console.log("\n-- provider secrets survive a round trip");

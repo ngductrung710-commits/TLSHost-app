@@ -813,6 +813,9 @@ export const EN: Record<string, string> = {
   "Stripe trả về {ma}.": "Stripe returned {ma}.",
   "PayPal trả về {ma}.": "PayPal returned {ma}.",
   "Stripe từ chối khoá này ({ma}).": "Stripe rejected this key ({ma}).",
+  "Giá trên là quy đổi để bạn dễ hình dung. Khoản thực thu là {tien}, theo tỷ giá {ty} ₫ = 1 $.":
+    "The prices above are converted so they are easier to read. You will actually be charged in {tien}, at {ty} ₫ = 1 $.",
+  "khoảng {gia}": "about {gia}",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

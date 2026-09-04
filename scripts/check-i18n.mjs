@@ -262,6 +262,53 @@ for (const [key, first, again] of duplicates) {
 }
 if (duplicates.length === 0) console.log(`PASS  ${seenKeys.size} keys, none repeated`);
 
+console.log("\n-- the guest pages ship only the strings they can render");
+
+// A booking page is the one page a stranger reaches, on a phone, once. It gets
+// a hand-written subset of the dictionary rather than all of it — the full one
+// took the English page from 34 KB to 86 KB so that two small forms could
+// translate fourteen strings.
+//
+// A hand-written list drifts, so it is checked against the components that
+// read it: every t("...") in a guest client component must be listed, and
+// every listed key must still be used. Without this the subset would quietly
+// stop covering the forms, and the only symptom would be Vietnamese words on
+// an English page — the exact failure this whole file exists to prevent.
+{
+  const GUEST_CLIENT_FILES = [
+    "src/app/dat/[slug]/BookingWidget.tsx",
+    "src/app/dat/[slug]/thanh-toan/PayForm.tsx",
+  ];
+  const listed = new Set(
+    [...readFileSync("src/app/dat/[slug]/guestDict.ts", "utf8").matchAll(
+      /^\s*"((?:[^"\\]|\\.)*)",$/gm,
+    )].map((m) => m[1]),
+  );
+
+  const used = new Set();
+  for (const file of GUEST_CLIENT_FILES) {
+    const code = stripComments(readFileSync(file, "utf8"));
+    for (const m of code.matchAll(/\bt\(\s*"((?:[^"\\]|\\.)*)"/g)) used.add(m[1]);
+  }
+
+  let drift = 0;
+  for (const key of used) {
+    if (!listed.has(key)) {
+      drift += 1;
+      fail("src/app/dat/[slug]/guestDict.ts", `not shipped to the client: ${JSON.stringify(key)}`);
+    }
+  }
+  for (const key of listed) {
+    if (!used.has(key)) {
+      drift += 1;
+      fail("src/app/dat/[slug]/guestDict.ts", `shipped but unused: ${JSON.stringify(key)}`);
+    }
+  }
+  if (drift === 0) {
+    console.log(`PASS  ${listed.size} keys, exactly what the guest forms use`);
+  }
+}
+
 console.log("\n-- nothing translates to itself");
 // A copied-across value reads as done and is not. Proper nouns are the honest
 // exception, and none of them carry Vietnamese diacritics.
