@@ -6,8 +6,7 @@ import { withOrg } from "@/lib/db";
 import { formatMoney, shortVi } from "@/lib/dates";
 import { KIND_LABELS, proposalSchema } from "@/lib/proposals";
 
-import { AskForm } from "./AskForm";
-import { approve, ask, reject } from "./actions";
+import { approve, reject } from "./actions";
 import { getT, readLocale } from "@/lib/locale";
 import { fill, type Locale, type T } from "@/lib/i18n";
 
@@ -117,7 +116,6 @@ export default async function AssistantPage() {
     rooms.map((r) => [r.id, `${r.property.name} — ${r.name}`]),
   );
 
-  const configured = Boolean(process.env.ANTHROPIC_API_KEY);
   const now = new Date();
 
   return (
@@ -126,30 +124,8 @@ export default async function AssistantPage() {
         {t("Trợ lý")}
       </h1>
       <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
-        {t("Mô tả việc bạn cần bằng lời thường ngày. Trợ lý soạn sẵn thay đổi, bạn đọc rồi duyệt — không có gì được ghi vào lịch trước khi bạn gật đầu.")}
+        {t("Mọi đề xuất trợ lý đã soạn, kèm việc bạn đã duyệt hay bỏ qua. Hỏi trợ lý ở khung bên phải màn hình.")}
       </p>
-
-      {!configured ? (
-        <div
-          role="status"
-          className="mt-6 max-w-2xl rounded-2xl border border-warning/30 bg-warning-soft px-5 py-4"
-        >
-          <p className="text-[14px] font-semibold text-warning">
-            {t("Trợ lý chưa được bật")}
-          </p>
-          <p className="mt-1 text-[13.5px] leading-relaxed text-ink-700">
-            {t("Cần một khóa API của Anthropic. Thêm")}{" "}
-            <code className="rounded bg-sand-200 px-1.5 py-0.5 font-mono text-[12px]">
-              ANTHROPIC_API_KEY
-            </code>{" "}
-            {t("vào tệp")} <code className="font-mono text-[12px]">.env</code> {t("rồi khởi động lại. Mọi thứ khác trên trang này vẫn dùng được — đề xuất đã có vẫn duyệt được bình thường.")}
-          </p>
-        </div>
-      ) : null}
-
-      <div className="mt-7">
-        <AskForm action={ask} disabled={!configured} />
-      </div>
 
       {proposals.length > 0 ? (
         <section className="mt-12 border-t border-line pt-10">
@@ -266,7 +242,14 @@ export default async function AssistantPage() {
             })}
           </ul>
         </section>
-      ) : null}
+      ) : (
+        // Without this the page is a heading and a sentence. The ask form used
+        // to fill the space, and taking it away left a screen that looks
+        // broken rather than empty.
+        <p className="mt-10 max-w-2xl rounded-2xl border border-line bg-surface px-5 py-4 text-[14px] leading-relaxed text-ink-600">
+          {t("Chưa có đề xuất nào. Mở trợ lý ở khung bên phải và mô tả việc bạn cần — mọi thứ nó soạn sẽ hiện ở đây.")}
+        </p>
+      )}
     </>
   );
 }

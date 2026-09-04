@@ -270,29 +270,16 @@ export const EN: Record<string, string> = {
   "của chính bạn": "your own",
 
   /* ---- Assistant ---- */
-  "Bạn cần làm gì?": "What do you need?",
   "Mô tả việc bạn cần làm.": "Describe what you need done.",
-  "Mô tả việc bạn cần bằng lời thường ngày. Trợ lý soạn sẵn thay đổi, bạn đọc rồi duyệt — không có gì được ghi vào lịch trước khi bạn gật đầu.":
-    "Describe what you need in ordinary words. The assistant drafts the change, you read it and approve — nothing reaches the calendar before you say so.",
-  "Nhờ trợ lý soạn": "Ask the assistant",
   "Đề xuất": "Proposal",
   Duyệt: "Approve",
   "Từ chối": "Decline",
   "Đã duyệt": "Approved",
   "Đã từ chối": "Declined",
-  "Trợ lý chưa được bật": "The assistant is not switched on",
-  "rồi khởi động lại. Mọi thứ khác trên trang này vẫn dùng được — đề xuất đã có vẫn duyệt được bình thường.":
-    "and restart. Everything else here still works — proposals you already have can still be approved.",
   "Bạn không có quyền dùng trợ lý.": "You do not have permission to use the assistant.",
   "Không đọc được nội dung đề xuất.": "That proposal could not be read.",
   "Chuyển khoảng ngày": "Move the dates",
   "Vượt phòng": "Over capacity",
-  "Chị Lan đặt Sky Loft 20 đến 23 tháng 11, hai người, số 0905123456":
-    "Lan is booking Sky Loft from 20 to 23 November, two people, phone 0905123456",
-  "Khóa Garden Suite từ 5 đến 8 tháng 12 để sơn lại phòng tắm":
-    "Block Garden Suite from 5 to 8 December to repaint the bathroom",
-  "Đặt giá Ocean View Studio thành 1.600.000 một đêm":
-    "Set Ocean View Studio to 1,600,000 a night",
 
   /* ---- Settings: account ---- */
   "Tài khoản": "Account",
@@ -429,7 +416,6 @@ export const EN: Record<string, string> = {
   "Hủy": "Cancel",
   "Đang xử lý…": "Working…",
   "Đang tạo…": "Creating…",
-  "Đang soạn…": "Drafting…",
   "Đang kiểm tra…": "Checking…",
   "Thông tin chưa hợp lệ.": "Something in that is not valid.",
   "Tối đa": "Maximum",
@@ -499,9 +485,6 @@ export const EN: Record<string, string> = {
     "{n} rooms have no rate. Guests can still book them, but will see no price at all — set the rates before you share the link.",
   "Link xuất lịch cho từng phòng nằm ở": "Each room's export link is under",
   "Màu thương hiệu": "Brand colour",
-  "Ví dụ:": "For example:",
-  "Cần một khóa API của Anthropic. Thêm": "This needs an Anthropic API key. Add",
-  "vào tệp": "to",
   "Hết hạn lúc": "Expires",
   "Chào {ten}. Đặt mật khẩu để bắt đầu — tài khoản của bạn là":
     "Hello {ten}. Set a password to get started — your account is",
@@ -837,6 +820,10 @@ export const EN: Record<string, string> = {
   "Trợ lý chỉ soạn sẵn — không có gì được ghi vào lịch trước khi bạn bấm Duyệt.":
     "The assistant only drafts — nothing reaches the calendar until you press Approve.",
   "Xem tất cả đề xuất": "See every proposal",
+  "Mọi đề xuất trợ lý đã soạn, kèm việc bạn đã duyệt hay bỏ qua. Hỏi trợ lý ở khung bên phải màn hình.":
+    "Every proposal the assistant has drafted, and what you approved or dismissed. Ask it from the panel on the right of the screen.",
+  "Chưa có đề xuất nào. Mở trợ lý ở khung bên phải và mô tả việc bạn cần — mọi thứ nó soạn sẽ hiện ở đây.":
+    "No proposals yet. Open the assistant on the right and describe what you need — everything it drafts will appear here.",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":
