@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { canManageBookings, requireMember } from "@/lib/dal";
+import { canManageBookings, orgCurrency, requireMember } from "@/lib/dal";
 import {
   addDays,
   daysBetween,
-  formatVnd,
+  formatMoney,
   parseIsoDate,
   shortVi,
   todayIn,
@@ -27,6 +27,7 @@ export default async function SalesPage(props: PageProps<"/ban-hang">) {
   const t = await getT();
   const locale = await readLocale();
   const member = await requireMember();
+  const currency = await orgCurrency();
 
   // A housekeeper must not reach this: it prices rooms and names the guests
   // who hold them. The nav does not offer it either, but the nav is not a
@@ -181,11 +182,11 @@ export default async function SalesPage(props: PageProps<"/ban-hang">) {
                           ) : (
                             <>
                               <p className="text-[15px] font-semibold text-ink-900 tnum">
-                                {formatVnd(v.total, locale)}
+                                {formatMoney(v.total, currency, locale)}
                               </p>
                               <p className="text-[12.5px] text-ink-500 tnum">
                                 {fill(t("{gia} × {dem} đêm"), {
-                                  gia: formatVnd(v.basePrice ?? 0, locale),
+                                  gia: formatMoney(v.basePrice ?? 0, currency, locale),
                                   dem: result.nights,
                                 })}
                               </p>

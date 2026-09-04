@@ -14,6 +14,8 @@
  * should not be one anywhere else either.
  */
 
+import { currencySymbol, currencySymbolAfter } from "@/lib/currencies";
+
 /** A calendar date as "YYYY-MM-DD". What forms submit and URLs carry. */
 export type IsoDate = string;
 
@@ -90,12 +92,39 @@ export function isWeekend(date: Date): boolean {
   return day === 0 || day === 6;
 }
 
-/** Formats minor currency units. VND has no subunit, so this is whole dong. */
-export function formatVnd(amount: number, locale: "vi" | "en" = "vi"): string {
-  // The grouping separator is the whole point of the parameter. Vietnamese
-  // groups with a full stop — 1.200.000 — which an English reader parses as a
-  // decimal and reads as one and a bit. The currency itself is the same money
-  // either way, so the symbol does not move.
+/**
+ * A host's money, in whatever currency that host prices in.
+ *
+ * The grouping separator is why the locale is a parameter. Vietnamese groups
+ * with a full stop — 1.200.000 — which an English reader parses as a decimal
+ * and reads as one and a bit.
+ *
+ * The symbol moves as well as the separator: ₫ trails the number and $ leads
+ * it. This used to be hardcoded to ₫ for every screen in the app, which was
+ * invisible while every organization priced in đồng and wrong the moment one
+ * did not — a room at seventy-six dollars rendered as "76 ₫", a price no
+ * guest would believe and no host would have set.
+ */
+export function formatMoney(
+  amount: number,
+  currency: string,
+  locale: "vi" | "en" = "vi",
+): string {
+  const digits = amount.toLocaleString(locale === "en" ? "en-GB" : "vi-VN");
+  const symbol = currencySymbol(currency);
+  return currencySymbolAfter(currency) ? `${digits} ${symbol}` : `${symbol}${digits}`;
+}
+
+/**
+ * What TLSHost charges a host for a plan — always đồng, never theirs.
+ *
+ * Kept separate from formatMoney on purpose. Our own prices are quoted in
+ * đồng and collected by Vietnamese bank transfer, so they do not follow the
+ * host's currency, and a plan page that starts saying "$690.000" because a
+ * host switched their rooms to dollars would be quoting a price nobody can
+ * pay.
+ */
+export function formatPlanPrice(amount: number, locale: "vi" | "en" = "vi"): string {
   return `${amount.toLocaleString(locale === "en" ? "en-GB" : "vi-VN")} ₫`;
 }
 

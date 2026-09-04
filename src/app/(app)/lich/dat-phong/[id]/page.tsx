@@ -4,9 +4,9 @@ import { notFound, redirect } from "next/navigation";
 
 import { BookingForm } from "@/components/BookingForm";
 import { SOURCE_LABELS } from "@/lib/board";
-import { canEditBooking, canManageBookings, requireMember, visiblePropertyFilter } from "@/lib/dal";
+import { canEditBooking, canManageBookings, orgCurrency, requireMember, visiblePropertyFilter } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
-import { daysBetween, formatVnd, shortVi, toIsoDate } from "@/lib/dates";
+import { daysBetween, formatMoney, shortVi, toIsoDate } from "@/lib/dates";
 
 import { cancelBooking, updateBooking } from "../../actions";
 import { getT, readLocale } from "@/lib/locale";
@@ -23,6 +23,7 @@ export default async function BookingPage(
   const t = await getT();
   const locale = await readLocale();
   const member = await requireMember();
+  const currency = await orgCurrency();
   if (!canManageBookings(member)) redirect("/lich");
 
   const { id } = await props.params;
@@ -91,7 +92,7 @@ export default async function BookingPage(
               <>
                 {" · "}
                 <span className="tnum font-medium text-ink-900">
-                  {formatVnd(booking.totalCents, locale)}
+                  {formatMoney(booking.totalCents, currency, locale)}
                 </span>
               </>
             ) : null}

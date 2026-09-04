@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { canManageBookings, requireMember } from "@/lib/dal";
+import { canManageBookings, orgCurrency, requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
-import { formatVnd, shortVi } from "@/lib/dates";
+import { formatMoney, shortVi } from "@/lib/dates";
 import { KIND_LABELS, proposalSchema } from "@/lib/proposals";
 
 import { AskForm } from "./AskForm";
@@ -28,6 +28,7 @@ function preview(
   rooms: Map<string, string>,
   t: T,
   locale: Locale,
+  currency: string,
 ): string[] {
   const parsed = proposalSchema.safeParse(raw);
   if (!parsed.success) return [t("Không đọc được nội dung đề xuất.")];
@@ -72,7 +73,7 @@ function preview(
       return [
         fill(t("Phòng: {ten}"), { ten: room(p.roomId) }),
         fill(t("Giá mỗi đêm: {gia}"), {
-          gia: p.basePrice === null ? t("bỏ giá") : formatVnd(p.basePrice, locale),
+          gia: p.basePrice === null ? t("bỏ giá") : formatMoney(p.basePrice, currency, locale),
         }),
       ];
     case "NONE":
@@ -84,6 +85,7 @@ export default async function AssistantPage() {
   const t = await getT();
   const locale = await readLocale();
   const member = await requireMember();
+  const currency = await orgCurrency();
   if (!canManageBookings(member)) redirect("/buong-phong");
 
   const { proposals, rooms } = await withOrg(member.orgId, async (tx) => {
@@ -205,7 +207,7 @@ export default async function AssistantPage() {
                   {/* The change itself, read back out of the stored payload
                       rather than from the summary above it. */}
                   <dl className="mt-4 space-y-1 rounded-xl bg-sand-50 px-4 py-3">
-                    {preview(p.payload, roomNames, t, locale).map((line) => (
+                    {preview(p.payload, roomNames, t, locale, currency).map((line) => (
                       <dd key={line} className="text-[13.5px] text-ink-700">
                         {line}
                       </dd>

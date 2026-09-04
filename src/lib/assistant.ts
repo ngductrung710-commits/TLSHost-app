@@ -5,7 +5,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 
 import { visiblePropertyFilter, type ActiveMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
-import { addDays, formatVnd, toIsoDate } from "@/lib/dates";
+import { addDays, formatMoney, toIsoDate } from "@/lib/dates";
 import { assistantReplySchema, type AssistantReply } from "@/lib/proposals";
 import type { Locale } from "@/lib/i18n";
 
@@ -48,6 +48,12 @@ async function buildSnapshot(
   const until = addDays(today, WINDOW_DAYS);
 
   return withOrg(member.orgId, async (tx) => {
+    const org = await tx.organization.findUnique({
+      where: { id: member.orgId },
+      select: { currency: true },
+    });
+    const currency = org?.currency ?? "VND";
+
     const rooms = await tx.room.findMany({
       where: { property: visiblePropertyFilter(member) },
       select: {
@@ -97,7 +103,7 @@ async function buildSnapshot(
     for (const r of rooms) {
       lines.push(
         `- id=${r.id} | ${r.property.name} — ${r.name} | tối đa ${r.capacity} khách | ` +
-          (r.basePrice === null ? "chưa đặt giá" : `${formatVnd(r.basePrice)}/đêm`),
+          (r.basePrice === null ? "chưa đặt giá" : `${formatMoney(r.basePrice, currency)}/đêm`),
       );
     }
 

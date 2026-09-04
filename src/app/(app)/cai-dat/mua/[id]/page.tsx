@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CopyLine } from "@/components/CopyLine";
 import { requireMember } from "@/lib/dal";
-import { formatVnd } from "@/lib/dates";
+import { formatPlanPrice } from "@/lib/dates";
 import { withOrg } from "@/lib/db";
 import { fill } from "@/lib/i18n";
 import { getT, readLocale } from "@/lib/locale";
@@ -115,7 +115,7 @@ export default async function PurchasePage(props: PageProps<"/cai-dat/mua/[id]">
               <CopyLine
                 label={t("Số tiền")}
                 value={String(purchase.amount)}
-                display={formatVnd(purchase.amount, locale)}
+                display={formatPlanPrice(purchase.amount, locale)}
                 mono
               />
               <CopyLine

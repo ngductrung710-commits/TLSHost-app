@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { canManageBookings, requireMember } from "@/lib/dal";
+import { canManageBookings, orgCurrency, requireMember } from "@/lib/dal";
 import { loadDashboard, longDate, weekdayShort } from "@/lib/dashboard";
-import { formatVnd, todayIn } from "@/lib/dates";
+import { formatMoney, todayIn } from "@/lib/dates";
 import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
@@ -137,6 +137,7 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
   const t = await getT();
   const locale = await readLocale();
   const member = await requireMember();
+  const currency = await orgCurrency();
   if (!canManageBookings(member)) redirect("/buong-phong");
 
   const params = await props.searchParams;
@@ -341,8 +342,9 @@ export default async function DashboardPage(props: PageProps<"/tong-quan">) {
             </span>{" "}
             ·{" "}
             <span className="tnum">
-              {formatVnd(
+              {formatMoney(
                 d.forecast.reduce((sum, f) => sum + f.revenue, 0),
+                currency,
                 locale,
               )}
             </span>

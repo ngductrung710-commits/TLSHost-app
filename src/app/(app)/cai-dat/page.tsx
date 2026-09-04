@@ -7,7 +7,7 @@ import { BuyButton } from "./mua/BuyButton";
 import { startPurchase } from "./mua/actions";
 import { pushConfigured } from "@/lib/push";
 import { secretsConfigured } from "@/lib/secrets";
-import { formatVnd } from "@/lib/dates";
+import { formatPlanPrice } from "@/lib/dates";
 import { requireMember } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 
@@ -343,7 +343,7 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
                       and gave the reader no number to compare against the
                       two beside it. */}
                   <p className="mt-2 text-[1.375rem] font-semibold text-ink-900 tnum">
-                    {formatVnd(plan.price, locale)}
+                    {formatPlanPrice(plan.price, locale)}
                     <span className="text-[13px] font-normal text-ink-500">
                       {" "}
                       {plan.price === 0 ? t("/ vĩnh viễn") : t("/ tháng")}
@@ -383,7 +383,7 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
                       action={startPurchase}
                       plan={p}
                       label={fill(t("Mua 1 tháng · {gia}"), {
-                        gia: formatVnd(plan.price, locale),
+                        gia: formatPlanPrice(plan.price, locale),
                       })}
                     />
                   ) : null}

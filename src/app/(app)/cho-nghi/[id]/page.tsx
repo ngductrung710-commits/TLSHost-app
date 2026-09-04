@@ -6,7 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireMember } from "@/lib/dal";
 import { amenityNames } from "@/lib/amenities";
 import { withOrg } from "@/lib/db";
-import { formatVnd, todayIn } from "@/lib/dates";
+import { formatMoney, todayIn } from "@/lib/dates";
 
 import { PublicPageForm } from "./PublicPageForm";
 import { DeletePropertyForm } from "./DeletePropertyForm";
@@ -38,6 +38,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         amenities: true,
         publicSlug: true,
         published: true,
+        currency: true,
         rooms: {
           select: { id: true, name: true, capacity: true, basePrice: true },
           orderBy: { name: "asc" },
@@ -242,12 +243,13 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         .{" "}
         {property.rooms.some((r) => r.basePrice !== null)
           ? fill(t("Giá thấp nhất đang đặt: {gia}."), {
-              gia: formatVnd(
+              gia: formatMoney(
                 Math.min(
                   ...property.rooms
                     .filter((r) => r.basePrice !== null)
                     .map((r) => r.basePrice as number),
                 ),
+                property.currency,
               ),
             })
           : ""}

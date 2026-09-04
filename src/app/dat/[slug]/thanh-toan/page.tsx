@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { withOrg, withPublicSlug } from "@/lib/db";
-import { formatVnd, shortVi } from "@/lib/dates";
+import { formatMoney, shortVi } from "@/lib/dates";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
 
 import { PayForm } from "./PayForm";
@@ -69,7 +69,7 @@ export default async function PaymentPage(
 
     const org = await tx.organization.findUnique({
       where: { id: found.orgId },
-      select: { bookingTheme: true, brandColor: true },
+      select: { bookingTheme: true, brandColor: true, currency: true },
     });
 
     return { booking, accounts, paid, org };
@@ -114,7 +114,7 @@ export default async function PaymentPage(
             <div className="flex justify-between gap-4 pt-1">
               <dt className="text-[var(--ink-soft)]">Tổng cộng</dt>
               <dd className="text-[17px] font-semibold tnum">
-                {formatVnd(data.booking.totalCents)}
+                {formatMoney(data.booking.totalCents, data.org?.currency ?? "VND")}
               </dd>
             </div>
           ) : null}

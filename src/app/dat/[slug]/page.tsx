@@ -6,7 +6,7 @@ import { withOrg, withPublicSlug } from "@/lib/db";
 import {
   addDays,
   daysBetween,
-  formatVnd,
+  formatMoney,
   parseIsoDate,
   shortVi,
   todayIn,
@@ -335,7 +335,7 @@ export default async function PublicBookingPage(
                     {room.basePrice !== null ? (
                       <p className="text-right">
                         <span className="text-[18px] font-semibold tnum">
-                          {formatVnd(room.basePrice)}
+                          {formatMoney(room.basePrice, property.currency)}
                         </span>
                         <span className="block text-[13px] text-[var(--ink-soft)]">
                           mỗi đêm
@@ -348,7 +348,7 @@ export default async function PublicBookingPage(
                     <p className="mt-3 border-t border-[var(--line)] pt-3 text-[14px]">
                       {nights} đêm ·{" "}
                       <span className="font-semibold tnum">
-                        {formatVnd(room.basePrice * nights)}
+                        {formatMoney(room.basePrice * nights, property.currency)}
                       </span>
                     </p>
                   ) : null}

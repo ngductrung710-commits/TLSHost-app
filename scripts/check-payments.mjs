@@ -22,6 +22,8 @@ process.env.SECRET_KEY ??= "check-payments-key-that-is-long-enough-32+";
 const {
   __testing: { stripeAmount, paypalAmount, PAYPAL_NO_DECIMALS },
   paypalSupports,
+  formatMoney,
+  formatPlanPrice,
   decryptSecret,
   encryptSecret,
   maskSecret,
@@ -82,6 +84,27 @@ check("KRW is refused", paypalSupports("KRW"), false);
 check("USD is fine", paypalSupports("USD"), true);
 check("lowercase is fine too", paypalSupports("usd"), true);
 check("nonsense is refused", paypalSupports("XXX"), false);
+
+/* -------------------------------------------------------------------- */
+console.log("\n-- money on screen: the right symbol, on the right side");
+
+// This is here because it broke silently. Every screen formatted money with
+// a hardcoded ₫, which nobody could see while every organization priced in
+// đồng — and the moment one switched to dollars, a seventy-six dollar room
+// rendered as "76 ₫". The number was right and the price was nonsense.
+check("VND groups with stops and trails the symbol", formatMoney(1_400_000, "VND", "vi"), "1.400.000 ₫");
+check("…and with commas for an English reader", formatMoney(1_400_000, "VND", "en"), "1,400,000 ₫");
+check("USD leads with the symbol", formatMoney(76, "USD", "vi"), "$76");
+check("…in either language", formatMoney(1234, "USD", "en"), "$1,234");
+check("zero is still a price", formatMoney(0, "USD", "vi"), "$0");
+// An unknown code prints the code rather than guessing a symbol: wrong
+// money is worse than unfamiliar money.
+check("an unknown currency shows its code", formatMoney(50, "XYZ", "vi"), "50 XYZ");
+
+// Our own plan prices do not follow the host's currency. A host who prices
+// rooms in dollars still pays us in đồng, by Vietnamese bank transfer.
+check("a plan price stays in dong", formatPlanPrice(690_000, "vi"), "690.000 ₫");
+check("…even for an English reader", formatPlanPrice(690_000, "en"), "690,000 ₫");
 
 /* -------------------------------------------------------------------- */
 console.log("\n-- provider secrets survive a round trip");

@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 
-import { withUser } from "@/lib/db";
+import { withOrg, withUser } from "@/lib/db";
 import { limitsFor } from "@/lib/plans";
 import { readSession } from "@/lib/session";
 
@@ -87,6 +87,27 @@ export async function requireMember(): Promise<ActiveMember> {
   if (!member) redirect("/dang-nhap");
   return member;
 }
+
+/**
+ * What currency this organization prices in.
+ *
+ * Its own function, memoised per render, because almost every screen shows
+ * money and none of them should be guessing. The fallback is VND rather than
+ * a throw: a missing organization means the caller is already in trouble, and
+ * a dashboard that renders with the wrong symbol is better than one that
+ * renders a stack trace.
+ */
+export const orgCurrency = cache(async (): Promise<string> => {
+  const member = await getActiveMember();
+  if (!member) return "VND";
+  const org = await withOrg(member.orgId, (tx) =>
+    tx.organization.findUnique({
+      where: { id: member.orgId },
+      select: { currency: true },
+    }),
+  );
+  return org?.currency ?? "VND";
+});
 
 // Re-exported so every existing import of these keeps working: they are part
 // of the data-access surface conceptually, they just do not need a request.
