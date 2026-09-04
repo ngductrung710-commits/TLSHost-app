@@ -2,18 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { withOrg, withPublicSlug } from "@/lib/db";
+import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
+import { fill } from "@/lib/i18n";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
 
 import { settlePayment } from "../thanh-toan/actions";
 
-export const metadata: Metadata = {
-  title: "Đã nhận đặt phòng",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(
+  props: PageProps<"/dat/[slug]/xong">,
+): Promise<Metadata> {
+  const t = guestT(await guestLocale(await props.searchParams));
+  return {
+    title: t("Đã nhận đặt phòng"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function BookedPage(props: PageProps<"/dat/[slug]/xong">) {
   const { slug } = await props.params;
   const params = await props.searchParams;
+  const locale = await guestLocale(params);
+  const t = guestT(locale);
 
   // Stripe substitutes its id into ?tt=; PayPal appends its own ?token=.
   // Both land here, and neither is trusted for anything beyond "look up a
@@ -61,17 +70,16 @@ export default async function BookedPage(props: PageProps<"/dat/[slug]/xong">) {
     >
       <main className="mx-auto w-full max-w-lg px-5 py-20 text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
-          Đã xác nhận
+          {t("Đã xác nhận")}
         </p>
         <h1
           className="mt-3 text-[2rem] font-semibold leading-tight"
           style={{ fontFamily: THEMES[theme].display }}
         >
-          Phòng của bạn đã được giữ.
+          {t("Phòng của bạn đã được giữ.")}
         </h1>
         <p className="mt-4 text-[16px] leading-relaxed text-[var(--ink-soft)]">
-          Những đêm bạn chọn đã khoá lại ngay trên lịch của chủ nhà — và trên
-          mọi kênh khác. Chủ nhà sẽ liên hệ để sắp xếp phần còn lại.
+          {t("Những đêm bạn chọn đã khoá lại ngay trên lịch của chủ nhà — và trên mọi kênh khác. Chủ nhà sẽ liên hệ để sắp xếp phần còn lại.")}
         </p>
 
         {settled === "paid" ? (
@@ -79,23 +87,24 @@ export default async function BookedPage(props: PageProps<"/dat/[slug]/xong">) {
             role="status"
             className="mx-auto mt-6 max-w-sm rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[15px] leading-relaxed"
           >
-            Đã nhận thanh toán. Cảm ơn bạn.
+            {t("Đã nhận thanh toán. Cảm ơn bạn.")}
           </p>
         ) : settled === "pending" ? (
           <p
             role="status"
             className="mx-auto mt-6 max-w-sm rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[15px] leading-relaxed text-[var(--ink-soft)]"
           >
-            Chưa xác nhận được thanh toán. Phòng vẫn là của bạn — chủ nhà sẽ
-            liên hệ để thu xếp.
+            {t("Chưa xác nhận được thanh toán. Phòng vẫn là của bạn — chủ nhà sẽ liên hệ để thu xếp.")}
           </p>
         ) : null}
         <p className="mt-8">
           <Link
-            href={`/dat/${slug}`}
+            href={`/dat/${slug}${withLocale({}, locale)}`}
             className="text-[15px] font-semibold underline underline-offset-4"
           >
-            Về {found?.name ?? "trang chỗ nghỉ"}
+            {fill(t("Về {ten}"), {
+              ten: found?.name ?? t("trang chỗ nghỉ"),
+            })}
           </Link>
         </p>
       </main>

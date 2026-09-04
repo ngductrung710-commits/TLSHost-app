@@ -1,5 +1,6 @@
 import "server-only";
 
+import { fill } from "@/lib/i18n";
 import { decryptSecret } from "@/lib/secrets";
 
 /**
@@ -127,7 +128,7 @@ async function stripeCheckout(
     if (status !== 200 || !data.id || !data.url) {
       return {
         ok: false,
-        error: data.error?.message ?? `Stripe trả về ${status}.`,
+        error: data.error?.message ?? fill("Stripe trả về {ma}.", { ma: status }),
       };
     }
     return { ok: true, externalId: data.id, url: data.url };
@@ -156,7 +157,7 @@ async function stripeVerify(
       error?: { message?: string };
     };
     if (status !== 200) {
-      return { ok: false, error: data.error?.message ?? `Stripe trả về ${status}.` };
+      return { ok: false, error: data.error?.message ?? fill("Stripe trả về {ma}.", { ma: status }) };
     }
 
     const currency = (data.currency ?? "vnd").toUpperCase();
@@ -331,7 +332,7 @@ async function paypalCheckout(
     };
     const approve = data.links?.find((l) => l.rel === "payer-action" || l.rel === "approve");
     if (status >= 300 || !data.id || !approve?.href) {
-      return { ok: false, error: data.message ?? `PayPal trả về ${status}.` };
+      return { ok: false, error: data.message ?? fill("PayPal trả về {ma}.", { ma: status }) };
     }
     return { ok: true, externalId: data.id, url: approve.href };
   } catch {
@@ -374,7 +375,7 @@ async function paypalVerify(
       (d) => d.issue === "ORDER_ALREADY_CAPTURED",
     );
     if (status >= 300 && !alreadyDone) {
-      return { ok: false, error: data.message ?? `PayPal trả về ${status}.` };
+      return { ok: false, error: data.message ?? fill("PayPal trả về {ma}.", { ma: status }) };
     }
 
     const value =
@@ -446,7 +447,7 @@ export async function testCredentials(
     const data = body as { error?: { message?: string } };
     return {
       ok: false,
-      error: data.error?.message ?? `Stripe từ chối khoá này (${status}).`,
+      error: data.error?.message ?? fill("Stripe từ chối khoá này ({ma}).", { ma: status }),
     };
   } catch {
     return { ok: false, error: "Không kết nối được tới Stripe." };

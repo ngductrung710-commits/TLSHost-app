@@ -8,10 +8,14 @@ import {
   daysBetween,
   formatMoney,
   parseIsoDate,
-  shortVi,
+  shortDate,
   todayIn,
   toIsoDate,
 } from "@/lib/dates";
+import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
+import { fill } from "@/lib/i18n";
+import { dictFor } from "@/lib/locale";
+import { I18nProvider } from "@/components/I18nProvider";
 
 import { PROPERTY_TYPE_LABELS } from "@/lib/propertyTypes";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
@@ -126,14 +130,18 @@ export async function generateMetadata(
   props: PageProps<"/dat/[slug]">,
 ): Promise<Metadata> {
   const { slug } = await props.params;
+  const t = guestT(await guestLocale(await props.searchParams));
   const property = await load(slug);
-  if (!property) return { title: "Không tìm thấy" };
+  if (!property) return { title: t("Không tìm thấy") };
 
   return {
     title: property.name,
     description:
       property.intro ??
-      `Đặt phòng trực tiếp tại ${property.name}${property.address ? `, ${property.address}` : ""}.`,
+      fill(t("Đặt phòng trực tiếp tại {ten}{diachi}."), {
+        ten: property.name,
+        diachi: property.address ? `, ${property.address}` : "",
+      }),
     // This one page is meant to be found — it is the host's storefront, and the
     // rest of the app is explicitly not indexed.
     robots: { index: true, follow: true },
@@ -145,6 +153,8 @@ export default async function PublicBookingPage(
 ) {
   const { slug } = await props.params;
   const params = await props.searchParams;
+  const locale = await guestLocale(params);
+  const t = guestT(locale);
 
   const property = await load(slug);
   if (!property) notFound();
@@ -187,9 +197,10 @@ export default async function PublicBookingPage(
 
   const available = property.rooms.filter((r) => free.has(r.id));
 
-  // A guest page is always in the property's language, never in whatever the
-  // staff member who last touched it was reading. See src/lib/locale.ts.
-  const propertyAmenities = amenityNames(property.amenities, "vi");
+  // The guest's language, never the staff cookie: a manager reading the
+  // workspace in English must not flip a stranger's page. See
+  // src/lib/guestLocale.ts.
+  const propertyAmenities = amenityNames(property.amenities, locale);
   const houseRules = (property.houseRules ?? "")
     .split("\n")
     .map((line) => line.trim())
@@ -202,6 +213,7 @@ export default async function PublicBookingPage(
     // Every colour on this page comes from these variables. The host picks one
     // of four presets and optionally one accent; nothing else here is theirs to
     // set, which is what keeps the page readable whatever they choose.
+    <I18nProvider dict={dictFor(locale)}>
     <div style={vars as React.CSSProperties} className="min-h-dvh bg-[var(--bg)] text-[var(--ink)]">
       <main className="mx-auto w-full max-w-3xl px-5 py-12">
         <header>
@@ -217,8 +229,29 @@ export default async function PublicBookingPage(
             />
           ) : null}
 
+          <div className="mb-4 flex justify-end gap-3 text-[13px]">
+            {/* Two plain links rather than a form: switching language is a
+                navigation, so the English page has a URL of its own that a
+                guest can bookmark or send on. */}
+            {(["vi", "en"] as const).map((code) => (
+              <a
+                key={code}
+                href={`/dat/${slug}${withLocale(params, code)}`}
+                hrefLang={code}
+                aria-current={locale === code ? "true" : undefined}
+                className={
+                  locale === code
+                    ? "font-semibold text-[var(--ink)] underline underline-offset-4"
+                    : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                }
+              >
+                {code === "vi" ? "Tiếng Việt" : "English"}
+              </a>
+            ))}
+          </div>
+
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
-            Đặt trực tiếp · không qua trung gian
+            {t("Đặt trực tiếp · không qua trung gian")}
           </p>
           <h1
             className="mt-2 text-[2rem] font-semibold leading-tight"
@@ -231,9 +264,11 @@ export default async function PublicBookingPage(
               {/* Type first: "Homestay" and "Resort" set different
                   expectations before a guest reads a word of the description. */}
               {property.type
-                ? PROPERTY_TYPE_LABELS[
-                    property.type as keyof typeof PROPERTY_TYPE_LABELS
-                  ]
+                ? t(
+                    PROPERTY_TYPE_LABELS[
+                      property.type as keyof typeof PROPERTY_TYPE_LABELS
+                    ],
+                  )
                 : null}
               {property.type && property.address ? " · " : null}
               {property.address}
@@ -247,10 +282,13 @@ export default async function PublicBookingPage(
         </header>
 
         <section className="mt-10">
-          <h2 className="text-[1.125rem] font-semibold">Chọn ngày</h2>
+          <h2 className="text-[1.125rem] font-semibold">{t("Chọn ngày")}</h2>
           <p className="mt-1 text-[14px] text-[var(--ink-soft)]">
-            Đang xem {shortVi(from)} – {shortVi(to)} ·{" "}
-            <span className="tnum">{nights} đêm</span>
+            {fill(t("Đang xem {tu} – {den}"), {
+              tu: shortDate(from, locale),
+              den: shortDate(to, locale),
+            })}{" "}
+            · <span className="tnum">{fill(t("{n} đêm"), { n: nights })}</span>
           </p>
 
           {/* A plain GET form: changing dates is a navigation, so the result
@@ -259,7 +297,7 @@ export default async function PublicBookingPage(
           <form method="get" className="mt-4 flex flex-wrap items-end gap-3">
             <div>
               <label htmlFor="tu" className="block text-[13px] font-medium">
-                Nhận phòng
+                {t("Nhận phòng")}
               </label>
               <input
                 id="tu"
@@ -273,7 +311,7 @@ export default async function PublicBookingPage(
             </div>
             <div>
               <label htmlFor="den" className="block text-[13px] font-medium">
-                Trả phòng
+                {t("Trả phòng")}
               </label>
               <input
                 id="den"
@@ -290,7 +328,7 @@ export default async function PublicBookingPage(
               className="min-h-11 border border-[var(--line)] bg-[var(--surface)] px-5 text-[14px] font-medium"
               style={{ borderRadius: "999px" }}
             >
-              Xem phòng trống
+              {t("Xem phòng trống")}
             </button>
           </form>
         </section>
@@ -298,14 +336,13 @@ export default async function PublicBookingPage(
         <section className="mt-10">
           <h2 className="text-[1.125rem] font-semibold">
             {available.length > 0
-              ? `${available.length} phòng còn trống`
-              : "Không còn phòng trống"}
+              ? fill(t("{n} phòng còn trống"), { n: available.length })
+              : t("Không còn phòng trống")}
           </h2>
 
           {available.length === 0 ? (
             <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[var(--ink-soft)]">
-              Những đêm này đã kín. Thử đổi ngày ở trên — hoặc nhắn trực tiếp cho
-              chủ nhà, có thể còn cách khác.
+              {t("Những đêm này đã kín. Thử đổi ngày ở trên — hoặc nhắn trực tiếp cho chủ nhà, có thể còn cách khác.")}
             </p>
           ) : (
             <ul className="mt-4 space-y-4">
@@ -324,7 +361,7 @@ export default async function PublicBookingPage(
                         {room.name}
                       </h3>
                       <p className="mt-0.5 text-[14px] text-[var(--ink-soft)]">
-                        Tối đa <span className="tnum">{room.capacity}</span> khách
+                        {fill(t("Tối đa {n} khách"), { n: room.capacity })}
                       </p>
                       {room.description ? (
                         <p className="mt-2 max-w-xl whitespace-pre-line text-[14px] leading-relaxed text-[var(--ink-soft)]">
@@ -335,10 +372,10 @@ export default async function PublicBookingPage(
                     {room.basePrice !== null ? (
                       <p className="text-right">
                         <span className="text-[18px] font-semibold tnum">
-                          {formatMoney(room.basePrice, property.currency)}
+                          {formatMoney(room.basePrice, property.currency, locale)}
                         </span>
                         <span className="block text-[13px] text-[var(--ink-soft)]">
-                          mỗi đêm
+                          {t("mỗi đêm")}
                         </span>
                       </p>
                     ) : null}
@@ -346,16 +383,20 @@ export default async function PublicBookingPage(
 
                   {room.basePrice !== null ? (
                     <p className="mt-3 border-t border-[var(--line)] pt-3 text-[14px]">
-                      {nights} đêm ·{" "}
+                      {fill(t("{n} đêm"), { n: nights })} ·{" "}
                       <span className="font-semibold tnum">
-                        {formatMoney(room.basePrice * nights, property.currency)}
+                        {formatMoney(
+                          room.basePrice * nights,
+                          property.currency,
+                          locale,
+                        )}
                       </span>
                     </p>
                   ) : null}
 
                   {room.amenities.length > 0 ? (
                     <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[var(--ink-soft)]">
-                      {amenityNames(room.amenities, "vi").map((name) => (
+                      {amenityNames(room.amenities, locale).map((name) => (
                         <li key={name}>· {name}</li>
                       ))}
                     </ul>
@@ -368,6 +409,7 @@ export default async function PublicBookingPage(
                     checkIn={toIsoDate(from)}
                     checkOut={toIsoDate(to)}
                     maxGuests={room.capacity}
+                    locale={locale}
                   />
                 </li>
               ))}
@@ -377,7 +419,7 @@ export default async function PublicBookingPage(
 
         {propertyAmenities.length > 0 ? (
           <section className="mt-10">
-            <h2 className="text-[1.125rem] font-semibold">Tiện nghi</h2>
+            <h2 className="text-[1.125rem] font-semibold">{t("Tiện nghi")}</h2>
             <ul className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {propertyAmenities.map((name) => (
                 <li key={name} className="text-[15px] text-[var(--ink-soft)]">
@@ -390,7 +432,7 @@ export default async function PublicBookingPage(
 
         {houseRules.length > 0 ? (
           <section className="mt-10">
-            <h2 className="text-[1.125rem] font-semibold">Nội quy lưu trú</h2>
+            <h2 className="text-[1.125rem] font-semibold">{t("Nội quy lưu trú")}</h2>
             <ul className="mt-4 space-y-1.5">
               {houseRules.map((rule) => (
                 <li key={rule} className="text-[15px] leading-relaxed text-[var(--ink-soft)]">
@@ -402,10 +444,10 @@ export default async function PublicBookingPage(
         ) : null}
 
         <footer className="mt-14 border-t border-[var(--line)] pt-6 text-[13px] leading-relaxed text-[var(--ink-soft)]">
-          Đặt trực tiếp với chủ nhà. Không phí nền tảng, không hoa hồng — số tiền
-          bạn trả là số tiền chủ nhà nhận.
+          {t("Đặt trực tiếp với chủ nhà. Không phí nền tảng, không hoa hồng — số tiền bạn trả là số tiền chủ nhà nhận.")}
         </footer>
       </main>
     </div>
+    </I18nProvider>
   );
 }

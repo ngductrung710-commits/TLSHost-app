@@ -741,6 +741,78 @@ export const EN: Record<string, string> = {
     "PayPal does not accept {tien}, so guests cannot pay through it. Use Stripe, or change the property's currency.",
   "Giá mỗi đêm ({tien})": "Price per night ({tien})",
   "Tổng tiền ({tien})": "Total ({tien})",
+  "Bạn vẫn giữ phòng — có thể trả khi nhận phòng.":
+    "Your room is still held — you can pay on arrival.",
+  "Bạn đã thoát khỏi trang thanh toán. Phòng vẫn được giữ — trả sau cũng được.":
+    "You left the payment page. The room is still held — paying later is fine.",
+  "Bỏ chọn phòng này": "Deselect this room",
+  "Chưa thanh toán trực tuyến được cho lượt đặt này.":
+    "This booking cannot be paid online.",
+  "Chưa xác nhận được thanh toán. Phòng vẫn là của bạn — chủ nhà sẽ liên hệ để thu xếp.":
+    "We could not confirm the payment. The room is still yours — the host will be in touch to sort it out.",
+  "Chọn phòng này": "Choose this room",
+  "Chỗ nghỉ này nhận thanh toán khi bạn tới. Chủ nhà sẽ liên hệ để sắp xếp phần còn lại.":
+    "This place takes payment on arrival. The host will be in touch to arrange the rest.",
+  "Công ty": "Company",
+  "Ghi chú cho chủ nhà": "Note for the host",
+  "Không còn phòng trống": "No rooms available",
+  "Không tìm thấy": "Not found",
+  "Lượt đặt này chưa có số tiền để thanh toán.":
+    "This booking has no amount to pay.",
+  "Lượt đặt này đã thanh toán rồi.": "This booking has already been paid.",
+  "Lượt đặt này đã thanh toán. Hẹn gặp bạn.":
+    "This booking is paid. See you soon.",
+  "Ngày": "Dates",
+  "Nhập số điện thoại để chủ nhà liên hệ.":
+    "Enter a phone number so the host can reach you.",
+  "Nhập tên của bạn.": "Enter your name.",
+  "Những đêm bạn chọn đã khoá lại ngay trên lịch của chủ nhà — và trên mọi kênh khác. Chủ nhà sẽ liên hệ để sắp xếp phần còn lại.":
+    "The nights you picked are now blocked on the host's calendar — and on every other channel. The host will be in touch to arrange the rest.",
+  "Những đêm này đã kín. Thử đổi ngày ở trên — hoặc nhắn trực tiếp cho chủ nhà, có thể còn cách khác.":
+    "These nights are full. Try different dates above — or message the host directly, there may be another way.",
+  "Phòng của bạn đã được giữ.": "Your room is held.",
+  "Phòng này nhận tối đa {n} khách.": "This room takes at most {n} guests.",
+  "Rất tiếc, những đêm này vừa có người đặt. Thử chọn ngày khác giúp mình nhé.":
+    "Sorry — someone just booked these nights. Please try different dates.",
+  "Thanh toán qua {cong}": "Pay with {cong}",
+  "Trả trước hay trả khi nhận phòng đều được — phòng đã là của bạn. Tiền vào thẳng tài khoản của chủ nhà.":
+    "Pay now or on arrival, either is fine — the room is already yours. The money goes straight to the host's account.",
+  "Tối đa {n} khách": "Up to {n} guests",
+  "Tổng cộng": "Total",
+  "Về {ten}": "Back to {ten}",
+  "Xem phòng trống": "Show available rooms",
+  "Yêu cầu không hợp lệ.": "That request was not valid.",
+  "mỗi đêm": "per night",
+  "thẻ": "card",
+  "trang chỗ nghỉ": "the property page",
+  "{n} phòng còn trống": "{n} rooms available",
+  "Đang gửi…": "Sending…",
+  "Đang mở trang thanh toán…": "Opening the payment page…",
+  "Đang xem {tu} – {den}": "Showing {tu} – {den}",
+  "Đã giữ phòng": "Room held",
+  "Đã nhận thanh toán. Cảm ơn bạn.": "Payment received. Thank you.",
+  "Đã nhận đặt phòng": "Booking received",
+  "Đã xác nhận": "Confirmed",
+  "Đặt phòng trực tiếp tại {ten}{diachi}.": "Book directly at {ten}{diachi}.",
+  "Đặt trực tiếp với chủ nhà. Không phí nền tảng, không hoa hồng — số tiền bạn trả là số tiền chủ nhà nhận.":
+    "Book directly with the host. No platform fee, no commission — what you pay is what the host receives.",
+  "Đặt trực tiếp · không qua trung gian": "Book direct · no middleman",
+  "Đặt tối đa {n} đêm một lần.": "You can book at most {n} nights at once.",
+  "Không giải mã được khoá Stripe đã lưu.":
+    "The stored Stripe key could not be decrypted.",
+  "Không giải mã được khoá Stripe.": "The Stripe key could not be decrypted.",
+  "Không giải mã được khoá đã lưu.": "The stored key could not be decrypted.",
+  "Không kết nối được tới Stripe.": "Could not reach Stripe.",
+  "Không kết nối được tới PayPal.": "Could not reach PayPal.",
+  "Không xác thực được với PayPal. Kiểm tra lại khoá.":
+    "Could not authenticate with PayPal. Check the keys.",
+  "Không xác thực được với PayPal.": "Could not authenticate with PayPal.",
+  "PayPal từ chối cặp khoá này.": "PayPal rejected this key pair.",
+  "PayPal không nhận tiền tệ này. Đổi tiền tệ của cơ sở, hoặc dùng Stripe.":
+    "PayPal does not accept this currency. Change the property's currency, or use Stripe.",
+  "Stripe trả về {ma}.": "Stripe returned {ma}.",
+  "PayPal trả về {ma}.": "PayPal returned {ma}.",
+  "Stripe từ chối khoá này ({ma}).": "Stripe rejected this key ({ma}).",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

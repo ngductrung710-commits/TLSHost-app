@@ -86,6 +86,25 @@ export function shortVi(date: Date): string {
   return `${date.getUTCDate()}/${date.getUTCMonth() + 1}`;
 }
 
+const MONTHS_EN = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/**
+ * A short date a guest cannot misread.
+ *
+ * "4/9" is the fourth of September to a Vietnamese reader and the ninth of
+ * April to an American one, and the guest reading it is deciding which nights
+ * to pay for. So the English form names the month — "4 Sep" — rather than
+ * reordering two numbers that look equally plausible either way.
+ */
+export function shortDate(date: Date, locale: "vi" | "en" = "vi"): string {
+  return locale === "en"
+    ? `${date.getUTCDate()} ${MONTHS_EN[date.getUTCMonth()]}`
+    : shortVi(date);
+}
+
 /** Saturday or Sunday, read in UTC. */
 export function isWeekend(date: Date): boolean {
   const day = date.getUTCDay();

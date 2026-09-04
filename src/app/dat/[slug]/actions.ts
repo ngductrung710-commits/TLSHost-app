@@ -11,6 +11,8 @@ import {
   withPublicSlug,
 } from "@/lib/db";
 import { daysBetween, parseIsoDate, shortVi } from "@/lib/dates";
+import { guestT } from "@/lib/guestLocale";
+import { fill } from "@/lib/i18n";
 import { notifyOrgInBackground } from "@/lib/push";
 
 export type GuestState = { error: string | null };
@@ -34,29 +36,56 @@ const MAX_NIGHTS = 90;
 const TAKEN =
   "Rất tiếc, những đêm này vừa có người đặt. Thử chọn ngày khác giúp mình nhé.";
 
+/**
+ * Which language to answer in.
+ *
+ * Read straight off the form rather than from the request, because a
+ * server action has no URL to read. The widget posts it as a hidden field;
+ * anything else is Vietnamese, which is also what a forged value gets.
+ */
+function localeOf(formData: FormData): "vi" | "en" {
+  return formData.get("ng") === "en" ? "en" : "vi";
+}
+
+/** Carry the language across a redirect, or a guest lands in the other one. */
+function suffix(locale: "vi" | "en", first: boolean): string {
+  if (locale !== "en") return "";
+  return first ? "?ng=en" : "&ng=en";
+}
+
 export async function requestBooking(
   _prev: GuestState,
   formData: FormData,
 ): Promise<GuestState> {
+  const locale = localeOf(formData);
+  const t = guestT(locale);
+
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ." };
+    // Every message in the schema above is a whole Vietnamese sentence,
+    // which is exactly what this codebase uses as a translation key — so
+    // the validator needs no second lookup table.
+    const message = parsed.error.issues[0]?.message;
+    return { error: message ? t(message) : t("Thông tin chưa hợp lệ.") };
   }
 
   const data = parsed.data;
 
   // Silently accepted and dropped: telling a bot it was caught only teaches it
   // which field to leave alone next time.
-  if (data.company) redirect(`/dat/${data.slug}/xong`);
+  // The route written whole, then the query — a path assembled out of
+  // fragments is a path no reader and no link check can recognise.
+  const done = `/dat/${data.slug}/xong`;
+  if (data.company) redirect(`${done}${suffix(locale, true)}`);
 
   const checkIn = parseIsoDate(data.checkIn);
   const checkOut = parseIsoDate(data.checkOut);
-  if (!checkIn || !checkOut) return { error: "Ngày chưa hợp lệ." };
+  if (!checkIn || !checkOut) return { error: t("Ngày chưa hợp lệ.") };
   if (checkOut <= checkIn) {
-    return { error: "Ngày trả phòng phải sau ngày nhận phòng." };
+    return { error: t("Ngày trả phòng phải sau ngày nhận phòng.") };
   }
   if (daysBetween(checkIn, checkOut) > MAX_NIGHTS) {
-    return { error: `Đặt tối đa ${MAX_NIGHTS} đêm một lần.` };
+    return { error: fill(t("Đặt tối đa {n} đêm một lần."), { n: MAX_NIGHTS }) };
   }
 
   // Everything the form claimed about which property and room this is gets
@@ -78,10 +107,14 @@ export async function requestBooking(
     return { orgId: property.orgId, room };
   });
 
-  if (!found) return { error: "Không tìm thấy phòng này." };
+  if (!found) return { error: t("Không tìm thấy phòng này.") };
 
   if (data.guests > found.room.capacity) {
-    return { error: `Phòng này nhận tối đa ${found.room.capacity} khách.` };
+    return {
+      error: fill(t("Phòng này nhận tối đa {n} khách."), {
+        n: found.room.capacity,
+      }),
+    };
   }
 
   let bookingId: string;
@@ -142,8 +175,8 @@ export async function requestBooking(
   } catch (error) {
     // Both branches say the same thing to a guest. The distinction — our check
     // caught it, or the constraint did — matters to us, not to them.
-    if (error instanceof NightsTakenError) return { error: TAKEN };
-    if (pgErrorCode(error) === PG_EXCLUSION_VIOLATION) return { error: TAKEN };
+    if (error instanceof NightsTakenError) return { error: t(TAKEN) };
+    if (pgErrorCode(error) === PG_EXCLUSION_VIOLATION) return { error: t(TAKEN) };
     throw error;
   }
 
@@ -161,7 +194,7 @@ export async function requestBooking(
   // is theirs.
   redirect(
     payable
-      ? `/dat/${data.slug}/thanh-toan?dat=${bookingId}`
-      : `/dat/${data.slug}/xong`,
+      ? `/dat/${data.slug}/thanh-toan?dat=${bookingId}${suffix(locale, false)}`
+      : `${done}${suffix(locale, true)}`,
   );
 }

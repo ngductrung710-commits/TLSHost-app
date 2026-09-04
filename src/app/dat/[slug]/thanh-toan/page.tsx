@@ -3,16 +3,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { withOrg, withPublicSlug } from "@/lib/db";
-import { formatMoney, shortVi } from "@/lib/dates";
+import { formatMoney, shortDate } from "@/lib/dates";
+import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
+import { fill } from "@/lib/i18n";
+import { dictFor } from "@/lib/locale";
+import { I18nProvider } from "@/components/I18nProvider";
 import { THEMES, themeVars, type BookingTheme } from "@/lib/themes";
 
 import { PayForm } from "./PayForm";
 import { startPayment } from "./actions";
 
-export const metadata: Metadata = {
-  title: "Thanh toán",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(
+  props: PageProps<"/dat/[slug]/thanh-toan">,
+): Promise<Metadata> {
+  const t = guestT(await guestLocale(await props.searchParams));
+  return {
+    title: t("Thanh toán"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Offered after a booking is made, never before it.
@@ -29,6 +38,8 @@ export default async function PaymentPage(
 ) {
   const { slug } = await props.params;
   const params = await props.searchParams;
+  const locale = await guestLocale(params);
+  const t = guestT(locale);
   const bookingId = typeof params.dat === "string" ? params.dat : null;
   const cancelled = params.huy === "1";
 
@@ -84,13 +95,14 @@ export default async function PaymentPage(
     !data.paid && providers.length > 0 && (data.booking.totalCents ?? 0) > 0;
 
   return (
+    <I18nProvider dict={dictFor(locale)}>
     <div
       style={vars as React.CSSProperties}
       className="min-h-dvh bg-[var(--bg)] text-[var(--ink)]"
     >
       <main className="mx-auto w-full max-w-md px-5 py-16">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
-          Đã giữ phòng
+          {t("Đã giữ phòng")}
         </p>
         <h1
           className="mt-2 text-[1.75rem] font-semibold leading-tight"
@@ -101,20 +113,25 @@ export default async function PaymentPage(
 
         <dl className="mt-6 space-y-2 border-y border-[var(--line)] py-5 text-[15px]">
           <div className="flex justify-between gap-4">
-            <dt className="text-[var(--ink-soft)]">Phòng</dt>
+            <dt className="text-[var(--ink-soft)]">{t("Phòng")}</dt>
             <dd className="font-medium">{data.booking.room.name}</dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-[var(--ink-soft)]">Ngày</dt>
+            <dt className="text-[var(--ink-soft)]">{t("Ngày")}</dt>
             <dd className="font-medium tnum">
-              {shortVi(data.booking.checkIn)} – {shortVi(data.booking.checkOut)}
+              {shortDate(data.booking.checkIn, locale)} –{" "}
+              {shortDate(data.booking.checkOut, locale)}
             </dd>
           </div>
           {data.booking.totalCents !== null ? (
             <div className="flex justify-between gap-4 pt-1">
-              <dt className="text-[var(--ink-soft)]">Tổng cộng</dt>
+              <dt className="text-[var(--ink-soft)]">{t("Tổng cộng")}</dt>
               <dd className="text-[17px] font-semibold tnum">
-                {formatMoney(data.booking.totalCents, data.org?.currency ?? "VND")}
+                {formatMoney(
+                  data.booking.totalCents,
+                  data.org?.currency ?? "VND",
+                  locale,
+                )}
               </dd>
             </div>
           ) : null}
@@ -125,14 +142,13 @@ export default async function PaymentPage(
             role="status"
             className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[14px] leading-relaxed text-[var(--ink-soft)]"
           >
-            Bạn đã thoát khỏi trang thanh toán. Phòng vẫn được giữ — trả sau
-            cũng được.
+            {t("Bạn đã thoát khỏi trang thanh toán. Phòng vẫn được giữ — trả sau cũng được.")}
           </p>
         ) : null}
 
         {data.paid ? (
           <p className="mt-6 text-[15px] leading-relaxed text-[var(--ink-soft)]">
-            Lượt đặt này đã thanh toán. Hẹn gặp bạn.
+            {t("Lượt đặt này đã thanh toán. Hẹn gặp bạn.")}
           </p>
         ) : payable ? (
           <div className="mt-6">
@@ -141,28 +157,28 @@ export default async function PaymentPage(
               slug={slug}
               bookingId={data.booking.id}
               providers={providers}
+              locale={locale}
             />
             <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)]">
-              Trả trước hay trả khi nhận phòng đều được — phòng đã là của bạn.
-              Tiền vào thẳng tài khoản của chủ nhà.
+              {t("Trả trước hay trả khi nhận phòng đều được — phòng đã là của bạn. Tiền vào thẳng tài khoản của chủ nhà.")}
             </p>
           </div>
         ) : (
           <p className="mt-6 text-[15px] leading-relaxed text-[var(--ink-soft)]">
-            Chỗ nghỉ này nhận thanh toán khi bạn tới. Chủ nhà sẽ liên hệ để sắp
-            xếp phần còn lại.
+            {t("Chỗ nghỉ này nhận thanh toán khi bạn tới. Chủ nhà sẽ liên hệ để sắp xếp phần còn lại.")}
           </p>
         )}
 
         <p className="mt-10">
           <Link
-            href={`/dat/${slug}`}
+            href={`/dat/${slug}${withLocale({}, locale)}`}
             className="text-[14px] font-semibold underline underline-offset-4"
           >
-            Về {found.name}
+            {fill(t("Về {ten}"), { ten: found.name })}
           </Link>
         </p>
       </main>
     </div>
+    </I18nProvider>
   );
 }

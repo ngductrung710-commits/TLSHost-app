@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { withOrg, withPublicSlug } from "@/lib/db";
 import { createCheckout, verifyPayment } from "@/lib/payments";
+import { guestT } from "@/lib/guestLocale";
 
 export type PayState = { error: string | null };
 
@@ -34,8 +35,13 @@ export async function startPayment(
   _prev: PayState,
   formData: FormData,
 ): Promise<PayState> {
+  // Same hidden field the booking widget posts, and the same reason: a
+  // server action has no URL to read the language off.
+  const locale = formData.get("ng") === "en" ? "en" : "vi";
+  const t = guestT(locale);
+
   const parsed = startSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "Yêu cầu không hợp lệ." };
+  if (!parsed.success) return { error: t("Yêu cầu không hợp lệ.") };
 
   const { slug, bookingId, provider } = parsed.data;
 
@@ -45,7 +51,7 @@ export async function startPayment(
       select: { id: true, orgId: true, name: true },
     }),
   );
-  if (!found) return { error: "Không tìm thấy chỗ nghỉ này." };
+  if (!found) return { error: t("Không tìm thấy chỗ nghỉ này.") };
 
   const data = await withOrg(found.orgId, async (tx) => {
     // The booking must belong to this property. A booking id from elsewhere
@@ -81,10 +87,12 @@ export async function startPayment(
     return { booking, account, currency: org?.currency ?? "VND", settled };
   });
 
-  if (!data) return { error: "Chưa thanh toán trực tuyến được cho lượt đặt này." };
-  if (data.settled) return { error: "Lượt đặt này đã thanh toán rồi." };
+  if (!data) {
+    return { error: t("Chưa thanh toán trực tuyến được cho lượt đặt này.") };
+  }
+  if (data.settled) return { error: t("Lượt đặt này đã thanh toán rồi.") };
   if (data.booking.totalCents === null || data.booking.totalCents <= 0) {
-    return { error: "Lượt đặt này chưa có số tiền để thanh toán." };
+    return { error: t("Lượt đặt này chưa có số tiền để thanh toán.") };
   }
 
   const base = await origin();
@@ -99,20 +107,21 @@ export async function startPayment(
   //
   // A first draft sent an empty `?tt=` to both, which would have taken money
   // and then reported it unpaid.
+  const lang = locale === "en" ? "ng=en" : "";
   const successUrl =
     provider === "STRIPE"
-      ? `${base}/dat/${slug}/xong?tt={CHECKOUT_SESSION_ID}`
-      : `${base}/dat/${slug}/xong`;
+      ? `${base}/dat/${slug}/xong?tt={CHECKOUT_SESSION_ID}${lang ? `&${lang}` : ""}`
+      : `${base}/dat/${slug}/xong${lang ? `?${lang}` : ""}`;
 
   const checkout = await createCheckout(data.account, {
     amount: data.booking.totalCents,
     currency: data.currency,
     description: `${found.name} — ${data.booking.guestName}`,
     successUrl,
-    cancelUrl: `${base}/dat/${slug}/thanh-toan?dat=${data.booking.id}&huy=1`,
+    cancelUrl: `${base}/dat/${slug}/thanh-toan?dat=${data.booking.id}&huy=1${lang ? `&${lang}` : ""}`,
   });
 
-  if (!checkout.ok) return { error: checkout.error };
+  if (!checkout.ok) return { error: t(checkout.error) };
 
   await withOrg(found.orgId, (tx) =>
     tx.payment.create({

@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { useT } from "@/components/I18nProvider";
+
 import type { GuestState } from "./actions";
 
 // Reads the page's theme variables rather than the app's palette: this
@@ -14,6 +16,7 @@ const inputClass =
 const roundedField = { borderRadius: "calc(var(--radius) * 0.6)" } as const;
 
 function Submit() {
+  const t = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -21,7 +24,7 @@ function Submit() {
       disabled={pending}
       className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[var(--accent)] px-6 text-[15px] font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90 disabled:opacity-60"
     >
-      {pending ? "Đang gửi…" : "Đặt phòng này"}
+      {pending ? t("Đang gửi…") : t("Đặt phòng này")}
     </button>
   );
 }
@@ -37,6 +40,7 @@ export function BookingWidget({
   checkIn,
   checkOut,
   maxGuests,
+  locale,
 }: {
   action: (prev: GuestState, formData: FormData) => Promise<GuestState>;
   slug: string;
@@ -44,7 +48,9 @@ export function BookingWidget({
   checkIn: string;
   checkOut: string;
   maxGuests: number;
+  locale: "vi" | "en";
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState<GuestState, FormData>(action, {
     error: null,
@@ -57,7 +63,7 @@ export function BookingWidget({
         onClick={() => setOpen(true)}
         className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--accent)] px-5 text-[14px] font-semibold text-[var(--on-accent)] transition-opacity hover:opacity-90"
       >
-        Chọn phòng này
+        {t("Chọn phòng này")}
       </button>
     );
   }
@@ -71,6 +77,11 @@ export function BookingWidget({
       <input type="hidden" name="roomId" value={roomId} />
       <input type="hidden" name="checkIn" value={checkIn} />
       <input type="hidden" name="checkOut" value={checkOut} />
+      {/* The language the guest is reading in. A server action has no
+          request URL to read it from, and an error that comes back in the
+          wrong language is the one moment a guest most needs to understand
+          the page. */}
+      <input type="hidden" name="ng" value={locale} />
 
       {/* Positioned off-screen rather than display:none — some bots skip
           hidden fields but fill anything they can reach. aria-hidden and
@@ -78,7 +89,7 @@ export function BookingWidget({
           who would otherwise be asked for a company name that must stay
           empty. */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-0">
-        <label htmlFor={`company-${roomId}`}>Công ty</label>
+        <label htmlFor={`company-${roomId}`}>{t("Công ty")}</label>
         <input
           id={`company-${roomId}`}
           name="company"
@@ -102,7 +113,7 @@ export function BookingWidget({
           htmlFor={`name-${roomId}`}
           className="block text-[14px] font-medium"
         >
-          Tên của bạn
+          {t("Tên của bạn")}
         </label>
         <input
           id={`name-${roomId}`}
@@ -137,7 +148,7 @@ export function BookingWidget({
             htmlFor={`phone-${roomId}`}
             className="block text-[14px] font-medium"
           >
-            Điện thoại
+            {t("Điện thoại")}
           </label>
           <input
             id={`phone-${roomId}`}
@@ -156,7 +167,7 @@ export function BookingWidget({
           htmlFor={`guests-${roomId}`}
           className="block text-[14px] font-medium"
         >
-          Số khách
+          {t("Số khách")}
         </label>
         <input
           id={`guests-${roomId}`}
@@ -174,8 +185,10 @@ export function BookingWidget({
           htmlFor={`notes-${roomId}`}
           className="block text-[14px] font-medium"
         >
-          Ghi chú cho chủ nhà{" "}
-          <span className="font-normal text-[var(--ink-soft)]">(không bắt buộc)</span>
+          {t("Ghi chú cho chủ nhà")}{" "}
+          <span className="font-normal text-[var(--ink-soft)]">
+            {t("(không bắt buộc)")}
+          </span>
         </label>
         <textarea
           id={`notes-${roomId}`}
@@ -194,7 +207,7 @@ export function BookingWidget({
         onClick={() => setOpen(false)}
         className="block min-h-11 w-full text-center text-[14px] text-[var(--ink-soft)] hover:text-[var(--ink)]"
       >
-        Bỏ chọn phòng này
+        {t("Bỏ chọn phòng này")}
       </button>
     </form>
   );

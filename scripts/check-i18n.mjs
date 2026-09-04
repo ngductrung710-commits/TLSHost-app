@@ -29,12 +29,25 @@ import { EN } from "../.tmp/en.mjs";
 const VI =
   /[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i;
 
-// The signed-in workspace only. Guest-facing pages under /dat are in the
-// property's language, which is the host's choice and not a staff setting.
-// src/components too: BoardGrid draws the calendar and lives there, and
-// leaving it out meant the busiest screen in the product kept its Vietnamese
-// tooltips while every check reported a complete translation.
-const ROOTS = ["src/app/(app)", "src/app/(auth)", "src/components"];
+// The workspace and the guest-facing booking pages.
+//
+// /dat used to be excluded on the grounds that a guest page was always in the
+// property's own language. That stopped being true when the booking pages
+// were translated: the exclusion then meant every new key on the busiest
+// guest-facing screen in the product was unchecked, and the suite reported a
+// complete translation while the English booking page was still in
+// Vietnamese. An excluded directory is not a smaller test, it is a test that
+// cannot fail for whatever it excludes.
+//
+// src/components for the same reason: BoardGrid draws the calendar and lives
+// there, and leaving it out meant the busiest screen in the workspace kept
+// its Vietnamese tooltips while every check reported a complete translation.
+const ROOTS = [
+  "src/app/(app)",
+  "src/app/(auth)",
+  "src/app/dat",
+  "src/components",
+];
 
 /**
  * Label tables that live in lib but end up on a workspace screen.
@@ -54,7 +67,27 @@ const LABEL_MODULES = [
   "src/lib/plans.ts",
   "src/lib/availability.ts",
   "src/lib/propertyTypes.ts",
+  // Its error strings are handed to a guest verbatim, at the one moment
+  // a guest most needs to read them: t(checkout.error) on the payment
+  // page. Left out of this list, an English guest whose payment failed
+  // got a Vietnamese sentence and the suite reported a full translation.
+  "src/lib/payments.ts",
 ];
+
+/**
+ * Strings that must NOT be translated.
+ *
+ * One entry, and it is the language switcher. A language is named in its own
+ * language everywhere it is offered — "Tiếng Việt" stays "Tiếng Việt" on the
+ * English page, because the person who needs to find it is the person who
+ * cannot read the rest of the page. Translating it to "Vietnamese" hides the
+ * button from exactly the reader it exists for.
+ *
+ * Written down here rather than worked around in the component. The rule this
+ * skips is a good rule; the honest way past it is a list of exceptions
+ * somebody has to justify, not a string smuggled out of reach of the check.
+ */
+const EXEMPT = new Set(["Tiếng Việt"]);
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -117,6 +150,7 @@ for (const group of [FILES]) {
     // rendered, by t(state.error).
     for (const m of code.matchAll(/(["'])((?:(?!\1)[^\\\n])*)\1/g)) {
       if (!VI.test(m[2])) continue;
+      if (EXEMPT.has(m[2])) continue;
       found.add(m[2]);
       if (!(m[2] in EN)) fail(file, `no English for ${JSON.stringify(m[2])}`);
     }
@@ -180,6 +214,7 @@ for (const group of [FILES]) {
       for (const m of withoutCalls.matchAll(/(["'])((?:(?!\1)[^\\\n])*)\1/g)) {
         if (!VI.test(m[2])) continue;
         if (!insideFunction(withoutCalls, m.index)) continue;
+        if (EXEMPT.has(m[2])) continue;
         unwrappedJsx.push([file, m[2]]);
       }
     }
