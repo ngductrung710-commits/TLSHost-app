@@ -653,9 +653,14 @@ tháng nào. Đó là ràng buộc ở tầng cơ sở dữ liệu, không phả
 
 ## Những việc còn lại, không thuộc phần triển khai
 
-- **Bảy file logo kênh trong `tlshost/public/channels/` lấy từ trang sưu tầm,
-  không phải bộ nhận diện chính thức.** Chỉ Airbnb và Booking.com là bản gốc.
-  Màu của bốn cái còn lại có thể lệch. Đối chiếu trước khi chạy thật.
+- **Logo kênh: giữ nguyên như hiện tại, quyết ngày 05/09/2026.** Bảy file
+  trong `tlshost/public/channels/` lấy từ trang sưu tầm chứ không phải bộ nhận
+  diện chính thức; chỉ Airbnb và Booking.com là bản gốc, màu những cái còn lại
+  có thể lệch so với bản chuẩn của từng hãng. Chủ sản phẩm đã cân nhắc và chọn
+  dùng tiếp — đây không còn là việc phải làm.
+  Cần xem lại nếu một trong các hãng có ý kiến, hoặc khi làm một đợt chỉnh bộ
+  nhận diện. `tlshost/public/channels/README.md` ghi nơi lấy asset chính thức
+  của từng hãng và điều kiện sử dụng logo của họ.
 - **Giới hạn đăng nhập chỉ chặn được kẻ tấn công, không chặn được kẻ kiên
   nhẫn.** Năm lần sai một email trong mười lăm phút là đủ để dập một cuộc dò
   mật khẩu tự động, nhưng ai đó thử năm mật khẩu mỗi mười lăm phút suốt một
