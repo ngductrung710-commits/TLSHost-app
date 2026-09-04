@@ -816,6 +816,27 @@ export const EN: Record<string, string> = {
   "Giá trên là quy đổi để bạn dễ hình dung. Khoản thực thu là {tien}, theo tỷ giá {ty} ₫ = 1 $.":
     "The prices above are converted so they are easier to read. You will actually be charged in {tien}, at {ty} ₫ = 1 $.",
   "khoảng {gia}": "about {gia}",
+  "Gửi": "Send",
+  "Sẵn sàng": "Ready",
+  "Chưa hoạt động": "Not running",
+  "Xoá cuộc trò chuyện": "Clear the conversation",
+  "Đóng trợ lý": "Close the assistant",
+  "Nâng cấp để mở khoá trợ lý": "Upgrade to unlock the assistant",
+  "Trợ lý soạn sẵn thay đổi cho bạn duyệt. Gói hiện tại chưa có tính năng này.":
+    "The assistant drafts changes for you to approve. Your current plan does not include it.",
+  "Xem các gói": "See the plans",
+  "Nhờ chủ tài khoản nâng gói.": "Ask the account owner to upgrade.",
+  "Máy chủ chưa đặt ANTHROPIC_API_KEY nên trợ lý chưa chạy. Những đề xuất đã có vẫn duyệt được bình thường.":
+    "The server has no ANTHROPIC_API_KEY, so the assistant is not running. Existing proposals can still be approved as usual.",
+  "Mô tả việc bạn cần bằng lời thường ngày.":
+    "Describe what you need in ordinary words.",
+  "Ví dụ: khoá Garden Suite từ 5 đến 8 tháng 12 để sơn lại phòng tắm.":
+    "For example: block Garden Suite from 5 to 8 December to repaint the bathroom.",
+  "Bỏ qua": "Dismiss",
+  "Nhắn cho trợ lý": "Message the assistant",
+  "Trợ lý chỉ soạn sẵn — không có gì được ghi vào lịch trước khi bạn bấm Duyệt.":
+    "The assistant only drafts — nothing reaches the calendar until you press Approve.",
+  "Xem tất cả đề xuất": "See every proposal",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

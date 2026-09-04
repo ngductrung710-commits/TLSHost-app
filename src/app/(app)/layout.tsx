@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 
-import { AssistantTab } from "@/components/AssistantTab";
+import { AssistantPanel } from "@/components/AssistantPanel";
 import { SidebarNav, type NavItem } from "@/components/SidebarNav";
 import { daysUntil } from "@/lib/billing";
-import { requireMember } from "@/lib/dal";
+import { canManageBookings, requireMember } from "@/lib/dal";
 import { effectivePlan } from "@/lib/plans";
 import { getT, readLocale } from "@/lib/locale";
 
+import { approve, ask, reject } from "./tro-ly/actions";
 import { signOut } from "../(auth)/actions";
 import { setLocale } from "./cai-dat/localeAction";
 
@@ -107,7 +108,19 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Not for housekeepers: the assistant reads and writes bookings, and
           the page turns them away anyway. */}
-      {member.role !== "HOUSEKEEPER" ? <AssistantTab /> : null}
+      {/* Docked rather than a page, because a host wants it while looking at
+          the calendar. It renders nothing for a housekeeper: the role cannot
+          approve a proposal, so an assistant that only drafts them is a door
+          into an empty room. */}
+      <AssistantPanel
+        action={ask}
+        approve={approve}
+        reject={reject}
+        canUse={canManageBookings(member)}
+        enabled={member.limits.assistant}
+        configured={Boolean(process.env.ANTHROPIC_API_KEY)}
+        planHref={member.role === "OWNER" ? "/cai-dat?muc=goi" : null}
+      />
     </div>
   );
 }

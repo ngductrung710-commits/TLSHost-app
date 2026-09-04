@@ -12,7 +12,27 @@ import { LIMIT_MESSAGES } from "@/lib/plans";
 import { PROPOSAL_TTL_MS } from "@/lib/proposals";
 import { getT, readLocale } from "@/lib/locale";
 
-export type AssistantState = { error: string | null };
+/**
+ * What comes back from one ask.
+ *
+ * `drafted` exists for the side panel. The page re-renders from the database
+ * after revalidatePath and needs nothing here, but the panel floats over
+ * whatever screen the host was on — revalidating that screen to show one new
+ * proposal would redraw a calendar underneath them for no reason. So the
+ * proposal comes back with the reply and the panel appends it to the thread on
+ * screen, while the database stays the record.
+ */
+export type Drafted = {
+  id: string;
+  summary: string;
+  kind: string;
+  expiresAt: string;
+};
+
+export type AssistantState = {
+  error: string | null;
+  drafted?: Drafted | null;
+};
 
 const askSchema = z.object({
   prompt: z.string().trim().min(3, "Mô tả việc bạn cần làm.").max(2000),
@@ -45,7 +65,8 @@ export async function ask(
 
   if (!outcome.ok) return { error: outcome.error };
 
-  await withOrg(member.orgId, (tx) =>
+  const expiresAt = new Date(Date.now() + PROPOSAL_TTL_MS);
+  const created = await withOrg(member.orgId, (tx) =>
     tx.aiProposal.create({
       data: {
         orgId: member.orgId,
@@ -53,14 +74,26 @@ export async function ask(
         summary: outcome.reply.summary,
         kind: outcome.reply.proposal.kind,
         payload: outcome.reply.proposal,
-        expiresAt: new Date(Date.now() + PROPOSAL_TTL_MS),
+        expiresAt,
         createdByMembershipId: member.membershipId,
       },
+      select: { id: true },
     }),
   );
 
   revalidatePath("/tro-ly");
-  return { error: null };
+  return {
+    error: null,
+    drafted: {
+      id: created.id,
+      summary: outcome.reply.summary,
+      kind: outcome.reply.proposal.kind,
+      // Serialised: a Date crosses the server-action boundary fine, but the
+      // panel only ever formats it, and a string is one less thing that can
+      // arrive as an empty object after a serialisation change.
+      expiresAt: expiresAt.toISOString(),
+    },
+  };
 }
 
 export async function approve(formData: FormData): Promise<void> {
@@ -118,6 +151,11 @@ export async function approve(formData: FormData): Promise<void> {
   revalidatePath("/tro-ly");
   revalidatePath("/lich");
   revalidatePath("/cho-nghi");
+  // The panel is reachable from every screen, so an approval can land while
+  // the host is looking at the dashboard or the sales report. Those read the
+  // same rows the approval just changed.
+  revalidatePath("/tong-quan");
+  revalidatePath("/ban-hang");
 }
 
 export async function reject(formData: FormData): Promise<void> {
