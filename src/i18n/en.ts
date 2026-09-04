@@ -739,6 +739,8 @@ export const EN: Record<string, string> = {
     "This purchase was cancelled. Start a new one if you still want to buy.",
   "Chưa cấu hình tài khoản nhận tiền, nên chưa hiện được mã QR. Đơn đã ghi nhận — liên hệ chúng tôi để thanh toán.":
     "No receiving account is configured, so there is no QR code to show. The purchase is recorded — contact us to pay.",
+  "PayPal không nhận {tien}, nên khách sẽ không trả được bằng cổng này. Dùng Stripe, hoặc đổi tiền tệ của cơ sở.":
+    "PayPal does not accept {tien}, so guests cannot pay through it. Use Stripe, or change the property's currency.",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

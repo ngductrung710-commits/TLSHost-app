@@ -20,7 +20,8 @@
 process.env.SECRET_KEY ??= "check-payments-key-that-is-long-enough-32+";
 
 const {
-  __testing: { stripeAmount, paypalAmount },
+  __testing: { stripeAmount, paypalAmount, PAYPAL_NO_DECIMALS },
+  paypalSupports,
   decryptSecret,
   encryptSecret,
   maskSecret,
@@ -51,11 +52,36 @@ check("EUR becomes cents", stripeAmount(85, "EUR"), 8_500);
 check("zero stays zero", stripeAmount(0, "USD"), 0);
 
 console.log("\n-- PayPal: strings, with the right number of decimals");
-check("VND has none", paypalAmount(1_200_000, "VND"), "1200000");
+// This list used to say VND, KRW, CLP, ISK and VUV, and it was wrong about
+// every one of them: PayPal does not accept any of those currencies at all,
+// so how many decimals to write for them was never a real question. It also
+// omitted HUF and TWD, which are real. Corrected on 2026-09-04 by asking the
+// sandbox API: "12.50" as JPY, HUF or TWD comes back DECIMALS_NOT_SUPPORTED,
+// while "1250" is accepted.
 check("JPY has none", paypalAmount(15_000, "JPY"), "15000");
+check("HUF has none", paypalAmount(15_000, "HUF"), "15000");
+check("TWD has none", paypalAmount(15_000, "TWD"), "15000");
 check("USD has two", paypalAmount(120, "USD"), "120.00");
 check("usd, lowercase, same", paypalAmount(120, "usd"), "120.00");
 check("EUR has two", paypalAmount(85.5, "EUR"), "85.50");
+// Joined, because check() compares with Object.is and two arrays holding the
+// same strings are still two arrays.
+check(
+  "the no-decimals set is exactly those three",
+  [...PAYPAL_NO_DECIMALS].sort().join(" "),
+  "HUF JPY TWD",
+);
+
+console.log("\n-- PayPal: currencies it will not take");
+// The guard that matters. VND is this product's default currency and
+// PayPal refuses it outright — measured against the sandbox API, 422 with
+// CURRENCY_NOT_SUPPORTED — so a host on VND has to be told before a guest
+// discovers it at the moment they try to pay.
+check("VND is refused", paypalSupports("VND"), false);
+check("KRW is refused", paypalSupports("KRW"), false);
+check("USD is fine", paypalSupports("USD"), true);
+check("lowercase is fine too", paypalSupports("usd"), true);
+check("nonsense is refused", paypalSupports("XXX"), false);
 
 /* -------------------------------------------------------------------- */
 console.log("\n-- provider secrets survive a round trip");

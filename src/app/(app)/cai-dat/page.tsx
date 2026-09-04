@@ -28,6 +28,7 @@ import { setLocale } from "./localeAction";
 import { PushControls } from "./PushControls";
 import { sendTestPush, subscribePush, unsubscribePush } from "./pushActions";
 import { PaymentForm } from "./PaymentForm";
+import { paypalSupports } from "@/lib/payments";
 import { connectPayments, disconnectPayments } from "./paymentActions";
 import { getT, readLocale } from "@/lib/locale";
 import { LOCALE_NAMES, fill } from "@/lib/i18n";
@@ -241,8 +242,24 @@ export default async function SettingsPage(props: PageProps<"/cai-dat">) {
             <div className="grid gap-4 lg:grid-cols-2">
               {(["STRIPE", "PAYPAL"] as const).map((p) => {
                 const account = accountFor(p);
+                // PayPal refuses some currencies outright, VND among them, and
+                // it refuses them at checkout rather than at connect time —
+                // the credential test only asks for a token. Said here, the
+                // host finds out before a guest does.
+                const unusable =
+                  p === "PAYPAL" &&
+                  Boolean(org) &&
+                  !paypalSupports(org!.currency);
                 return (
                   <div key={p} className="space-y-2">
+                    {unusable ? (
+                      <p className="max-w-2xl rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-[13.5px] leading-relaxed text-warning">
+                        {fill(
+                          t("PayPal không nhận {tien}, nên khách sẽ không trả được bằng cổng này. Dùng Stripe, hoặc đổi tiền tệ của cơ sở."),
+                          { tien: org!.currency },
+                        )}
+                      </p>
+                    ) : null}
                     <PaymentForm
                       action={connectPayments}
                       provider={p}

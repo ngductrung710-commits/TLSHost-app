@@ -218,13 +218,50 @@ async function paypalToken(account: Account): Promise<string | null> {
 }
 
 /**
- * PayPal's amounts are decimal strings, and VND takes no decimals at all —
- * sending "1200000.00" for a VND order is rejected outright.
+ * PayPal will not take every currency, and VND is one it refuses.
+ *
+ * This was measured against the sandbox API on 2026-09-04, not read off a
+ * page: creating an order with currency_code "VND" comes back 422 with
+ * CURRENCY_NOT_SUPPORTED. So does KRW, and so do CNY and MYR — though those
+ * two are on PayPal's own published list, which is why the honest thing here
+ * is a list of what PayPal documents and a comment saying two of them were
+ * refused by the account we tested with.
+ *
+ * The set matters because the app offers exactly two currencies, VND and USD.
+ * One of them cannot be paid with PayPal at all. Without the guard below, a
+ * VND host connects PayPal successfully — testCredentials only asks for an
+ * OAuth token, which succeeds no matter the currency — sees a green
+ * "connected" badge, and then every single guest checkout fails at the moment
+ * the guest tries to pay.
  */
-const PAYPAL_ZERO_DECIMAL = new Set(["VND", "JPY", "KRW", "CLP", "ISK", "VUV"]);
+const PAYPAL_CURRENCIES = new Set([
+  "AUD", "BRL", "CAD", "CNY", "CZK", "DKK", "EUR", "HKD", "HUF", "ILS", "JPY",
+  "MYR", "MXN", "TWD", "NZD", "NOK", "PHP", "PLN", "GBP", "RUB", "SGD", "SEK",
+  "CHF", "THB", "USD",
+]);
+
+/** Whether a host can be paid through PayPal in this currency at all. */
+export function paypalSupports(currency: string): boolean {
+  return PAYPAL_CURRENCIES.has(currency.toUpperCase());
+}
+
+/**
+ * The currencies PayPal refuses a fractional amount for.
+ *
+ * Also measured, and the previous list here was wrong in both directions: it
+ * named VND, KRW, CLP, ISK and VUV — none of which PayPal takes at all — and
+ * it missed HUF and TWD. Sending "12.50" as JPY, HUF or TWD comes back
+ * DECIMALS_NOT_SUPPORTED; "1250" is accepted. Every other supported currency
+ * takes both.
+ *
+ * None of these three are selectable in the app today. The set is kept
+ * correct anyway, because the day a fourth currency is added is not the day
+ * anybody will re-derive this.
+ */
+const PAYPAL_NO_DECIMALS = new Set(["JPY", "HUF", "TWD"]);
 
 function paypalAmount(amount: number, currency: string): string {
-  return PAYPAL_ZERO_DECIMAL.has(currency.toUpperCase())
+  return PAYPAL_NO_DECIMALS.has(currency.toUpperCase())
     ? String(amount)
     : amount.toFixed(2);
 }
@@ -239,6 +276,16 @@ async function paypalCheckout(
     cancelUrl: string;
   },
 ): Promise<CheckoutResult> {
+  // Before the network call, not after: PayPal's own refusal for this comes
+  // back as "semantically incorrect, or failed business validation", which
+  // tells a host nothing about what to change.
+  if (!paypalSupports(args.currency)) {
+    return {
+      ok: false,
+      error: "PayPal không nhận tiền tệ này. Đổi tiền tệ của cơ sở, hoặc dùng Stripe.",
+    };
+  }
+
   const token = await paypalToken(account);
   if (!token) {
     return { ok: false, error: "Không xác thực được với PayPal. Kiểm tra lại khoá." };
@@ -407,4 +454,4 @@ export async function testCredentials(
 }
 
 /** Exposed for the check script — the amount conversion is the dangerous part. */
-export const __testing = { stripeAmount, paypalAmount };
+export const __testing = { stripeAmount, paypalAmount, PAYPAL_NO_DECIMALS };
