@@ -417,46 +417,152 @@ Rồi trên trình duyệt:
 
 ## 9. Sao lưu
 
-Cơ sở dữ liệu, hằng đêm:
+Script nằm trong repo: `scripts/backup.sh`. Đừng chép lại nội dung nó vào đây —
+bản trong repo là bản được `npm run check:backup` kiểm, bản chép tay thì không.
 
-```bash
-sudo -u postgres pg_dump tlshost | gzip > /var/backups/tlshost-$(date +%F).sql.gz
+### Vì sao không phải một dòng `pg_dump | gzip`
+
+Bản tài liệu này trước 05/09/2026 ghi thế này, và nó sai:
+
+```sh
+#!/bin/sh
+set -e
+pg_dump tlshost | gzip > "$DIR/tlshost-$(date +%F).sql.gz"
+find "$DIR" -name 'tlshost-*.sql.gz' -mtime +14 -delete
 ```
 
-Tự động hằng đêm. Viết thành một file script rồi cho cron gọi file đó — cron
-hiểu `%` là ký tự đặc biệt, nên nhét cả dòng `date +%F` thẳng vào crontab là
-cách thường gặp nhất để có một bản sao lưu không bao giờ chạy:
+`set -e` chỉ đọc mã thoát của lệnh **cuối** đường ống. `pg_dump` hỏng thì `gzip`
+vẫn thành công — nó nén cái luồng rỗng được đưa cho — nên script ghi ra một file
+20 byte, không dừng lại, chạy tiếp lệnh xoá, và thoát 0. Chạy hỏng 14 đêm là mọi
+bản sao lưu tốt bị xoá sạch, thay bằng 14 file rỗng, cron báo thành công mỗi đêm.
+
+Bản mới dùng `bash` với `set -Eeuo pipefail`, dump ra định dạng `custom`, và hỏi
+`pg_restore --list` xem file có chứa gì không trước khi làm bất cứ việc gì khác.
+Lệnh dọn dẹp nằm **cuối cùng**, chỉ chạy sau khi bản mới đã có mặt ở nơi khác.
+
+### Cài
 
 ```bash
 sudo mkdir -p /var/backups/tlshost && sudo chown postgres:postgres /var/backups/tlshost
 ```
 
 ```bash
-sudo tee /usr/local/bin/tlshost-backup > /dev/null <<'SH'
-#!/bin/sh
-set -e
-pg_dump tlshost | gzip > "/var/backups/tlshost/tlshost-$(date +%F).sql.gz"
-find /var/backups/tlshost -name 'tlshost-*.sql.gz' -mtime +14 -delete
-SH
+sudo install -m 755 /var/www/tlshost-app/scripts/backup.sh /usr/local/bin/tlshost-backup
+```
+
+### Khoá mã hoá — tạo ở máy bạn, không phải trên máy chủ
+
+Bản dump chứa tên, email và số điện thoại của khách. Không đẩy nó lên bất kỳ
+bucket nào ở dạng thô.
+
+Trên **máy của bạn**, không phải trên VPS:
+
+```bash
+age-keygen -o tlshost-backup.key
+```
+
+File đó chứa cả khoá riêng. Cất nó ở nơi bạn giữ mật khẩu, và giữ ít nhất hai
+bản. Mất nó là mất toàn bộ khả năng đọc lại các bản sao lưu.
+
+Chỉ dòng `public key:` mới được lên máy chủ. Máy chủ ghi được bản sao lưu mà
+không đọc được chúng — nên kẻ chiếm được máy chủ chỉ có đúng cơ sở dữ liệu đang
+chạy mà họ vốn đã có, chứ không có lịch sử, không có những dòng đã xoá, không có
+các khoá thanh toán cũ.
+
+### Nơi cất — ngoài máy chủ
+
+Backblaze B2 rẻ và đủ dùng. Tạo bucket riêng tư, tạo application key giới hạn
+đúng bucket đó, rồi trên VPS:
+
+```bash
+sudo apt install -y age rclone && sudo -u postgres rclone config
+```
+
+Đặt tên remote là `b2`. Kiểm tra nó thấy được bucket:
+
+```bash
+sudo -u postgres rclone lsd b2:
+```
+
+### Cấu hình
+
+```bash
+sudo tee /etc/default/tlshost-backup > /dev/null <<'ENV'
+TLSHOST_AGE_RECIPIENT=age1... # dán public key ở đây
+TLSHOST_RCLONE_REMOTE=b2:tlshost-backups
+TLSHOST_BACKUP_HEARTBEAT=https://hc-ping.com/... # xem mục dưới
+ENV
 ```
 
 ```bash
-sudo chmod +x /usr/local/bin/tlshost-backup
+sudo chmod 600 /etc/default/tlshost-backup && sudo chown postgres:postgres /etc/default/tlshost-backup
+```
+
+### Cron
+
+`%` là ký tự đặc biệt với cron, nên mọi thứ phải nằm trong script chứ không nằm
+trong dòng crontab:
+
+```bash
+echo '0 3 * * * . /etc/default/tlshost-backup && /usr/local/bin/tlshost-backup' | sudo -u postgres crontab -
+```
+
+Chạy thử ngay một lần, đừng đợi 3 giờ sáng mới biết nó hỏng:
+
+```bash
+sudo -u postgres sh -c '. /etc/default/tlshost-backup && /usr/local/bin/tlshost-backup'
+```
+
+### Chuông báo khi cron ngừng chạy
+
+Một cron job chết thì không in ra gì cả — không có lỗi để đọc, không có mail để
+nhận. Thứ duy nhất phát hiện được là một cú ping đã hẹn mà không tới. Tạo một
+check ở healthchecks.io (miễn phí), đặt chu kỳ 1 ngày, dán URL vào
+`TLSHOST_BACKUP_HEARTBEAT`. Script chỉ ping ở dòng cuối cùng, sau khi mọi bước
+đã xong — nên im lặng nghĩa là hỏng, và bạn được báo.
+
+### Khôi phục thử — làm một lần, rồi mỗi quý một lần
+
+**Một bản sao lưu chưa từng khôi phục thì chưa phải bản sao lưu.** Vòng
+dump → restore này đã được chạy thật trên lược đồ hiện tại ngày 05/09/2026: 17
+bảng, cờ RLS, số policy và số dòng từng bảng đều khớp nguyên vẹn. RLS là chỗ
+đáng lo nhất, vì mất policy nghĩa là các tổ chức đọc được dữ liệu của nhau, và
+không có gì báo lỗi.
+
+Tải bản mới nhất về máy bạn rồi giải mã:
+
+```bash
+rclone copy b2:tlshost-backups/tlshost-2026-09-05.tar.age .
 ```
 
 ```bash
-echo "0 3 * * * /usr/local/bin/tlshost-backup" | sudo -u postgres crontab -
+age --decrypt --identity tlshost-backup.key tlshost-2026-09-05.tar.age > kho.tar && tar -xf kho.tar
 ```
 
-Chạy thử một lần ngay, đừng đợi 3 giờ sáng mới biết nó hỏng:
+Khôi phục vào một cơ sở dữ liệu **trống và khác tên** — không bao giờ vào CSDL
+đang chạy:
 
 ```bash
-sudo -u postgres /usr/local/bin/tlshost-backup && ls -lh /var/backups/tlshost/
+createdb tlshost_thu && pg_restore -d tlshost_thu tlshost-2026-09-05.dump
 ```
 
-**Sao lưu cơ sở dữ liệu là chưa đủ.** `SECRET_KEY` trong `.env` là thứ giải mã
-khoá thanh toán của các chủ nhà. Khôi phục dump mà không có đúng khoá đó thì mọi
-kết nối Stripe/PayPal đã lưu đều thành rác. Cất `.env` ở nơi khác máy chủ.
+So lại. Ba câu này phải cho cùng kết quả với CSDL thật:
+
+```bash
+psql -d tlshost_thu -c "select count(*) from booking" -c "select count(*) from property" -c "select relname, relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and relkind='r' order by 1"
+```
+
+```bash
+dropdb tlshost_thu
+```
+
+### Cái mà cơ sở dữ liệu không cứu được
+
+`SECRET_KEY` trong `.env` là thứ giải mã khoá thanh toán của các chủ nhà. Khôi
+phục dump mà không có đúng khoá đó thì mọi kết nối Stripe/PayPal đã lưu đều
+thành rác. Script đã tự đóng gói `.env` vào cùng kho lưu trữ — đó là lý do biến
+`TLSHOST_BACKUP_EXTRA` tồn tại — nhưng hãy kiểm tra dòng `kèm ...` có trong log
+lần chạy đầu tiên.
 
 ---
 
@@ -557,15 +663,24 @@ tháng nào. Đó là ràng buộc ở tầng cơ sở dữ liệu, không phả
   thực hai lớp, cả hai đều chưa có.
 - **`ANTHROPIC_API_KEY` chưa có.** Trang Trợ lý tự giải thích và tắt đi, mọi
   thứ khác chạy bình thường. Tuỳ chọn, không chặn triển khai.
-- **Mã VietQR chưa từng được quét bằng app ngân hàng thật.** Khối định danh
-  tài khoản trong mã do ứng dụng sinh ra giống từng byte với mã mà chính app
-  TPBank tạo cho cùng tài khoản đó, và một bộ giải mã độc lập đọc lại đúng số
-  tài khoản, số tiền và nội dung chuyển khoản. Nhưng chỉ app ngân hàng mới trả
-  lời được là Napas có chấp nhận hay không. Mở trang thanh toán, quét, kiểm bốn
-  thứ hiện lên — đừng chuyển tiền thật.
-- **Các lệnh gọi thật tới Stripe và PayPal chưa được kiểm** — chưa từng có khoá
-  thật trong môi trường phát triển. Kết nối bằng khoá `sk_test_` trước và chạy
-  thử một lượt thanh toán. Chỗ đáng nghi nhất đã ghi chú sẵn trong
+- **Mã VietQR đã được app TPBank thật quét, ngày 04/09/2026.** Mã sinh bởi
+  `qrPayloadFor()` từ các biến `TLSHOST_BANK_*` đang chạy, app đọc ra đúng ngân
+  hàng, đúng số tài khoản, đúng chủ tài khoản, số tiền và nội dung đều điền
+  sẵn. Bố cục thẻ đã được xác nhận với Napas, không còn là suy đoán. **Quét lại
+  bằng tay mỗi khi thẻ 38 đổi** — số tài khoản, BIN, hay mã dịch vụ — vì đó là
+  phần `check:vietqr` không kiểm được.
+- **PayPal đã chạy thật tới bước tạo đơn; phần thu tiền thì chưa.** Với khoá
+  sandbox, `testCredentials()`, `createCheckout()` và `startPayment()` đều đã
+  chạy và tạo được đơn thật trên PayPal. `verifyPayment()` thì **chưa chạy lần
+  nào** — và nó *capture*, tức chuyển tiền, chứ không phải đọc. Câu chưa ai trả
+  lời được là gọi nó hai lần thì sao, vì đó đúng là điều xảy ra khi khách bấm
+  tải lại trang xác nhận.
+- **PayPal không nhận VND.** Đo ngày 04/09/2026: tạo đơn với `currency_code`
+  là VND trả về 422 `CURRENCY_NOT_SUPPORTED`, KRW cũng vậy. Cơ sở tính bằng
+  đồng thì không dùng được PayPal, và màn hình Cài đặt nay nói thẳng điều đó
+  thay vì để chủ nhà phát hiện lúc khách đang cầm thẻ.
+- **Stripe vẫn chưa chạy lần nào.** Kết nối bằng khoá `sk_test_` rồi chạy thử
+  một lượt thanh toán. Chỗ đáng nghi nhất đã ghi chú sẵn trong
   `src/lib/payments.ts`: Stripe phải tự thay `{CHECKOUT_SESSION_ID}` vào URL
   trả về. Nếu chỗ đó sai, khách trả tiền xong sẽ quay về trang báo "chưa xác
   nhận được thanh toán".
