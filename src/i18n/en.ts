@@ -160,7 +160,6 @@ export const EN: Record<string, string> = {
     "What you call this place yourself. You can change it later.",
   "(không bắt buộc)": "(optional)",
   "Phòng và giá": "Rooms and rates",
-  "Giá mỗi đêm (₫)": "Rate per night (₫)",
   "Giá mỗi đêm hiển thị trên trang đặt phòng. Phòng chưa có giá vẫn nhận được đặt, chỉ là khách không thấy con số nào.":
     "The nightly rate shown on the booking page. A room with no rate still takes bookings, the guest just sees no figure.",
   "bỏ giá": "clear the rate",
@@ -547,7 +546,6 @@ export const EN: Record<string, string> = {
   "Tên khách": "Guest name",
   "Điện thoại": "Phone",
   "Số khách": "Guests",
-  "Tổng tiền (₫)": "Total (₫)",
   "Nguồn": "Source",
   "Đêm cuối là đêm trước ngày này — phòng trống lại từ sáng hôm đó.":
     "The last night is the night before this date — the room is free again that morning.",
@@ -741,6 +739,8 @@ export const EN: Record<string, string> = {
     "No receiving account is configured, so there is no QR code to show. The purchase is recorded — contact us to pay.",
   "PayPal không nhận {tien}, nên khách sẽ không trả được bằng cổng này. Dùng Stripe, hoặc đổi tiền tệ của cơ sở.":
     "PayPal does not accept {tien}, so guests cannot pay through it. Use Stripe, or change the property's currency.",
+  "Giá mỗi đêm ({tien})": "Price per night ({tien})",
+  "Tổng tiền ({tien})": "Total ({tien})",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

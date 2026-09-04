@@ -6,6 +6,8 @@ import { useFormStatus } from "react-dom";
 
 import type { BookingState } from "@/app/(app)/lich/actions";
 import { useT } from "@/components/I18nProvider";
+import { currencySymbol } from "@/lib/currencies";
+import { fill } from "@/lib/i18n";
 
 /**
  * One form for creating and for editing a booking.
@@ -55,6 +57,7 @@ export function BookingForm({
   bookingId,
   submitLabel,
   cancelHref,
+  currency,
 }: {
   action: (prev: BookingState, formData: FormData) => Promise<BookingState>;
   rooms: RoomOption[];
@@ -63,6 +66,8 @@ export function BookingForm({
   bookingId?: string;
   submitLabel: string;
   cancelHref: string;
+  /** The organization's currency. The label lied about this until 2026-09-04. */
+  currency: string;
 }) {
   const t = useT();
   const [state, formAction] = useActionState<BookingState, FormData>(action, {
@@ -199,7 +204,7 @@ export function BookingForm({
         </div>
         <div>
           <label htmlFor="totalCents" className="block text-[14px] font-medium text-ink-700">
-            {t("Tổng tiền (₫)")}
+            {fill(t("Tổng tiền ({tien})"), { tien: currencySymbol(currency) })}
           </label>
           <input
             id="totalCents"

@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import {
-  canManageBookings,
-  requireMember,
-  visiblePropertyFilter,
-} from "@/lib/dal";
+import { canManageBookings, orgCurrency, requireMember, visiblePropertyFilter } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { addDays, parseIsoDate, todayIn, toIsoDate } from "@/lib/dates";
 
@@ -23,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
   const t = await getT();
   const member = await requireMember();
+  const currency = await orgCurrency();
   if (!canManageBookings(member)) redirect("/lich");
 
   const params = await props.searchParams;
@@ -80,6 +77,7 @@ export default async function NewBookingPage(props: PageProps<"/lich/moi">) {
       </p>
 
       <BookingForm
+            currency={currency}
         action={createBooking}
         rooms={rooms.map((r) => ({
           id: r.id,

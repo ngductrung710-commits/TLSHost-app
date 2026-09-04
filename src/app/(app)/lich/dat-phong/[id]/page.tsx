@@ -126,6 +126,7 @@ export default async function BookingPage(
       ) : (
         <div className="mt-7">
           <BookingForm
+            currency={currency}
             action={updateBooking}
             bookingId={booking.id}
             rooms={rooms.map((r) => ({

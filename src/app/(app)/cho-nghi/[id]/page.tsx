@@ -12,6 +12,7 @@ import { PublicPageForm } from "./PublicPageForm";
 import { DeletePropertyForm } from "./DeletePropertyForm";
 import { deleteProperty, publishProperty, setRoomPrice } from "./actions";
 import { getT, readLocale } from "@/lib/locale";
+import { currencySymbol } from "@/lib/currencies";
 import { fill } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -166,14 +167,16 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
                     htmlFor={`price-${room.id}`}
                     className="block text-[12px] font-medium text-ink-600"
                   >
-                    {t("Giá mỗi đêm (₫)")}
+                    {fill(t("Giá mỗi đêm ({tien})"), {
+                      tien: currencySymbol(property.currency),
+                    })}
                   </label>
                   <input
                     id={`price-${room.id}`}
                     name="basePrice"
                     type="number"
                     min={0}
-                    step={10000}
+                    step={property.currency === "VND" ? 10000 : 1}
                     defaultValue={room.basePrice ?? ""}
                     className="mt-1 min-h-11 w-40 rounded-xl border border-line-strong bg-white px-3 text-[15px] tnum"
                   />
