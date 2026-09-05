@@ -62,6 +62,30 @@
   --color-line-strong: #8a7f75; /* control boundary — 3.44:1 on canvas */
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Every transition-* utility in the app, in two lines.
+     Tailwind reads these for the `transition` utilities, so setting them here
+     changes all thirty-nine files that use one without touching any of them.
+     The easing goes from Tailwind's symmetric default to deceleration, which
+     is what an arriving thing should do. */
+  --default-transition-duration: var(--dur-quick);
+  --default-transition-timing-function: var(--ease-out-soft);
+}
+
+/* Motion durations.
+   Deliberately NOT the marketing site's scale, and that is the point rather
+   than an oversight. That site is read once and is arguing; this is a tool a
+   host keeps open all day, and 320ms of colour fade on a hover they will
+   perform a thousand times reads as lag. Same easing, faster clock.
+
+   In :root and not @theme, because Tailwind drops theme variables nothing
+   references — two of these were declared there first and silently did not
+   ship, which is exactly how someone later writes var(--dur-base) and gets a
+   transition that never runs. */
+:root {
+  --dur-press: 0.09s; /* the finger is still down; slower than this lags */
+  --dur-quick: 0.18s; /* a colour, a border, a background */
+  --dur-base: 0.3s; /* something arriving or leaving */
 }
 
 /* ==========================================================================
@@ -285,11 +309,56 @@
   border-bottom-right-radius: 0;
 }
 
+/* ==========================================================================
+   Phản hồi khi chạm.
+
+   Ứng dụng có 19 chỗ đổi màu khi rê chuột và gần như không có trạng thái
+   bấm. Trên điện thoại — nơi chủ nhà thật sự mở cái lịch này — hover không
+   tồn tại, nên một nút không phản hồi gì cho tới khi cả trang đổi. Khoảng
+   trống đó là thứ làm giao diện có cảm giác chậm dù không hề chậm.
+
+   Ba luật dưới đây, không hơn. Hướng dẫn xếp "làm mọi thứ chuyển động" ở
+   mức HIGH cùng với "chỉ dựa vào hover": cả hai đều là lỗi, và lỗi thứ hai
+   không sửa được bằng cách phạm lỗi thứ nhất.
+   ========================================================================== */
+
+/* :where() để độ ưu tiên bằng 0 — mọi lớp Tailwind đã có vẫn thắng, nên
+   luật này thêm vào chứ không giành với thứ gì. */
+:where(button, [role="button"], summary, a, input, select, textarea, label) {
+  /* Bỏ 300ms trễ mà trình duyệt di động chờ xem có phải cú nháy đúp không.
+     Không phải hiệu ứng, nhưng là thứ khiến mọi hiệu ứng khác trông nhanh. */
+  touch-action: manipulation;
+}
+
+/* Chỉ những thứ ngữ nghĩa là nút. Liên kết chữ thường không co lại khi bấm —
+   một câu văn nhún nhảy là chuyển động không mang nghĩa gì. */
+:where(button, [role="button"], summary):not(:disabled) {
+  transition: transform var(--dur-press) var(--ease-out-soft);
+}
+
+:where(button, [role="button"], summary):not(:disabled):active {
+  /* transform chứ không phải width/height: nó không tính lại bố cục, nên
+     không đẩy thứ gì xung quanh. 0.97 chứ không phải 0.95 — đây là công cụ
+     dùng cả ngày, không phải màn hình chào. */
+  transform: scale(0.97);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Cú co lại khi bấm bị bỏ, nhưng phản hồi thì không.
+     Khối trên chỉ rút thời lượng về 0 — cái transform vẫn nhảy, và một cú
+     nhảy tức thời vẫn là thứ chuyển động với người đã nói rằng họ không muốn
+     nó. Đổi sang mờ đi: vẫn biết mình vừa bấm trúng, mà không có gì di
+     chuyển. Phản hồi khi chạm là thông tin, không phải trang trí, nên nó
+     không được biến mất cùng với hiệu ứng. */
+  :where(button, [role="button"], summary):not(:disabled):active {
+    transform: none;
+    opacity: 0.68;
   }
 }
