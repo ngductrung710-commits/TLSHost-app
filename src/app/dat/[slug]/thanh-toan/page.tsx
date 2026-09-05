@@ -6,6 +6,7 @@ import { withOrg, withPublicSlug } from "@/lib/db";
 import { formatMoney, shortDate } from "@/lib/dates";
 import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
 import { shownPrice } from "@/lib/exchange";
+import { paypalSupports } from "@/lib/payments";
 import { fill } from "@/lib/i18n";
 import { I18nProvider } from "@/components/I18nProvider";
 import { guestClientDict } from "../guestDict";
@@ -91,7 +92,21 @@ export default async function PaymentPage(
 
   const theme = (data.org?.bookingTheme ?? "CLASSIC") as BookingTheme;
   const vars = themeVars(theme, data.org?.brandColor ?? null);
-  const providers = data.accounts.map((a) => a.provider);
+  const currency = data.org?.currency ?? "VND";
+
+  // A provider that cannot take this currency is not an option, and offering
+  // it is worse than offering nothing: the guest picks it, waits, and gets an
+  // error at the one moment they were ready to pay. createCheckout refuses the
+  // same pair — that guard is the last line, not the fix.
+  //
+  // Only PayPal is filtered. Its refusal was measured (422
+  // CURRENCY_NOT_SUPPORTED for VND); Stripe's currency support has never been
+  // exercised with a real key, and hiding it on a guess would be inventing a
+  // limit rather than respecting one.
+  const providers = data.accounts
+    .map((a) => a.provider)
+    .filter((p) => p !== "PAYPAL" || paypalSupports(currency));
+
   const payable =
     !data.paid && providers.length > 0 && (data.booking.totalCents ?? 0) > 0;
 
@@ -129,16 +144,12 @@ export default async function PaymentPage(
               <dt className="text-[var(--ink-soft)]">{t("Tổng cộng")}</dt>
               <dd className="text-right">
                 <span className="text-[17px] font-semibold tnum">
-                  {formatMoney(
-                    data.booking.totalCents,
-                    data.org?.currency ?? "VND",
-                    locale,
-                  )}
+                  {formatMoney(data.booking.totalCents, currency, locale)}
                 </span>
                 {(() => {
                   const shown = shownPrice(
                     data.booking.totalCents!,
-                    data.org?.currency ?? "VND",
+                    currency,
                     locale,
                   );
                   if (!shown.converted) return null;
