@@ -17,12 +17,18 @@ chạy đồng bộ kênh theo giờ.
 
 Đọc hai mục này trước, vì cả hai đều hỏng theo kiểu **không báo lỗi**.
 
-**1. `NEXT_PUBLIC_VAPID_PUBLIC_KEY` được nhúng vào lúc build, không phải lúc chạy.**
-Next thay thế mọi biến `NEXT_PUBLIC_*` thẳng vào gói JavaScript gửi cho trình
-duyệt. Nếu bạn `npm run build` trước rồi mới điền khoá vào `.env`, ứng dụng vẫn
-khởi động bình thường, mọi trang vẫn chạy, và phần bật thông báo lặng lẽ biến
-mất khỏi trang Cài đặt như thể tính năng đó chưa từng tồn tại. **Điền `.env`
-đầy đủ trước khi build.** Đổi khoá VAPID về sau thì phải build lại.
+**1. Mọi biến `NEXT_PUBLIC_*` được nhúng vào lúc build, không phải lúc chạy.**
+Next thay thế chúng thẳng vào gói JavaScript gửi cho trình duyệt. Nếu bạn
+`npm run build` trước rồi mới điền vào `.env`, ứng dụng vẫn khởi động bình
+thường, mọi trang vẫn chạy, và tính năng lặng lẽ biến mất như thể chưa từng
+tồn tại. **Điền `.env` đầy đủ trước khi build**; đổi về sau thì phải build lại.
+
+Hiện có hai biến như vậy, và cả hai đều hỏng câm:
+
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — thiếu thì phần bật thông báo biến mất khỏi
+  trang Cài đặt.
+- `NEXT_PUBLIC_SITE_URL` — thiếu thì đường về trang giới thiệu biến mất khỏi
+  màn hình đăng nhập và khỏi chân trang đặt phòng của khách.
 
 **2. Ứng dụng phải kết nối bằng role KHÔNG phải chủ sở hữu bảng.**
 Row-level security trong PostgreSQL **không áp dụng cho chủ sở hữu bảng**. Nối

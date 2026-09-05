@@ -13,6 +13,7 @@ import {
   toIsoDate,
 } from "@/lib/dates";
 import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
+import { siteUrl } from "@/lib/links";
 import { shownPrice, vndPerUsd } from "@/lib/exchange";
 import { fill } from "@/lib/i18n";
 import { I18nProvider } from "@/components/I18nProvider";
@@ -156,6 +157,7 @@ export default async function PublicBookingPage(
   const params = await props.searchParams;
   const locale = await guestLocale(params);
   const t = guestT(locale);
+  const home = siteUrl(locale);
 
   const property = await load(slug);
   if (!property) notFound();
@@ -476,6 +478,19 @@ export default async function PublicBookingPage(
 
         <footer className="mt-14 border-t border-[var(--line)] pt-6 text-[13px] leading-relaxed text-[var(--ink-soft)]">
           {t("Đặt trực tiếp với chủ nhà. Không phí nền tảng, không hoa hồng — số tiền bạn trả là số tiền chủ nhà nhận.")}
+
+          {/* Deliberately the quietest thing on the page, and last. This is a
+              host's storefront, and the sentence directly above it is the
+              promise that nobody stands between them and their guest — a
+              vendor badge shouting over that would undercut the one claim the
+              page is making. Small, grey, after the full stop. */}
+          {home ? (
+            <span className="mt-2 block text-[12px] text-[var(--ink-soft)] opacity-70">
+              <a href={home} className="hover:underline">
+                {t("Chạy trên TLSHost")}
+              </a>
+            </span>
+          ) : null}
         </footer>
       </main>
     </div>

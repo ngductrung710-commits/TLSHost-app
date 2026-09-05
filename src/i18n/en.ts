@@ -824,6 +824,7 @@ export const EN: Record<string, string> = {
     "Every proposal the assistant has drafted, and what you approved or dismissed. Ask it from the panel on the right of the screen.",
   "Chưa có đề xuất nào. Mở trợ lý ở khung bên phải và mô tả việc bạn cần — mọi thứ nó soạn sẽ hiện ở đây.":
     "No proposals yet. Open the assistant on the right and describe what you need — everything it drafts will appear here.",
+  "Chạy trên TLSHost": "Running on TLSHost",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":
