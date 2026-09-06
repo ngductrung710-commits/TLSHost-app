@@ -40,8 +40,8 @@ export const getActiveMember = cache(async (): Promise<ActiveMember | null> => {
   // belonging to the user the session names, which is the only identity
   // available at this point. That id came from a session token the server
   // looked up itself, so the client cannot forge it.
-  const membership = await withUser(session.userId, (tx) =>
-    tx.membership.findFirst({
+  const membership = await withUser(session.userId, async (tx) => {
+    const found = await tx.membership.findFirst({
       where: { userId: session.userId, joinedAt: { not: null } },
       orderBy: { invitedAt: "asc" },
       select: {
@@ -50,13 +50,32 @@ export const getActiveMember = cache(async (): Promise<ActiveMember | null> => {
         role: true,
         canEditOthersBookings: true,
         org: {
-        select: { name: true, timezone: true, plan: true, planUntil: true },
-      },
+          select: { name: true, timezone: true, plan: true, planUntil: true },
+        },
         user: { select: { name: true, email: true } },
-        scopes: { select: { propertyId: true } },
       },
-    }),
-  );
+    });
+    if (!found) return null;
+
+    // The scopes come second, on purpose.
+    //
+    // Asking for them in the select above — a to-many alongside the two
+    // to-one relations — makes Prisma fan the load out into queries it issues
+    // before the parent's client is free, and pg warns that this is deprecated
+    // and removed in pg@9. Measured, not guessed: `org` + `user` alone is
+    // silent, `scopes` alone is silent, the three together warn, and splitting
+    // them like this is silent again.
+    //
+    // It matters more than a warning usually would because this function runs
+    // on every authenticated request. At pg@9 it stops being a warning, and
+    // every signed-in page in the product fails at once.
+    const scopes = await tx.membershipScope.findMany({
+      where: { membershipId: found.id },
+      select: { propertyId: true },
+    });
+
+    return { ...found, scopes };
+  });
 
   if (!membership) return null;
 

@@ -13,8 +13,25 @@
 // chú dạy được người đọc nó; nó không chặn được người không đọc.
 //
 // Luật ở đây hẹp có chủ ý: chỉ soi phần thân của `Promise.all(...)`, và chỉ
-// kêu khi bên trong có `tx.`. `Promise.all` bọc các lời gọi mạng — như
-// src/lib/push.ts gửi thông báo đẩy — là song song thật và không bị đụng tới.
+// kêu khi bên trong có `tx.`.
+//
+// VÀ NÓ KHÔNG PHẢI TẤT CẢ. Có một nguyên nhân thứ hai mà file này không nhìn
+// thấy được, tìm ra ngày 06/09/2026: một quan hệ MỘT-NHIỀU đứng chung select
+// với các quan hệ một-một. Prisma bung chúng thành nhiều truy vấn và phát
+// đúng cảnh báo này, dù mọi dòng trong code đều có await và không có
+// Promise.all nào. Đo cụ thể trên membership: `org` + `user` im lặng,
+// `scopes` một mình im lặng, cả ba cùng lúc thì kêu, tách `scopes` ra một
+// truy vấn tuần tự thì im lại — xem src/lib/dal.ts.
+//
+// Dạng đó không dò được bằng cách đọc chữ mà không dựng lại lược đồ, nên nó
+// được ghi ở đây thay vì được canh. Suite này xanh KHÔNG có nghĩa là không
+// còn cảnh báo pg; nó chỉ có nghĩa là không ai bọc truy vấn trong
+// Promise.all. Cách tìm nguyên nhân kia là khởi động nguội, chạm đúng một
+// đường, và đếm — cảnh báo của Node chỉ phát một lần mỗi vị trí gọi mỗi
+// tiến trình, nên đo lặp lại trên cùng tiến trình luôn cho số 0.
+//
+// `Promise.all` bọc các lời gọi mạng — như src/lib/push.ts gửi thông báo đẩy
+// — là song song thật và không bị đụng tới.
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
