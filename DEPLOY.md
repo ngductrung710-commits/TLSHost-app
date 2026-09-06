@@ -686,10 +686,16 @@ tháng nào. Đó là ràng buộc ở tầng cơ sở dữ liệu, không phả
   nào** — và nó *capture*, tức chuyển tiền, chứ không phải đọc. Câu chưa ai trả
   lời được là gọi nó hai lần thì sao, vì đó đúng là điều xảy ra khi khách bấm
   tải lại trang xác nhận.
-- **PayPal không nhận VND.** Đo ngày 04/09/2026: tạo đơn với `currency_code`
-  là VND trả về 422 `CURRENCY_NOT_SUPPORTED`, KRW cũng vậy. Cơ sở tính bằng
-  đồng thì không dùng được PayPal, và màn hình Cài đặt nay nói thẳng điều đó
-  thay vì để chủ nhà phát hiện lúc khách đang cầm thẻ.
+- **Hiện KHÔNG có cổng thẻ nào dùng được.** Ngày 05/09/2026 mọi tổ chức đã
+  đưa tiền tệ về VND, và PayPal — cổng duy nhất đã kết nối — từ chối VND: đo
+  ngày 04/09, tạo đơn với `currency_code` là VND trả về 422
+  `CURRENCY_NOT_SUPPORTED` (KRW cũng vậy). Nên khách hiện chỉ trả được bằng
+  VietQR.
+  Hai chỗ đã tự xử lý việc này thay vì để ai đó phát hiện muộn: màn hình Cài
+  đặt cảnh báo khi tiền tệ của cơ sở là thứ PayPal không nhận, và trang thanh
+  toán của khách **ẩn hẳn cổng đó đi** rồi chuyển sang "trả khi nhận phòng"
+  chứ không mời một nút chắc chắn hỏng. Chỉ PayPal bị lọc — giới hạn của
+  Stripe chưa từng đo, và ẩn theo phỏng đoán là bịa ra một giới hạn.
 - **Stripe vẫn chưa chạy lần nào.** Kết nối bằng khoá `sk_test_` rồi chạy thử
   một lượt thanh toán. Chỗ đáng nghi nhất đã ghi chú sẵn trong
   `src/lib/payments.ts`: Stripe phải tự thay `{CHECKOUT_SESSION_ID}` vào URL
