@@ -863,6 +863,14 @@ export const EN: Record<string, string> = {
   "Đã nhận đặt phòng — {noi}": "Booking received — {noi}",
   "Khách": "Guest",
   "Đặt phòng mới: {ten}": "New booking: {ten}",
+  "Mật khẩu này chỉ gồm vài ký tự lặp lại. Chọn mật khẩu khác.":
+    "This password is just a few characters repeated. Choose another one.",
+  "Mật khẩu này là một dãy liên tiếp trên bàn phím. Chọn mật khẩu khác.":
+    "This password runs straight along the keyboard. Choose another one.",
+  "Mật khẩu này quá dễ đoán. Chọn mật khẩu khác.":
+    "This password is too easy to guess. Choose another one.",
+  "Mật khẩu không nên chứa tên hoặc email của bạn.":
+    "A password should not contain your own name or email address.",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

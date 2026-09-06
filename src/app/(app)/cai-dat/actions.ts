@@ -93,13 +93,16 @@ export async function changePassword(
     return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
   }
 
-  const weak = passwordProblem(parsed.data.next);
-  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
-
   const user = await prisma.user.findUnique({
     where: { id: member.userId },
-    select: { passwordHash: true },
+    select: { passwordHash: true, email: true, name: true },
   });
+
+  // Sau khi tra người dùng chứ không phải trước: luật mật khẩu cần biết email
+  // và tên để từ chối những mật khẩu chính là tên chủ tài khoản, và ở đây chỉ
+  // có phiên đăng nhập chứ không có sẵn hai thứ đó.
+  const weak = passwordProblem(parsed.data.next, user ?? {});
+  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
 
   // The current password is required even though the session already proves
   // identity: a borrowed laptop with an open tab should not be enough to lock

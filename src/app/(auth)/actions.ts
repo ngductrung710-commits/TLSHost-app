@@ -164,7 +164,7 @@ export async function signUp(
 
   const { name, orgName, email, password } = parsed.data;
 
-  const weak = passwordProblem(password);
+  const weak = passwordProblem(password, { email, name });
   if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
 
   const passwordHash = await hashPassword(password);
@@ -346,12 +346,9 @@ export async function resetPassword(
 
   const { token, password } = parsed.data;
 
-  const problem = passwordProblem(password);
-  if (problem) return { error: fill(t(problem), { n: MIN_PASSWORD_LENGTH }) };
-
   const user = await prisma.user.findUnique({
     where: { passwordResetTokenHash: hashToken(token) },
-    select: { id: true, passwordResetExpiresAt: true },
+    select: { id: true, email: true, name: true, passwordResetExpiresAt: true },
   });
 
   // Expiry checked here and not only when the page was drawn: the page was
@@ -362,6 +359,14 @@ export async function resetPassword(
       error: t("Liên kết này đã hết hạn hoặc đã được dùng. Yêu cầu một liên kết mới."),
     };
   }
+
+  // Sau khi tra người dùng, không phải trước. Luật mật khẩu cần email và tên
+  // để từ chối những mật khẩu chính là tên chủ tài khoản, mà ở đầu hàm này
+  // chỉ có một token trong tay. Đổi lại, một liên kết đã hết hạn kèm mật khẩu
+  // yếu sẽ được trả lời là hết hạn — đúng thứ tự, vì mật khẩu mạnh cũng không
+  // cứu được một liên kết chết.
+  const problem = passwordProblem(password, user);
+  if (problem) return { error: fill(t(problem), { n: MIN_PASSWORD_LENGTH }) };
 
   const passwordHash = await hashPassword(password);
 

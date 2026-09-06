@@ -31,13 +31,15 @@ export async function acceptInvite(
   if (!parsed.success) return { error: UNUSABLE };
 
   const t = await getT();
-  const weak = passwordProblem(parsed.data.password);
-  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
-
   const tokenHash = hashToken(parsed.data.token);
   const passwordHash = await hashPassword(parsed.data.password);
 
   let userId: string | null = null;
+  // Luật mật khẩu chạy bên trong giao dịch, vì nó cần email và tên của người
+  // được mời để từ chối mật khẩu chính là tên họ — và ngoài này chỉ có một
+  // token. Băm mật khẩu vẫn tính trước dù có thể bỏ đi: một lời mời hỏng và
+  // một mật khẩu yếu khi đó tốn thời gian như nhau.
+  let weak: string | null = null;
 
   await withInviteToken(tokenHash, async (tx) => {
     const invite = await tx.membership.findFirst({
@@ -48,6 +50,7 @@ export async function acceptInvite(
         userId: true,
         joinedAt: true,
         inviteExpiresAt: true,
+        user: { select: { email: true, name: true } },
       },
     });
 
@@ -69,6 +72,9 @@ export async function acceptInvite(
     // skipped this. It does not work: Postgres still required the org policy's
     // check on the new row, and clearing the token failed with 42501 while
     // keeping it succeeded. See the drop_accept_policy migration.
+    weak = passwordProblem(parsed.data.password, invite.user);
+    if (weak) return;
+
     await tx.$executeRaw`SELECT set_config('app.current_org_id', ${invite.orgId}, true)`;
 
     await tx.membership.update({
@@ -92,6 +98,7 @@ export async function acceptInvite(
     userId = invite.userId;
   });
 
+  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
   if (!userId) return { error: UNUSABLE };
 
   await createSession(userId);
