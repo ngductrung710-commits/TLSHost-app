@@ -106,7 +106,54 @@ check("timed: date kept, time discarded",
       [iso(t.events[0].start), iso(t.events[0].end)], ["2026-07-12", "2026-07-15"]);
 
 /* -------------------------------------------------------------------- */
-/* 4. Empty feed                                                         */
+/* 4. A Booking.com-shaped feed                                          */
+/* -------------------------------------------------------------------- */
+//
+// Cùng chuẩn với Airbnb nhưng khác thói quen, và mỗi khác biệt ở đây từng là
+// một feed đọc ra rỗng ở đâu đó: thứ tự thuộc tính khác (UID xuống cuối), có
+// DTSTAMP và LAST-MODIFIED xen giữa, SUMMARY là "CLOSED - Not available" thay
+// vì "Reserved", và có sự kiện không có SUMMARY nào cả.
+//
+// Đây là hình dạng dựng theo mô tả, không phải feed thật cắt ra từ một tài
+// khoản — nên nó trả lời được "bộ đọc có vấp không", và không trả lời được
+// "Booking.com hôm nay có gửi đúng thế này không". Muốn biết cái sau thì phải
+// cắm một tài khoản thật.
+
+const bookingCom = [
+  "BEGIN:VCALENDAR",
+  "PRODID:-//Booking.com B.V.//NONSGML Booking.com Calendar//EN",
+  "VERSION:2.0",
+  "CALSCALE:GREGORIAN",
+  "BEGIN:VEVENT",
+  "DTSTAMP:20270301T101500Z",
+  "DTSTART;VALUE=DATE:20270310",
+  "DTEND;VALUE=DATE:20270313",
+  "LAST-MODIFIED:20270301T101500Z",
+  "SUMMARY:CLOSED - Not available",
+  "UID:4451234567-1@booking.com",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "DTSTART;VALUE=DATE:20270318",
+  "DTEND;VALUE=DATE:20270320",
+  "UID:4451234567-2@booking.com",
+  "END:VEVENT",
+  "END:VCALENDAR",
+  "",
+].join("\r\n");
+
+const bc = parseIcal(bookingCom);
+check("booking.com: hai sự kiện, không bỏ sót", [bc.events.length, bc.skipped], [2, 0]);
+check("booking.com: UID nằm cuối vẫn đọc được", bc.events[0].uid,
+      "4451234567-1@booking.com");
+check("booking.com: DTSTAMP không bị nhầm thành DTSTART",
+      [iso(bc.events[0].start), iso(bc.events[0].end)], ["2027-03-10", "2027-03-13"]);
+check("booking.com: DTEND vẫn là loại trừ — 3 đêm", nightsIn(bc.events[0]), 3);
+check("booking.com: summary kiểu CLOSED giữ nguyên", bc.events[0].summary,
+      "CLOSED - Not available");
+check("booking.com: không có SUMMARY vẫn nhận sự kiện", bc.events[1].summary, null);
+
+/* -------------------------------------------------------------------- */
+/* 5. Empty feed                                                         */
 /* -------------------------------------------------------------------- */
 
 const empty = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n";
@@ -114,7 +161,7 @@ check("empty feed: no events, no skips",
       [parseIcal(empty).events.length, parseIcal(empty).skipped], [0, 0]);
 
 /* -------------------------------------------------------------------- */
-/* 5. Round trip: what we write, we can read back unchanged              */
+/* 6. Round trip: what we write, we can read back unchanged              */
 /* -------------------------------------------------------------------- */
 
 const out = buildIcal({
@@ -155,7 +202,7 @@ check("round trip: escaped summary comes back intact",
       back.events[1].summary, "Bảo trì; không nhận khách, xem ghi chú");
 
 /* -------------------------------------------------------------------- */
-/* 6. A long Vietnamese summary must fold without corrupting UTF-8       */
+/* 7. A long Vietnamese summary must fold without corrupting UTF-8       */
 /* -------------------------------------------------------------------- */
 
 const longSummary = "Đã đặt — phòng này đã kín, vui lòng kiểm tra lại lịch trước khi xác nhận thêm khách nào nữa";
