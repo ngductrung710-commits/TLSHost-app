@@ -37,6 +37,10 @@ const ENTRY_POINTS = new Set([
   "/tham-gia/[token]", // sent to someone over Zalo as an absolute URL
   "/feed/[token]", // pasted into an OTA's calendar import, not clicked
   "/suc-khoe", // polled by an uptime monitor; a link to it would be the bug
+  // Arrives in an email and nowhere else. A link to it from inside the app
+  // would be a link only somebody already signed in could follow, which is
+  // the one person who does not need it.
+  "/dat-lai-mat-khau/[token]",
 ]);
 
 const isGroup = (segment) => segment.startsWith("(") && segment.endsWith(")");

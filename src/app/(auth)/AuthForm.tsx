@@ -118,6 +118,19 @@ export function AuthForm({
 
       <Submit label={signUp ? t("Tạo tài khoản") : t("Đăng nhập")} />
 
+      {/* Only on sign-in. Offering a reset to somebody creating an account
+          asks them to recover a password they have not chosen yet. */}
+      {signUp ? null : (
+        <p className="text-center text-[13.5px]">
+          <Link
+            href="/quen-mat-khau"
+            className="text-ink-600 underline underline-offset-4 hover:text-ink-900"
+          >
+            {t("Quên mật khẩu?")}
+          </Link>
+        </p>
+      )}
+
       <p className="pt-2 text-center text-[14px] text-ink-500">
         {signUp ? t("Đã có tài khoản? ") : t("Chưa có tài khoản? ")}
         <Link

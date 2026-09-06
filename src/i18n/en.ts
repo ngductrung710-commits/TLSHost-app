@@ -825,6 +825,33 @@ export const EN: Record<string, string> = {
   "Chưa có đề xuất nào. Mở trợ lý ở khung bên phải và mô tả việc bạn cần — mọi thứ nó soạn sẽ hiện ở đây.":
     "No proposals yet. Open the assistant on the right and describe what you need — everything it drafts will appear here.",
   "Chạy trên TLSHost": "Running on TLSHost",
+  "Nếu địa chỉ này có tài khoản, chúng tôi vừa gửi một liên kết đặt lại mật khẩu. Kiểm tra cả hộp thư rác.":
+    "If that address has an account, we have just sent it a password reset link. Check the spam folder too.",
+  "Đặt lại mật khẩu TLSHost": "Reset your TLSHost password",
+  "Chào {ten},": "Hello {ten},",
+  "Có người vừa yêu cầu đặt lại mật khẩu cho tài khoản này. Mở liên kết dưới đây để đặt mật khẩu mới:":
+    "Someone asked to reset the password for this account. Open the link below to set a new one:",
+  "Liên kết dùng được một lần và hết hạn sau một giờ.":
+    "The link works once and expires in an hour.",
+  "Nếu không phải bạn yêu cầu, bỏ qua thư này — mật khẩu hiện tại vẫn nguyên.":
+    "If this was not you, ignore this message — your current password still works.",
+  "Liên kết không hợp lệ.": "That link is not valid.",
+  "Liên kết này đã hết hạn hoặc đã được dùng. Yêu cầu một liên kết mới.":
+    "This link has expired or has already been used. Ask for a new one.",
+  "Quên mật khẩu?": "Forgotten your password?",
+  "Quên mật khẩu": "Forgotten password",
+  "Đặt mật khẩu mới": "Set a new password",
+  "Liên kết không dùng được": "This link cannot be used",
+  "Gửi liên kết mới": "Send a new link",
+  "Khôi phục": "Recovery",
+  "Ít nhất {n} ký tự.": "At least {n} characters.",
+  "Đặt lại xong, mọi thiết bị đang đăng nhập sẽ bị đăng xuất.":
+    "Once reset, every signed-in device is signed out.",
+  "Nhập email của bạn. Chúng tôi gửi một liên kết đặt lại, dùng được một lần và hết hạn sau một giờ.":
+    "Enter your email. We send a reset link that works once and expires in an hour.",
+  "Quay lại đăng nhập": "Back to sign in",
+  "Gửi liên kết đặt lại": "Send the reset link",
+  "Mật khẩu cần ít nhất {n} ký tự.": "A password needs at least {n} characters.",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

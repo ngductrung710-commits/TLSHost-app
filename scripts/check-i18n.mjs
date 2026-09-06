@@ -67,6 +67,10 @@ const LABEL_MODULES = [
   "src/lib/plans.ts",
   "src/lib/availability.ts",
   "src/lib/propertyTypes.ts",
+  // Holds one message rather than a table: the password-length rule, which
+  // four different forms render. It used to be a template literal — which
+  // this check cannot see — and so had no English at all.
+  "src/lib/passwordRules.ts",
   // Its error strings are handed to a guest verbatim, at the one moment
   // a guest most needs to read them: t(checkout.error) on the payment
   // page. Left out of this list, an English guest whose payment failed

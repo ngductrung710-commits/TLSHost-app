@@ -4,18 +4,27 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db";
-import {
-  burnTimeOnMiss,
-  hashPassword,
-  passwordProblem,
-  verifyPassword,
-} from "@/lib/passwords";
+import { MIN_PASSWORD_LENGTH, passwordProblem } from "@/lib/passwordRules";
+import { burnTimeOnMiss, hashPassword, verifyPassword } from "@/lib/passwords";
 import { fill } from "@/lib/i18n";
 import { clear, clientIp, hit } from "@/lib/rateLimit";
+import { sendMail } from "@/lib/mail";
+import { origin } from "@/lib/origin";
 import { createSession, destroySession } from "@/lib/session";
+import { hashToken, newToken } from "@/lib/tokens";
 import { getT } from "@/lib/locale";
 
-export type AuthState = { error: string | null };
+export type AuthState = {
+  error: string | null;
+  /**
+   * A neutral confirmation, for forms whose success is not a redirect.
+   *
+   * Password reset needs one: it answers the same way for an address that
+   * exists and one that does not, so there is nothing to redirect to and the
+   * page has to say something.
+   */
+  notice?: string | null;
+};
 
 const signInSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -156,7 +165,7 @@ export async function signUp(
   const { name, orgName, email, password } = parsed.data;
 
   const weak = passwordProblem(password);
-  if (weak) return { error: weak };
+  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
 
   const passwordHash = await hashPassword(password);
 
@@ -210,4 +219,169 @@ export async function signUp(
 export async function signOut(): Promise<void> {
   await destroySession();
   redirect("/dang-nhap");
+}
+
+/* -------------------------------------------------------------------------- */
+/* Khôi phục mật khẩu                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How long a reset link lives.
+ *
+ * Short, because the link is a way into the account and it sits in an inbox
+ * that may not be as well protected as the account itself. Long enough that
+ * someone who requests it, gets distracted, and comes back after lunch still
+ * finds it working — an expiry that fires while people are living their lives
+ * teaches them to request four links, which is worse.
+ */
+const RESET_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * The same answer whether or not the address is registered.
+ *
+ * A form that says "no account with that email" is a way to ask, one address
+ * at a time, which of somebody's customers use this product. The message
+ * below is returned for a hit, a miss, a rate limit and a failed send alike.
+ */
+const RESET_SENT =
+  "Nếu địa chỉ này có tài khoản, chúng tôi vừa gửi một liên kết đặt lại mật khẩu. Kiểm tra cả hộp thư rác.";
+
+/**
+ * How many requests before waiting.
+ *
+ * Lower than sign-in, because each one costs an outbound email rather than a
+ * hash — an unlimited form here is a way to use this product to post mail to
+ * a stranger, repeatedly, from our domain.
+ */
+const RESET_PER_EMAIL = { limit: 3, windowSeconds: 15 * 60 };
+const RESET_PER_IP = { limit: 10, windowSeconds: 15 * 60 };
+
+const requestSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Email chưa đúng định dạng."),
+});
+
+export async function requestPasswordReset(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const t = await getT();
+  const parsed = requestSchema.safeParse(Object.fromEntries(formData));
+
+  // A malformed address is the one thing worth saying out loud: it cannot
+  // belong to anybody, so saying so leaks nothing and saves a wasted wait.
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? t("Thông tin chưa hợp lệ.") };
+  }
+
+  const { email } = parsed.data;
+
+  const ip = await clientIp();
+  const overEmail = !hit(
+    `reset:email:${email}`,
+    RESET_PER_EMAIL.limit,
+    RESET_PER_EMAIL.windowSeconds,
+  ).allowed;
+  const overIp =
+    ip !== null &&
+    !hit(`reset:ip:${ip}`, RESET_PER_IP.limit, RESET_PER_IP.windowSeconds).allowed;
+
+  // Rate limited answers exactly like success. Telling somebody they are
+  // limited on this address confirms the address is worth limiting.
+  if (overEmail || overIp) return { error: null, notice: t(RESET_SENT) };
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, passwordHash: true },
+  });
+
+  // Only accounts that have a password can reset one. An account created
+  // through an invitation and never finished has nothing to put back.
+  if (user?.passwordHash) {
+    const token = newToken();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetTokenHash: hashToken(token),
+        passwordResetExpiresAt: new Date(Date.now() + RESET_TTL_MS),
+      },
+    });
+
+    const base = await origin();
+    const link = `${base}/dat-lai-mat-khau/${token}`;
+
+    // The result is deliberately dropped. What a failed send means to this
+    // form is nothing — the answer is the same sentence either way, and the
+    // provider's error is already in the server log where it belongs.
+    await sendMail({
+      to: email,
+      subject: t("Đặt lại mật khẩu TLSHost"),
+      text: [
+        fill(t("Chào {ten},"), { ten: user.name }),
+        "",
+        t("Có người vừa yêu cầu đặt lại mật khẩu cho tài khoản này. Mở liên kết dưới đây để đặt mật khẩu mới:"),
+        "",
+        link,
+        "",
+        t("Liên kết dùng được một lần và hết hạn sau một giờ."),
+        t("Nếu không phải bạn yêu cầu, bỏ qua thư này — mật khẩu hiện tại vẫn nguyên."),
+      ].join("\n"),
+    });
+  }
+
+  return { error: null, notice: t(RESET_SENT) };
+}
+
+const resetSchema = z.object({
+  token: z.string().min(1),
+  password: z.string(),
+});
+
+export async function resetPassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const t = await getT();
+  const parsed = resetSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: t("Liên kết không hợp lệ.") };
+
+  const { token, password } = parsed.data;
+
+  const problem = passwordProblem(password);
+  if (problem) return { error: fill(t(problem), { n: MIN_PASSWORD_LENGTH }) };
+
+  const user = await prisma.user.findUnique({
+    where: { passwordResetTokenHash: hashToken(token) },
+    select: { id: true, passwordResetExpiresAt: true },
+  });
+
+  // Expiry checked here and not only when the page was drawn: the page was
+  // rendered on an earlier request, and an hour is long enough for the link to
+  // go stale while the form sits open.
+  if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt <= new Date()) {
+    return {
+      error: t("Liên kết này đã hết hạn hoặc đã được dùng. Yêu cầu một liên kết mới."),
+    };
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        // Cleared, which is what makes the link single-use. Somebody who reads
+        // the mailbox later finds a link that no longer opens anything.
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+      },
+    }),
+    // Every existing session goes. Resetting a password is what somebody does
+    // when they think another person has been in the account, and leaving that
+    // person signed in on their own machine defeats the whole exercise.
+    prisma.session.deleteMany({ where: { userId: user.id } }),
+  ]);
+
+  await createSession(user.id);
+  redirect("/lich");
 }

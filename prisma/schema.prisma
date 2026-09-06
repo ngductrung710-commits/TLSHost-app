@@ -97,6 +97,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// SHA-256 of a reset token, never the token — the same rule Session
+  /// follows, and for the same reason: a leaked backup must not hand over the
+  /// ability to take an account over.
+  ///
+  /// Unique so two live links cannot collide, and nullable because almost
+  /// every row has no reset in flight. Cleared the moment one is used, which
+  /// is what makes a link single-use.
+  passwordResetTokenHash String?   @unique
+  passwordResetExpiresAt DateTime?
+
   memberships Membership[]
   sessions    Session[]
   pushSubs    PushSubscription[]

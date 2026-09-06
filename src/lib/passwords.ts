@@ -69,19 +69,3 @@ const DUMMY_HASH =
 export async function burnTimeOnMiss(plain: string): Promise<void> {
   await verifyPassword(DUMMY_HASH, plain);
 }
-
-/**
- * The rules shown to a person creating an account.
- *
- * A length floor and nothing else: composition rules ("one capital, one
- * symbol") push people toward `Password1!` and are no longer recommended by
- * NIST. Twelve characters of anything beats eight of theatre.
- */
-export const MIN_PASSWORD_LENGTH = 12;
-
-export function passwordProblem(plain: string): string | null {
-  if (plain.length < MIN_PASSWORD_LENGTH) {
-    return `Mật khẩu cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`;
-  }
-  return null;
-}

@@ -1,12 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { withOrg, withPublicSlug } from "@/lib/db";
 import { createCheckout, verifyPayment } from "@/lib/payments";
 import { guestT } from "@/lib/guestLocale";
+import { origin } from "@/lib/origin";
 
 export type PayState = { error: string | null };
 
@@ -15,14 +15,6 @@ const startSchema = z.object({
   bookingId: z.string().min(1),
   provider: z.enum(["STRIPE", "PAYPAL"]),
 });
-
-async function origin(): Promise<string> {
-  const head = await headers();
-  const host = head.get("host") ?? "localhost:3001";
-  const proto =
-    head.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
 
 /**
  * Opens a checkout with the host's own provider and sends the guest to it.

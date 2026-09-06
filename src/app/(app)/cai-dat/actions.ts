@@ -4,12 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireMember } from "@/lib/dal";
+import { fill } from "@/lib/i18n";
 import { prisma, withOrg } from "@/lib/db";
-import {
-  hashPassword,
-  passwordProblem,
-  verifyPassword,
-} from "@/lib/passwords";
+import { MIN_PASSWORD_LENGTH, passwordProblem } from "@/lib/passwordRules";
+import { hashPassword, verifyPassword } from "@/lib/passwords";
 import { createSession } from "@/lib/session";
 import { TIMEZONES } from "@/lib/timezones";
 import { brandColorProblem } from "@/lib/themes";
@@ -96,7 +94,7 @@ export async function changePassword(
   }
 
   const weak = passwordProblem(parsed.data.next);
-  if (weak) return { error: weak };
+  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
 
   const user = await prisma.user.findUnique({
     where: { id: member.userId },

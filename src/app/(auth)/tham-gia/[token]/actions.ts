@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { withInviteToken } from "@/lib/db";
-import { hashPassword, passwordProblem } from "@/lib/passwords";
+import { fill } from "@/lib/i18n";
+import { getT } from "@/lib/locale";
+import { MIN_PASSWORD_LENGTH, passwordProblem } from "@/lib/passwordRules";
+import { hashPassword } from "@/lib/passwords";
 import { createSession } from "@/lib/session";
 import { hashToken } from "@/lib/tokens";
 
@@ -27,8 +30,9 @@ export async function acceptInvite(
   });
   if (!parsed.success) return { error: UNUSABLE };
 
+  const t = await getT();
   const weak = passwordProblem(parsed.data.password);
-  if (weak) return { error: weak };
+  if (weak) return { error: fill(t(weak), { n: MIN_PASSWORD_LENGTH }) };
 
   const tokenHash = hashToken(parsed.data.token);
   const passwordHash = await hashPassword(parsed.data.password);
