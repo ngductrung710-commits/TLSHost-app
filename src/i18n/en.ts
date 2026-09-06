@@ -852,6 +852,17 @@ export const EN: Record<string, string> = {
   "Quay lại đăng nhập": "Back to sign in",
   "Gửi liên kết đặt lại": "Send the reset link",
   "Mật khẩu cần ít nhất {n} ký tự.": "A password needs at least {n} characters.",
+  "Chúng tôi đã nhận đặt phòng của bạn. Dưới đây là những gì đã ghi lại.":
+    "We have received your booking. Here is what we recorded.",
+  "Chỗ ở": "Property",
+  "Tổng": "Total",
+  "{gia} (quy đổi từ {goc})": "{gia} (converted from {goc})",
+  "Địa chỉ": "Address",
+  "Chủ nhà sẽ liên hệ nếu cần thêm thông tin. Trả lời thư này nếu bạn muốn đổi gì đó.":
+    "Your host will get in touch if anything else is needed. Reply to this message if you want to change something.",
+  "Đã nhận đặt phòng — {noi}": "Booking received — {noi}",
+  "Khách": "Guest",
+  "Đặt phòng mới: {ten}": "New booking: {ten}",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

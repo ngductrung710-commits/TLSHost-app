@@ -71,6 +71,11 @@ const LABEL_MODULES = [
   // four different forms render. It used to be a template literal — which
   // this check cannot see — and so had no English at all.
   "src/lib/passwordRules.ts",
+  // The two letters a booking sends. Nothing renders them on a screen, which
+  // is exactly why they need listing: a guest reading the booking page in
+  // English would otherwise get a Vietnamese confirmation in their inbox, and
+  // no check would say so.
+  "src/lib/bookingMail.ts",
   // Its error strings are handed to a guest verbatim, at the one moment
   // a guest most needs to read them: t(checkout.error) on the payment
   // page. Left out of this list, an English guest whose payment failed

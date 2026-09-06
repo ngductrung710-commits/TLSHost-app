@@ -105,6 +105,20 @@ export function shortDate(date: Date, locale: "vi" | "en" = "vi"): string {
     : shortVi(date);
 }
 
+/**
+ * The same date with the year, for anything that outlives the screen.
+ *
+ * shortDate above drops the year on purpose: it is read next to a calendar
+ * that already says which month is on show. A confirmation email has no such
+ * context — it is opened months later, and "10 Mar" in a letter about a
+ * booking six months out is a date the reader has to guess the year of.
+ */
+export function fullDate(date: Date, locale: "vi" | "en" = "vi"): string {
+  return locale === "en"
+    ? `${shortDate(date, "en")} ${date.getUTCFullYear()}`
+    : `${shortVi(date)}/${date.getUTCFullYear()}`;
+}
+
 /** Saturday or Sunday, read in UTC. */
 export function isWeekend(date: Date): boolean {
   const day = date.getUTCDay();

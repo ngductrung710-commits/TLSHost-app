@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { NightsTakenError, assertNightsFree } from "@/lib/availability";
+import { mailBookingInBackground } from "@/lib/bookingMail";
 import {
   PG_EXCLUSION_VIOLATION,
   pgErrorCode,
@@ -13,6 +14,7 @@ import {
 import { daysBetween, parseIsoDate, shortVi } from "@/lib/dates";
 import { guestT } from "@/lib/guestLocale";
 import { fill } from "@/lib/i18n";
+import { origin } from "@/lib/origin";
 import { notifyOrgInBackground } from "@/lib/push";
 
 export type GuestState = { error: string | null };
@@ -100,17 +102,26 @@ export async function requestBooking(
   const found = await withPublicSlug(data.slug, async (tx) => {
     const property = await tx.property.findFirst({
       where: { publicSlug: data.slug, published: true },
-      select: { id: true, orgId: true },
+      // name, address and currency are here for the confirmation letter: a
+      // guest reading it later needs to know which place they booked, and the
+      // total has to be printed in the currency it settles in.
+      select: {
+        id: true,
+        orgId: true,
+        name: true,
+        address: true,
+        currency: true,
+      },
     });
     if (!property) return null;
 
     const room = await tx.room.findFirst({
       where: { id: data.roomId, propertyId: property.id },
-      select: { id: true, capacity: true, basePrice: true },
+      select: { id: true, name: true, capacity: true, basePrice: true },
     });
     if (!room) return null;
 
-    return { orgId: property.orgId, room };
+    return { orgId: property.orgId, property, room };
   });
 
   if (!found) return { error: t("Không tìm thấy phòng này.") };
@@ -124,6 +135,7 @@ export async function requestBooking(
   }
 
   let bookingId: string;
+  let totalCents: number | null = null;
   let payable = false;
 
   try {
@@ -172,11 +184,13 @@ export async function requestBooking(
 
       return {
         id: created.id,
+        totalCents: created.totalCents,
         payable: Boolean(account) && (created.totalCents ?? 0) > 0,
       };
     });
 
     bookingId = result.id;
+    totalCents = result.totalCents;
     payable = result.payable;
   } catch (error) {
     // Both branches say the same thing to a guest. The distinction — our check
@@ -189,6 +203,30 @@ export async function requestBooking(
   // After the write, and not awaited. A guest pressing "book" must not wait on
   // a push service, and must not see an error because one was slow — the
   // booking already exists by the time this runs.
+  // Read before the background work starts, not inside it: headers() belongs
+  // to this request, and the letters are posted after the reply has gone.
+  const base = await origin();
+
+  mailBookingInBackground({
+    orgId: found.orgId,
+    propertyId: found.property.id,
+    base,
+    bookingId,
+    guestLocale: locale,
+    guestName: data.guestName,
+    guestEmail: data.guestEmail,
+    guestPhone: data.guestPhone,
+    propertyName: found.property.name,
+    propertyAddress: found.property.address,
+    roomName: found.room.name,
+    checkIn,
+    checkOut,
+    guests: data.guests,
+    totalCents,
+    currency: found.property.currency,
+    notes: data.notes || null,
+  });
+
   notifyOrgInBackground(found.orgId, {
     title: "Đặt phòng mới",
     body: `${data.guestName} · ${shortVi(checkIn)}–${shortVi(checkOut)}`,
