@@ -66,11 +66,58 @@ function Field({
   );
 }
 
+/**
+ * Câu "tạo tài khoản nghĩa là bạn đồng ý…".
+ *
+ * Dưới nút, không phải trên nó, và không phải một ô tích. Một ô tích bắt buộc
+ * chỉ đo được rằng người ta đã bấm vào ô tích; câu này nói đúng điều đang xảy
+ * ra, ngay chỗ nó đang xảy ra.
+ *
+ * Cả câu là MỘT khoá dịch, với hai chỗ trống, chứ không phải năm mảnh ghép
+ * lại. Ghép mảnh thì tiếng Anh còn tạm đọc được vì trật tự từ giống nhau, và
+ * sẽ vỡ ở ngôn ngữ thứ ba — nhưng lý do thật thì gần hơn thế: một người dịch
+ * nhìn thấy " và " nằm một mình không có cách nào biết nó đang nối cái gì.
+ */
+function Consent({ legal }: { legal?: { terms: string; privacy: string } | null }) {
+  const t = useT();
+  const template = t(
+    "Tạo tài khoản nghĩa là bạn đồng ý với {dieukhoan} và {riengtu} của chúng tôi.",
+  );
+
+  const label = { dieukhoan: t("Điều khoản sử dụng"), riengtu: t("Chính sách riêng tư") };
+  const href = legal ? { dieukhoan: legal.terms, riengtu: legal.privacy } : null;
+
+  return (
+    <p className="text-center text-[13px] leading-relaxed text-ink-500">
+      {template.split(/(\{dieukhoan\}|\{riengtu\})/).map((piece, index) => {
+        const key = piece === "{dieukhoan}" ? "dieukhoan" : piece === "{riengtu}" ? "riengtu" : null;
+        if (!key) return piece;
+        // Chưa cấu hình trang giới thiệu thì vẫn hiện tên văn bản, chỉ là
+        // không bấm được. Im lặng hoàn toàn sẽ tệ hơn một liên kết thiếu.
+        return href ? (
+          <a
+            key={index}
+            href={href[key]}
+            className="underline underline-offset-4 hover:text-ink-900"
+          >
+            {label[key]}
+          </a>
+        ) : (
+          <span key={index}>{label[key]}</span>
+        );
+      })}
+    </p>
+  );
+}
+
 export function AuthForm({
   mode,
+  legal,
   action,
 }: {
   mode: "signIn" | "signUp";
+  /** Liên kết tới trang giới thiệu, hoặc null khi chưa cấu hình. */
+  legal?: { terms: string; privacy: string } | null;
   action: (prev: AuthState, formData: FormData) => Promise<AuthState>;
 }) {
   const t = useT();
@@ -117,6 +164,13 @@ export function AuthForm({
       />
 
       <Submit label={signUp ? t("Tạo tài khoản") : t("Đăng nhập")} />
+
+      {/* Dưới nút, không phải trên nó, và không phải một ô tích.
+          Một ô tích bắt buộc chỉ đo được rằng người ta đã bấm vào ô tích. Câu
+          này nói đúng điều đang xảy ra, ngay chỗ nó đang xảy ra.
+          Khi chưa cấu hình trang giới thiệu thì vẫn hiện câu này, chỉ là
+          không có liên kết — im lặng hoàn toàn sẽ tệ hơn. */}
+      {signUp ? <Consent legal={legal} /> : null}
 
       {/* Only on sign-in. Offering a reset to somebody creating an account
           asks them to recover a password they have not chosen yet. */}

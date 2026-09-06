@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { getActiveMember } from "@/lib/dal";
 import { AuthForm } from "../AuthForm";
 import { signUp } from "../actions";
-import { getT } from "@/lib/locale";
+import { getT, readLocale } from "@/lib/locale";
+import { legalUrls } from "@/lib/links";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -27,7 +28,7 @@ export default async function SignUpPage() {
         {t("Một tài khoản, một doanh nghiệp. Thêm cơ sở và mời người sau.")}
       </p>
 
-      <AuthForm mode="signUp" action={signUp} />
+      <AuthForm mode="signUp" action={signUp} legal={legalUrls(await readLocale())} />
     </>
   );
 }

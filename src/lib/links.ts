@@ -28,3 +28,23 @@ export function siteUrl(locale: Locale): string | null {
   if (!SITE_URL) return null;
   return `${SITE_URL.replace(/\/+$/, "")}/${locale}`;
 }
+
+/**
+ * Điều khoản và chính sách riêng tư, nằm trên trang giới thiệu.
+ *
+ * Chúng ở bên đó chứ không ở đây vì người đọc chúng chưa chắc đã có tài khoản
+ * — và một trang pháp lý chỉ mở được sau khi đăng nhập thì đâu còn là công
+ * khai nữa.
+ *
+ * Trả về null khi chưa cấu hình trang giới thiệu, cùng lý do như siteUrl:
+ * không có liên kết còn hơn một liên kết dẫn tới hư không. Chỗ gọi phải xử lý
+ * trường hợp đó chứ không được lờ đi — form đăng ký vẫn phải nói ra rằng có
+ * điều khoản, kể cả khi chưa trỏ tới được.
+ */
+export function legalUrls(
+  locale: Locale,
+): { terms: string; privacy: string } | null {
+  const base = siteUrl(locale);
+  if (!base) return null;
+  return { terms: base + "/terms", privacy: base + "/privacy" };
+}

@@ -871,6 +871,10 @@ export const EN: Record<string, string> = {
     "This password is too easy to guess. Choose another one.",
   "Mật khẩu không nên chứa tên hoặc email của bạn.":
     "A password should not contain your own name or email address.",
+  "Tạo tài khoản nghĩa là bạn đồng ý với {dieukhoan} và {riengtu} của chúng tôi.":
+    "Creating an account means you agree to our {dieukhoan} and {riengtu}.",
+  "Điều khoản sử dụng": "Terms of Service",
+  "Chính sách riêng tư": "Privacy Policy",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":
