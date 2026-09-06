@@ -535,32 +535,34 @@ bảng, cờ RLS, số policy và số dòng từng bảng đều khớp nguyên
 đáng lo nhất, vì mất policy nghĩa là các tổ chức đọc được dữ liệu của nhau, và
 không có gì báo lỗi.
 
-Tải bản mới nhất về máy bạn rồi giải mã:
+Cả vòng đó nằm trong `scripts/restore-drill.sh`. Tải bản mới nhất về rồi chạy:
 
 ```bash
 rclone copy b2:tlshost-backups/tlshost-2026-09-05.tar.age .
 ```
 
 ```bash
-age --decrypt --identity tlshost-backup.key tlshost-2026-09-05.tar.age > kho.tar && tar -xf kho.tar
+TLSHOST_RESTORE_URL="postgresql://postgres@localhost/tlshost" scripts/restore-drill.sh tlshost-2026-09-05.tar.age
 ```
 
-Khôi phục vào một cơ sở dữ liệu **trống và khác tên** — không bao giờ vào CSDL
-đang chạy:
+Nó đọc khoá riêng từ stdin và **không ghi khoá xuống đĩa** — nên bạn dán từ tờ
+giấy rồi Ctrl+D, không để lại tệp nào phải nhớ xoá. Nếu khoá đã có sẵn trong
+một tệp thì `< duong-dan-khoa`.
 
-```bash
-createdb tlshost_thu && pg_restore -d tlshost_thu tlshost-2026-09-05.dump
-```
+Kịch bản giải mã, mở gói, dựng vào một CSDL tạm **khác tên**, đếm, rồi xoá CSDL
+tạm — kể cả khi giữa chừng hỏng. Nó từ chối chạy nếu tên CSDL tạm trùng CSDL
+thật, hoặc nếu tên đó đã tồn tại.
 
-So lại. Ba câu này phải cho cùng kết quả với CSDL thật:
+Câu quan trọng nhất nó hỏi là **số bảng bật RLS và số policy có khớp CSDL thật
+không**. Đo được: một bản khôi phục thiếu phần `post-data` đi qua toàn bộ phép
+đếm — đúng 17 bảng, đúng 10 đơn đặt, không đơn nào mồ côi — và chỉ phép so RLS
+bắt được. Nếu chỉ đếm dòng, bạn sẽ kết luận bản sao lưu tốt trong khi vừa dựng
+lên một hệ thống mà mọi tổ chức đọc được dữ liệu của nhau.
 
-```bash
-psql -d tlshost_thu -c "select count(*) from booking" -c "select count(*) from property" -c "select relname, relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and relkind='r' order by 1"
-```
-
-```bash
-dropdb tlshost_thu
-```
+Và câu nó hỏi mà không phần mềm nào khác hỏi được: **tờ giấy chép khoá age có
+đúng không.** Khoá riêng cố ý không nằm trên máy chủ, nên bản duy nhất là bản
+bạn cất. Một ký tự sai thì mọi bản sao lưu đã mã hoá từ trước tới nay đều là
+rác, và chỉ bài diễn tập này báo cho bạn biết.
 
 ### Cái mà cơ sở dữ liệu không cứu được
 

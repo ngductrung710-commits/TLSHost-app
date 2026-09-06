@@ -110,6 +110,49 @@ prepare
 run_case "pg_dump thật, dọn bản quá hạn" 0 MAT
 
 echo ""
+echo "-- và không được nói ra thứ không nên nói, hay im lặng bỏ sót tệp"
+
+# Hai lỗi tìm ra lúc chạy thử bài diễn tập phục hồi, cả hai đều im lặng.
+#
+# Cái thứ nhất: dòng log "dump $DB". Mặc định $DB là một cái tên trần nên
+# không sao, nhưng pg_dump cũng nhận cả chuỗi kết nối — và lúc đó mật khẩu cơ
+# sở dữ liệu được chép vào thư cron mỗi đêm.
+#
+# Cái thứ hai: danh sách tệp kèm theo từng được duyệt bằng `for f in
+# $EXTRA_FILES`, tách theo khoảng trắng. Một thư mục tên "Claude Code" biến
+# một đường dẫn thành hai tệp không tồn tại, script in hai dòng CẢNH BÁO rồi
+# vẫn báo XONG — với một bản sao lưu không có .env trong đó.
+
+prepare
+mkdir -p "$WORK/co khoang trang"
+echo "SECRET=xyz" > "$WORK/co khoang trang/.env"
+printf '#!/bin/bash\nfor a in "$@"; do case "$a" in --file=*) echo giavo > "${a#--file=}";; esac; done\nexit 0\n' > "$SHIM/pg_dump"
+printf '#!/bin/bash\necho "1; 2; 3"\nexit 0\n' > "$SHIM/pg_restore"
+chmod +x "$SHIM/pg_dump" "$SHIM/pg_restore"
+(
+  cd "$REPO" || exit 99
+  PATH="$SHIM:$PATH" TLSHOST_BACKUP_DIR="$WORK/dir" \
+    TLSHOST_DB="postgresql://nguoi:matkhau-bi-mat@localhost:5432/tlshost" \
+    TLSHOST_BACKUP_EXTRA="$WORK/co khoang trang/.env" \
+    bash scripts/backup.sh > "$WORK/out2.txt" 2>&1
+)
+
+if grep -q "matkhau-bi-mat" "$WORK/out2.txt"; then
+  failures=$((failures + 1))
+  echo "FAIL  mật khẩu trong chuỗi kết nối lọt vào log"
+else
+  echo "PASS  mật khẩu trong chuỗi kết nối bị che trong log"
+fi
+
+if grep -q "kèm $WORK/co khoang trang/.env" "$WORK/out2.txt"; then
+  echo "PASS  đường dẫn có dấu cách vẫn kèm được"
+else
+  failures=$((failures + 1))
+  echo "FAIL  đường dẫn có dấu cách bị tách thành nhiều tệp không tồn tại"
+  sed 's/^/      /' "$WORK/out2.txt"
+fi
+
+echo ""
 if [ "$failures" = 0 ]; then
   echo "all checks passed"
 else

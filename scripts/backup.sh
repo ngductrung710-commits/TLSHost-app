@@ -39,6 +39,11 @@ KEEP_DAYS="${TLSHOST_BACKUP_KEEP_DAYS:-14}"
 # Extra files that are useless to have a database without. SECRET_KEY decrypts
 # every host's stored payment keys; restore the dump without it and every
 # Stripe and PayPal connection in the database is unreadable bytes.
+#
+# Ngăn cách bằng XUỐNG DÒNG, không phải khoảng trắng. Đây là đường dẫn, và một
+# đường dẫn có dấu cách thì cách tách theo khoảng trắng sẽ biến nó thành mấy
+# tệp không tồn tại — mỗi tệp một dòng CẢNH BÁO, còn bản sao lưu vẫn báo XONG
+# và trong gói không có .env. Đo được: chạy trên một thư mục tên "Claude Code".
 EXTRA_FILES="${TLSHOST_BACKUP_EXTRA:-/var/www/tlshost-app/.env}"
 
 # age recipient — a PUBLIC key. The matching private key must NOT be on this
@@ -84,7 +89,16 @@ mkdir -p "$LOCAL_DIR"
 # only proves the gzip container is well formed, and an empty file is a
 # perfectly well-formed gzip container.
 DUMP="$WORK/tlshost-$STAMP.dump"
-log "dump $DB"
+
+# $DB thường là một cái tên trần — "tlshost" — nhưng pg_dump cũng nhận cả một
+# chuỗi kết nối, và có người sẽ đặt như thế. Lúc đó dòng log này sẽ chép mật
+# khẩu cơ sở dữ liệu vào thư cron mỗi đêm, ở một tệp không ai coi là bí mật.
+# Đo được chứ không phải đoán: đã xảy ra khi chạy thử bài diễn tập phục hồi.
+case "$DB" in
+  *://*) log "dump $(printf '%s' "$DB" | sed 's|://[^@]*@|://***@|')" ;;
+  *) log "dump $DB" ;;
+esac
+
 pg_dump --format=custom --file="$DUMP" "$DB" || die "pg_dump hỏng"
 
 # ---------------------------------------------------------- 2. is it real?
@@ -104,7 +118,8 @@ log "dump ok: $ENTRIES mục, $(du -h "$DUMP" | cut -f1)"
 
 BUNDLE="$WORK/tlshost-$STAMP.tar"
 tar -cf "$BUNDLE" -C "$WORK" "$(basename "$DUMP")"
-for f in $EXTRA_FILES; do
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
   if [ -f "$f" ]; then
     tar -rf "$BUNDLE" -C "$(dirname "$f")" "$(basename "$f")"
     log "kèm $f"
@@ -113,7 +128,7 @@ for f in $EXTRA_FILES; do
     # knowing about, but it must not stop a database backup from happening.
     log "CẢNH BÁO: không thấy $f"
   fi
-done
+done <<< "$EXTRA_FILES"
 
 # ------------------------------------------------------------ 4. encrypt
 
