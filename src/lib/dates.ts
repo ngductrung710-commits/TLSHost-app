@@ -189,6 +189,32 @@ export function formatPlanPrice(amount: number, locale: "vi" | "en" = "vi"): str
 const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** The board's column headers, in whichever language the reader is using. */
+const WEEKDAYS_LONG_VI = [
+  // "CN" chứ không phải "Chủ nhật": đứng cạnh "THỨ 2"…"THỨ 7", một chữ dài
+  // gấp đôi làm lệch cả hàng tiêu đề. Đây là chỗ viết tắt đáng dùng, và cũng
+  // là cách bản thiết kế được đưa viết.
+  "CN",
+  "Thứ 2",
+  "Thứ 3",
+  "Thứ 4",
+  "Thứ 5",
+  "Thứ 6",
+  "Thứ 7",
+];
+
+const WEEKDAYS_LONG_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/**
+ * "Thứ 2" thay cho "T2", cho những chỗ có đủ bề ngang.
+ *
+ * Viết tắt là thứ đáng làm khi ô hẹp, không phải một kiểu chữ. Cột ngày trên
+ * bảng lịch đã rộng 6.5rem, và ở bề rộng đó "T2" chỉ tiết kiệm chỗ mà không
+ * ai cần tiết kiệm.
+ */
+export function weekdayLong(date: Date, locale: "vi" | "en" = "vi"): string {
+  return (locale === "en" ? WEEKDAYS_LONG_EN : WEEKDAYS_LONG_VI)[date.getUTCDay()];
+}
+
 export function weekday(date: Date, locale: "vi" | "en" = "vi"): string {
   return (locale === "en" ? WEEKDAYS_EN : WEEKDAYS_VI)[date.getUTCDay()];
 }

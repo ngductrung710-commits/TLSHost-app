@@ -15,7 +15,8 @@ import {
   toIsoDate,
 } from "@/lib/dates";
 
-import { deleteBlock } from "./actions";
+import { deleteBlock, renameRoom } from "./actions";
+import { MonthPicker } from "@/components/MonthPicker";
 import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
 
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** How many days fit before the board needs scrolling on a laptop. */
-const WINDOW_DAYS = 14;
+const WINDOW_DAYS = 9;
 
 export default async function CalendarPage(props: PageProps<"/lich">) {
   const t = await getT();
@@ -99,9 +100,15 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
           </Link>
         </nav>
 
-        <h1 className="ml-1 text-[15px] font-semibold text-ink-900">
-          {rangeLabel(board.from, addDays(board.to, -1), locale)}
-        </h1>
+        {/* Tiêu đề là một cái nút mở lịch tháng. Trước đây nó chỉ là chữ, và
+            cách duy nhất đi tới một ngày xa là bấm mũi tên từng khoảng một. */}
+        <MonthPicker
+          label={rangeLabel(board.from, addDays(board.to, -1), locale)}
+          from={toIsoDate(board.from)}
+          today={toIsoDate(today)}
+          locale={locale}
+          search={query}
+        />
 
         <p className="text-[13px] text-ink-500">
           {fill(t("{n} phòng"), { n: board.rooms.length })} ·{" "}
@@ -216,7 +223,13 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
       ) : (
         <>
           <div>
-            <BoardGrid board={board} today={toIsoDate(today)} locale={locale} />
+            <BoardGrid
+              board={board}
+              today={toIsoDate(today)}
+              locale={locale}
+              renameAction={renameRoom}
+              canRename={member.role === "OWNER"}
+            />
           </div>
 
           <p className="mt-4 text-[13px] text-ink-500">

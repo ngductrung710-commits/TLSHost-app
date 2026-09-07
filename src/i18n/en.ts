@@ -977,6 +977,10 @@ export const EN: Record<string, string> = {
   "Trả phòng trước {b}.": "Check out by {b}.",
   "Được hút thuốc.": "Smoking is allowed.",
   "Được mang thú cưng.": "Pets are welcome.",
+  "Tháng trước": "Previous month",
+  "Tháng sau": "Next month",
+  "Tháng {thang} năm {nam}": "Month {thang}, {nam}",
+  "Sửa tên phòng": "Rename room",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

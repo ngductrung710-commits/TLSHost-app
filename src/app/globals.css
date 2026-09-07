@@ -277,9 +277,21 @@
      screen has to get right, since a host reads left-to-right from a
      room name to a date every single time.
      ------------------------------------------------------------------ */
+  /* Cột ngày là minmax(x, 1fr) chứ không phải x cố định.
+     ------------------------------------------------------------------------
+     Với bề rộng cố định, chín cột cộng cột tên chỉ chiếm 1144px, và trên một
+     màn 1536 thì phần còn lại của thẻ là một mảng trống bên phải — cái lưới
+     trông như bị cắt dở. minmax giữ nguyên bề rộng tối thiểu (nên bảng vẫn
+     cuộn ngang khi màn hẹp) và cho các cột giãn đều khi còn chỗ.
+
+     Điều này chỉ đúng được vì thanh đặt phòng đã chuyển sang định vị bằng
+     phần trăm. Chúng từng tính vị trí bằng calc(offset * bề-rộng-cột), và
+     một cột co giãn sẽ làm mọi thanh lệch khỏi ô của nó. */
   .board {
     display: grid;
-    grid-template-columns: var(--board-name-col) repeat(var(--board-days), var(--board-day-col));
+    grid-template-columns:
+      var(--board-name-col)
+      repeat(var(--board-days), minmax(var(--board-day-col), 1fr));
   }
 
   .board__sticky {

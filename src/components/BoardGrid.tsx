@@ -2,10 +2,12 @@ import Link from "next/link";
 
 import type { Board } from "@/lib/board";
 import { SOURCE_LABELS } from "@/lib/board";
-import { dayOfMonth, isWeekend, toIsoDate, weekday } from "@/lib/dates";
+import { dayOfMonth, isWeekend, toIsoDate, weekdayLong } from "@/lib/dates";
 import { fill, makeT, type Locale, type T } from "@/lib/i18n";
 import { dictFor } from "@/lib/locale";
 import { EmptyState } from "@/components/EmptyState";
+import { RoomGroup } from "@/components/RoomGroup";
+import { RoomNameCell } from "@/components/RoomNameCell";
 
 /**
  * The board: rooms down, days across, stays drawn over the day cells.
@@ -18,17 +20,24 @@ import { EmptyState } from "@/components/EmptyState";
  */
 
 const NAME_COL = "13rem";
-// Rộng hơn 3.25rem cũ. Ở bề rộng đó, hai mươi mốt cột vẫn tràn ra ngoài màn
-// hình laptop — nên bảng vừa chật vừa phải cuộn, tức là chịu cái giá của việc
-// nhồi nhiều ngày mà không được lợi gì. Mười bốn ngày ở 4.25rem vừa đúng một
-// màn 1440, và một ô rộng hơn thì tên khách trên thanh đặt phòng đọc được.
-const DAY_COL = "4.25rem";
+// Đi từ 3.25rem lên 4.25rem rồi lên 6.5rem, mỗi lần vì cùng một lý do: một ô
+// hẹp không chứa nổi thứ nó phải chứa. Ở 3.25rem thì tên khách trên thanh đặt
+// phòng bị cắt cụt; ở 4.25rem thì đọc được nhưng bảng vẫn dày đặc, chín ngày
+// bị nhồi thành mười bốn.
+//
+// 6.5rem × 9 ngày = 936px, cộng cột tên 13rem là vừa một màn 1366 mà không
+// phải cuộn ngang. Ít ngày hơn nhưng mỗi ngày đọc được — và mũi tên ‹ › với
+// bộ chọn tháng đã lo phần đi xa.
+const DAY_COL = "6.5rem";
 
 function StayBar({
   span,
+  days,
   t,
 }: {
   span: Board["rooms"][number]["spans"][number];
+  /** Số cột trong hàng, để đặt thanh theo phần trăm thay vì theo pixel. */
+  days: number;
   t: T;
 }) {
   const booking = span.kind === "booking";
@@ -52,9 +61,12 @@ function StayBar({
   return (
     <div
       className="absolute inset-y-1 px-0.5"
+      // Phần trăm của cả hàng, không phải bội số của một bề rộng cột cố
+      // định. Cột giờ co giãn theo màn hình, và một phép nhân với hằng số
+      // pixel sẽ đặt thanh lệch khỏi ô ngay khi cửa sổ rộng hơn mức tối thiểu.
       style={{
-        left: `calc(${span.offset} * ${DAY_COL})`,
-        width: `calc(${span.span} * ${DAY_COL})`,
+        left: `${(span.offset / days) * 100}%`,
+        width: `${(span.span / days) * 100}%`,
       }}
     >
       {/* Two branches rather than one polymorphic tag. A booking opens its own
@@ -79,15 +91,34 @@ export function BoardGrid({
   board,
   today,
   locale = "vi",
+  renameAction,
+  canRename,
 }: {
   board: Board;
   today: string;
   locale?: Locale;
+  renameAction: (formData: FormData) => Promise<void>;
+  /** Chỉ chủ nhà đổi được tên phòng; những vai khác chỉ đọc. */
+  canRename: boolean;
 }) {
   // Derived from the locale it was handed rather than read from the cookie:
   // this is a component, not a page, and it renders once per calendar view.
   const t = makeT(dictFor(locale));
   const todayIndex = board.days.findIndex((d) => toIsoDate(d) === today);
+
+  /**
+   * Gom phòng theo cơ sở, giữ nguyên thứ tự loadBoard đã sắp.
+   *
+   * Gom ở đây chứ không vừa duyệt vừa đoán chỗ bắt đầu nhóm như trước: một
+   * nhóm thu gọn được cần biết trước nó có bao nhiêu hàng và những hàng nào,
+   * mà cách cũ chỉ nhìn được hàng liền trước.
+   */
+  const groups: { id: string; name: string; rooms: Board["rooms"] }[] = [];
+  for (const room of board.rooms) {
+    const last = groups[groups.length - 1];
+    if (last && last.id === room.propertyId) last.rooms.push(room);
+    else groups.push({ id: room.propertyId, name: room.propertyName, rooms: [room] });
+  }
 
   if (board.rooms.length === 0) {
     return (
@@ -132,12 +163,14 @@ export function BoardGrid({
                     : "",
               ].join(" ")}
             >
+              {/* "THỨ 2" chứ không phải "T2". Ô đã rộng 6.5rem, và chữ viết
+                  tắt chỉ đáng khi không đủ chỗ cho chữ đầy đủ. */}
               <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-ink-400">
-                {weekday(day, locale)}
+                {weekdayLong(day, locale)}
               </div>
               <div
                 className={[
-                  "text-[13px] tnum",
+                  "text-[15px] tnum",
                   i === todayIndex
                     ? "font-bold text-clay-600"
                     : "font-medium text-ink-700",
@@ -183,37 +216,24 @@ export function BoardGrid({
           ))}
 
           {/* Rows -------------------------------------------------------- */}
-          {board.rooms.map((room, index) => (
-            <div key={room.id} className="contents">
-              {/* Tiêu đề nhóm, chỉ vẽ ở phòng đầu tiên của mỗi cơ sở.
-                  board.rooms đã sắp theo cơ sở rồi tên phòng, nên "khác cơ sở
-                  với hàng trên" là đủ để biết chỗ bắt đầu một nhóm — không cần
-                  gom lại thành mảng lồng nhau và cũng không phá được thế
-                  `display: contents` mà lưới này dựa vào. */}
-              {index === 0 || board.rooms[index - 1].propertyId !== room.propertyId ? (
-                <>
-                  <div className="board__sticky border-b border-r border-line bg-canvas-alt/60 px-4 py-2">
-                    <Link
-                      href={`/cho-nghi/${room.propertyId}`}
-                      className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-700 hover:text-ink-900"
-                    >
-                      <span className="truncate">{room.propertyName}</span>
-                      <span className="shrink-0 rounded-full bg-sand-200 px-1.5 text-[10px] font-semibold text-ink-600 tnum">
-                        {board.rooms.filter((r) => r.propertyId === room.propertyId).length}
-                      </span>
-                    </Link>
-                  </div>
-                  <div
-                    className="border-b border-line bg-canvas-alt/60"
-                    style={{ gridColumn: `2 / span ${board.days.length}` }}
-                  />
-                </>
-              ) : null}
-
+          {groups.map((group) => (
+            <RoomGroup
+              key={group.id}
+              propertyId={group.id}
+              name={group.name}
+              count={group.rooms.length}
+              days={board.days.length}
+              addLabel={t("Thêm phòng")}
+            >
+              {group.rooms.map((room) => (
+                <div key={room.id} className="contents">
               <div className="board__sticky border-b border-r border-line px-4 py-2.5">
-                <p className="truncate text-[13px] font-semibold text-ink-900">
-                  {room.name}
-                </p>
+                <RoomNameCell
+                  roomId={room.id}
+                  name={room.name}
+                  action={renameAction}
+                  canEdit={canRename}
+                />
               </div>
 
               {/* One cell per day for the ruling, then the stays laid over
@@ -227,7 +247,7 @@ export function BoardGrid({
                 <div
                   className="grid h-full"
                   style={{
-                    gridTemplateColumns: `repeat(${board.days.length}, ${DAY_COL})`,
+                    gridTemplateColumns: `repeat(${board.days.length}, minmax(0, 1fr))`,
                   }}
                 >
                   {board.days.map((day, i) => (
@@ -248,10 +268,17 @@ export function BoardGrid({
                 </div>
 
                 {room.spans.map((span) => (
-                  <StayBar key={`${span.kind}-${span.id}`} span={span} t={t} />
+                  <StayBar
+                    key={`${span.kind}-${span.id}`}
+                    span={span}
+                    days={board.days.length}
+                    t={t}
+                  />
                 ))}
               </div>
-            </div>
+                </div>
+              ))}
+            </RoomGroup>
           ))}
 
           {/* Lối thêm, ngay trong lưới ------------------------------------

@@ -1,5 +1,6 @@
 "use server";
 
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -15,6 +16,37 @@ import {
 import { parseIsoDate, shortVi, toIsoDate } from "@/lib/dates";
 import { getT } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
+
+/**
+ * Đổi tên một phòng, ngay trên bảng lịch.
+ *
+ * Riêng một action thay vì dùng lại updateRoom bên cho-nghi: cái kia nhận cả
+ * sức chứa, giá và số đêm, và một form chỉ có ô tên gửi lên sẽ ghi đè mọi
+ * trường còn lại bằng giá trị mặc định của schema. Sửa tên trên lịch mà xoá
+ * mất giá phòng là loại lỗi không ai nghi ngờ cho tới lúc khách hỏi.
+ *
+ * Chỉ chủ nhà. Cộng tác viên quản lý lượt đặt bên trong những cơ sở được giao,
+ * còn tên phòng là hình dạng của chính cơ sở đó.
+ */
+export async function renameRoom(formData: FormData): Promise<void> {
+  const member = await requireMember();
+  if (member.role !== "OWNER") return;
+
+  const roomId = String(formData.get("roomId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  // Tên rỗng bị bỏ qua trong im lặng chứ không báo lỗi: ô này nằm ngay trong
+  // bảng, không có chỗ nào đặt một dòng lỗi mà không đẩy cả lưới xuống. Không
+  // lưu, và tên cũ hiện lại nguyên vẹn sau khi trang vẽ lại.
+  if (!roomId || name === "" || name.length > 120) return;
+
+  await withOrg(member.orgId, (tx) =>
+    tx.room.updateMany({ where: { id: roomId }, data: { name } }),
+  );
+
+  revalidatePath("/lich");
+  revalidatePath("/buong-phong");
+  revalidatePath("/cho-nghi");
+}
 
 export type BookingState = { error: string | null };
 
