@@ -981,6 +981,14 @@ export const EN: Record<string, string> = {
   "Tháng sau": "Next month",
   "Tháng {thang} năm {nam}": "Month {thang}, {nam}",
   "Sửa tên phòng": "Rename room",
+  "Giường, phòng tắm, tầm nhìn, ban công — điều khách nên biết.":
+    "Bed, bathroom, view, balcony — whatever a guest should know.",
+  "Hiển thị cho khách trên trang đặt phòng. Ảnh đầu tiên là ảnh bìa.":
+    "Shown to guests on the booking page. The first photo is the cover.",
+  "Phần ảnh chưa làm — nó cần một nơi lưu trữ được chọn trước.":
+    "Photos are not built yet — they need somewhere to live, chosen first.",
+  "Sức chứa và giá": "Capacity and price",
+  "Ảnh phòng": "Room photos",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

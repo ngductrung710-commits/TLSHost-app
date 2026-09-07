@@ -6,6 +6,7 @@ import { dayOfMonth, isWeekend, toIsoDate, weekdayLong } from "@/lib/dates";
 import { fill, makeT, type Locale, type T } from "@/lib/i18n";
 import { dictFor } from "@/lib/locale";
 import { EmptyState } from "@/components/EmptyState";
+import { AddRoomPanel } from "@/components/AddRoomPanel";
 import { RoomGroup } from "@/components/RoomGroup";
 import { RoomNameCell } from "@/components/RoomNameCell";
 
@@ -92,13 +93,21 @@ export function BoardGrid({
   today,
   locale = "vi",
   renameAction,
+  addRoomAction,
+  currency,
   canRename,
 }: {
   board: Board;
   today: string;
   locale?: Locale;
   renameAction: (formData: FormData) => Promise<void>;
-  /** Chỉ chủ nhà đổi được tên phòng; những vai khác chỉ đọc. */
+  addRoomAction: (
+    prev: { error: string | null; notice?: string },
+    formData: FormData,
+  ) => Promise<{ error: string | null; notice?: string }>;
+  /** Ký hiệu tiền tệ của tổ chức, cho ô giá trong ngăn kéo. */
+  currency: string;
+  /** Chỉ chủ nhà thêm/đổi tên phòng; những vai khác chỉ đọc. */
   canRename: boolean;
 }) {
   // Derived from the locale it was handed rather than read from the cookie:
@@ -223,7 +232,18 @@ export function BoardGrid({
               name={group.name}
               count={group.rooms.length}
               days={board.days.length}
-              addLabel={t("Thêm phòng")}
+              addRoom={
+                canRename ? (
+                  <AddRoomPanel
+                    propertyId={group.id}
+                    propertyName={group.name}
+                    action={addRoomAction}
+                    locale={locale}
+                    currency={currency}
+                    label={t("Thêm phòng")}
+                  />
+                ) : null
+              }
             >
               {group.rooms.map((room) => (
                 <div key={room.id} className="contents">

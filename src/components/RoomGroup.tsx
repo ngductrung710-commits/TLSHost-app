@@ -21,7 +21,7 @@ export function RoomGroup({
   name,
   count,
   days,
-  addLabel,
+  addRoom,
   children,
 }: {
   propertyId: string;
@@ -29,8 +29,8 @@ export function RoomGroup({
   count: number;
   /** Số cột ngày, để hàng tiêu đề trải hết bề ngang. */
   days: number;
-  /** Nhãn "Thêm phòng", dịch sẵn ở phía máy chủ. */
-  addLabel: string;
+  /** Ngăn kéo thêm phòng, dựng sẵn ở phía máy chủ cho đúng cơ sở này. */
+  addRoom: ReactNode;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -89,15 +89,7 @@ export function RoomGroup({
       {open ? (
         <>
           <div className="board__sticky border-b border-r border-line px-2 py-1.5">
-            <Link
-              href={`/cho-nghi/${propertyId}?tab=phong`}
-              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-medium text-ink-500 transition-colors hover:bg-sand-100 hover:text-ink-900"
-            >
-              <span aria-hidden="true" className="text-[15px] leading-none">
-                +
-              </span>
-              {addLabel}
-            </Link>
+            {addRoom}
           </div>
           <div
             className="border-b border-line"

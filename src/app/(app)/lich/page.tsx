@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BoardGrid } from "@/components/BoardGrid";
 import { SOURCE_LABELS, loadBoard } from "@/lib/board";
 import { findBookings } from "@/lib/search";
-import { requireMember } from "@/lib/dal";
+import { orgCurrency, requireMember } from "@/lib/dal";
 import {
   addDays,
   parseIsoDate,
@@ -15,8 +15,10 @@ import {
   toIsoDate,
 } from "@/lib/dates";
 
+import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
 import { deleteBlock, renameRoom } from "./actions";
 import { MonthPicker } from "@/components/MonthPicker";
+import { currencySymbol } from "@/lib/currencies";
 import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
 
@@ -228,6 +230,8 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
               today={toIsoDate(today)}
               locale={locale}
               renameAction={renameRoom}
+              addRoomAction={createRoom}
+              currency={currencySymbol(await orgCurrency())}
               canRename={member.role === "OWNER"}
             />
           </div>
