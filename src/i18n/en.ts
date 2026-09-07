@@ -159,9 +159,6 @@ export const EN: Record<string, string> = {
   "Tên bạn dùng để gọi chỗ nghỉ của mình. Đổi được sau.":
     "What you call this place yourself. You can change it later.",
   "(không bắt buộc)": "(optional)",
-  "Phòng và giá": "Rooms and rates",
-  "Giá mỗi đêm hiển thị trên trang đặt phòng. Phòng chưa có giá vẫn nhận được đặt, chỉ là khách không thấy con số nào.":
-    "The nightly rate shown on the booking page. A room with no rate still takes bookings, the guest just sees no figure.",
   "bỏ giá": "clear the rate",
   "Thêm cơ sở đầu tiên và liệt kê các phòng bên trong. Lịch sẽ dựng lên từ đó.":
     "Add your first property and list the rooms inside it. The calendar is built from them.",
@@ -418,7 +415,6 @@ export const EN: Record<string, string> = {
   "Đang tạo…": "Creating…",
   "Đang kiểm tra…": "Checking…",
   "Thông tin chưa hợp lệ.": "Something in that is not valid.",
-  "Tối đa": "Maximum",
 
   /* ---- Sentences with something in the middle of them ----
      The placeholder stays inside the key so each language decides where in
@@ -902,6 +898,44 @@ export const EN: Record<string, string> = {
   "Đồng bộ kênh": "Channel sync",
   "Ảnh cơ sở": "Property photos",
   "Ảnh": "Photos",
+  "Chưa đặt giá": "No price set",
+  "Chỉ chủ nhà mới sửa được phòng.": "Only an owner can edit a room.",
+  "Chỉ chủ nhà mới thêm được phòng.": "Only an owner can add a room.",
+  "Chỉ chủ nhà mới xóa được phòng.": "Only an owner can delete a room.",
+  "Cơ sở này chưa có phòng nào.": "This property has no rooms yet.",
+  "Mô tả": "Description",
+  "Người lớn tối đa": "Maximum adults",
+  "Nhiều hơn một thì tên phòng được đánh số: Standard 1, Standard 2…":
+    "More than one and the names are numbered: Standard 1, Standard 2…",
+  "Số phòng cùng loại": "How many rooms like this",
+  "Số đêm nhiều nhất phải lớn hơn hoặc bằng số đêm ít nhất.":
+    "The maximum number of nights must be at least the minimum.",
+  "Số đêm nhiều nhất": "Maximum nights",
+  "Số đêm ít nhất": "Minimum nights",
+  "Sức chứa tổng": "Total capacity",
+  "Sửa": "Edit",
+  "Thêm phòng": "Add a room",
+  "Tiện nghi trong phòng": "Room amenities",
+  "Trẻ em tối đa": "Maximum children",
+  "Tên chưa khớp.": "That name does not match.",
+  "Tên phòng": "Room name",
+  "Xóa phòng này sẽ xóa luôn mọi lượt đặt của nó, kể cả những lượt đã ở xong. Gõ đúng tên phòng để xác nhận.":
+    "Deleting this room deletes every booking it holds, including stays that already ended. Type the room name to confirm.",
+  "Xóa phòng": "Delete room",
+  "từ {n} đêm": "from {n} nights",
+  "{a} người lớn · {b} trẻ em": "{a} adults · {b} children",
+  "{a}–{b} đêm": "{a}–{b} nights",
+  "Đang thêm…": "Adding…",
+  "Đã thêm phòng.": "Room added.",
+  "Đã xóa phòng.": "Room deleted.",
+  "Đặt tên cho phòng.": "Give the room a name.",
+  "Để trống nghĩa là không giới hạn.": "Leave it empty for no limit.",
+  "Để trống nếu chưa đặt giá. Phòng vẫn nhận đặt, khách chỉ không thấy con số nào.":
+    "Leave it empty if there is no price yet. The room still takes bookings; the guest just sees no figure.",
+  "đêm": "night",
+  "Phòng này nhận ít nhất {n} đêm.": "This room takes at least {n} nights.",
+  "Phòng này nhận nhiều nhất {n} đêm.":
+    "This room takes at most {n} nights.",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

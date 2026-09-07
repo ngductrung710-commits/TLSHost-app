@@ -327,6 +327,15 @@ model Room {
   /// before it has been priced.
   basePrice  Int?
 
+  /// Số đêm ít nhất và nhiều nhất cho một lượt đặt vào phòng này.
+  ///
+  /// minNights có mặc định 1 vì "không giới hạn" ở đầu dưới không phải một
+  /// trạng thái có thật — mọi lượt đặt đều ít nhất một đêm. maxNights thì
+  /// nullable, vì "không giới hạn" ở đầu trên là trạng thái có thật, và lưu
+  /// một con số to giả vờ làm vô hạn là thứ sau này có người đem so sánh.
+  minNights Int  @default(1)
+  maxNights Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

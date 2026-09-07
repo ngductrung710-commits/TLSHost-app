@@ -15,6 +15,193 @@ import { PROPERTY_TYPES } from "@/lib/propertyTypes";
 export type PublicPageState = { error: string | null; notice?: string };
 
 /* -------------------------------------------------------------------------- */
+/* Phòng                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export type RoomState = { error: string | null; notice?: string };
+
+/**
+ * Một phòng là một thứ đặt được, không phải một loại phòng.
+ *
+ * Bản thiết kế được đưa có khái niệm "loại phòng" với số lượng bên trong: một
+ * Standard Room, năm phòng. Ứng dụng này cố ý không có bảng loại phòng —
+ * ghi chú trong cho-nghi/actions.ts nói rõ vì sao: Room chính là thứ đặt
+ * được, và đó là điều cho phép ràng buộc chống trùng lịch chỉ có đúng một
+ * hình dạng. Thêm một tầng loại phòng lên trên sẽ phải dạy lại ràng buộc đó,
+ * dạy lại lịch, dạy lại buồng phòng và dạy lại đồng bộ kênh.
+ *
+ * Nên form này thêm N phòng cùng lúc, đánh số như wizard vẫn làm. Nhìn giống
+ * "thêm một loại phòng, số lượng 5", chỉ khác là bên dưới không có tầng nào
+ * cả.
+ */
+const roomBase = {
+  name: z.string().trim().min(1, "Đặt tên cho phòng."),
+  description: z.string().trim().transform(lines),
+  maxAdults: z.coerce.number().int().min(1).max(30),
+  maxChildren: z.coerce.number().int().min(0).max(30),
+  basePrice: z
+    .union([z.literal(""), z.coerce.number().int().min(0)])
+    .transform((v) => (v === "" ? null : v)),
+  minNights: z.coerce.number().int().min(1).max(365),
+  // Ô trống nghĩa là không giới hạn, khác hẳn với một con số lớn.
+  maxNights: z
+    .union([z.literal(""), z.coerce.number().int().min(1).max(365)])
+    .transform((v) => (v === "" ? null : v)),
+};
+
+const createRoomSchema = z.object({
+  ...roomBase,
+  propertyId: z.string().min(1),
+  count: z.coerce.number().int().min(1).max(50),
+});
+
+const updateRoomSchema = z.object({ ...roomBase, roomId: z.string().min(1) });
+
+function nightRangeProblem(min: number, max: number | null): string | null {
+  return max !== null && max < min
+    ? "Số đêm nhiều nhất phải lớn hơn hoặc bằng số đêm ít nhất."
+    : null;
+}
+
+export async function createRoom(
+  _prev: RoomState,
+  formData: FormData,
+): Promise<RoomState> {
+  const t = await getT();
+  const member = await requireMember();
+  if (member.role !== "OWNER") return { error: t("Chỉ chủ nhà mới thêm được phòng.") };
+
+  const parsed = createRoomSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: t(parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ.") };
+  }
+  const d = parsed.data;
+
+  const bad = nightRangeProblem(d.minNights, d.maxNights);
+  if (bad) return { error: t(bad) };
+
+  const amenities = parseAmenityIds(formData.get("roomAmenities"));
+
+  const made = await withOrg(member.orgId, async (tx) => {
+    // Cơ sở tra ở đây chứ không tin propertyId gửi lên: RLS đã ràng theo tổ
+    // chức, nhưng một id của cơ sở khác trong cùng tổ chức thì RLS không chặn.
+    const property = await tx.property.findFirst({
+      where: { id: d.propertyId },
+      select: { id: true },
+    });
+    if (!property) return 0;
+
+    const rows = Array.from({ length: d.count }, (_, i) => ({
+      orgId: member.orgId,
+      propertyId: property.id,
+      name: d.count === 1 ? d.name : `${d.name} ${i + 1}`,
+      capacity: d.maxAdults + d.maxChildren,
+      maxAdults: d.maxAdults,
+      maxChildren: d.maxChildren,
+      description: d.description || null,
+      basePrice: d.basePrice,
+      minNights: d.minNights,
+      maxNights: d.maxNights,
+      amenities,
+    }));
+
+    await tx.room.createMany({ data: rows });
+    return rows.length;
+  });
+
+  if (made === 0) return { error: t("Không tìm thấy cơ sở này.") };
+
+  revalidatePath(`/cho-nghi/${d.propertyId}`);
+  revalidatePath("/lich");
+  return { error: null, notice: t("Đã thêm phòng.") };
+}
+
+export async function updateRoom(
+  _prev: RoomState,
+  formData: FormData,
+): Promise<RoomState> {
+  const t = await getT();
+  const member = await requireMember();
+  if (member.role !== "OWNER") return { error: t("Chỉ chủ nhà mới sửa được phòng.") };
+
+  const parsed = updateRoomSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: t(parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ.") };
+  }
+  const d = parsed.data;
+
+  const bad = nightRangeProblem(d.minNights, d.maxNights);
+  if (bad) return { error: t(bad) };
+
+  const changed = await withOrg(member.orgId, (tx) =>
+    tx.room.updateMany({
+      where: { id: d.roomId },
+      data: {
+        name: d.name,
+        capacity: d.maxAdults + d.maxChildren,
+        maxAdults: d.maxAdults,
+        maxChildren: d.maxChildren,
+        description: d.description || null,
+        basePrice: d.basePrice,
+        minNights: d.minNights,
+        maxNights: d.maxNights,
+        amenities: parseAmenityIds(formData.get("roomAmenities")),
+      },
+    }),
+  );
+
+  if (changed.count === 0) return { error: t("Không tìm thấy phòng này.") };
+
+  revalidatePath("/cho-nghi");
+  revalidatePath("/lich");
+  revalidatePath("/dat", "layout");
+  return { error: null, notice: t("Đã lưu.") };
+}
+
+/**
+ * Xoá một phòng.
+ *
+ * Cùng một chốt như xoá cơ sở, và cùng lý do: phải gõ đúng tên. Xoá phòng kéo
+ * theo mọi lượt đặt của nó, kể cả những lượt đã ở xong — mà một lượt đặt đã
+ * qua vẫn là bản ghi của một đêm ai đó đã trả tiền.
+ *
+ * Số lượt đặt đếm ngay tại đây, không phải con số trang đã vẽ sẵn: một con số
+ * do trang cũ đưa xuống là con số của lúc trang đó được dựng.
+ */
+export async function deleteRoom(
+  _prev: RoomState,
+  formData: FormData,
+): Promise<RoomState> {
+  const t = await getT();
+  const member = await requireMember();
+  if (member.role !== "OWNER") return { error: t("Chỉ chủ nhà mới xóa được phòng.") };
+
+  const roomId = String(formData.get("roomId") ?? "");
+  const typed = String(formData.get("confirmName") ?? "").trim();
+  if (!roomId) return { error: t("Không tìm thấy phòng này.") };
+
+  const outcome = await withOrg(member.orgId, async (tx) => {
+    const room = await tx.room.findFirst({
+      where: { id: roomId },
+      select: { id: true, name: true, propertyId: true },
+    });
+    if (!room) return "missing" as const;
+    if (typed !== room.name) return "name" as const;
+
+    await tx.room.delete({ where: { id: room.id } });
+    return room.propertyId;
+  });
+
+  if (outcome === "missing") return { error: t("Không tìm thấy phòng này.") };
+  if (outcome === "name") return { error: t("Tên chưa khớp.") };
+
+  revalidatePath(`/cho-nghi/${outcome}`);
+  revalidatePath("/lich");
+  revalidatePath("/buong-phong");
+  return { error: null, notice: t("Đã xóa phòng.") };
+}
+
+/* -------------------------------------------------------------------------- */
 /* Sửa thông tin cơ sở                                                         */
 /* -------------------------------------------------------------------------- */
 
@@ -187,34 +374,6 @@ export async function publishProperty(
       ? t("Trang đã mở. Chia sẻ link bên dưới cho khách.")
       : t("Đã đóng trang. Link giữ nguyên, mở lại lúc nào cũng được."),
   };
-}
-
-const priceSchema = z.object({
-  roomId: z.string().min(1),
-  basePrice: z.string(),
-});
-
-export async function setRoomPrice(formData: FormData): Promise<void> {
-  const member = await requireMember();
-  if (member.role !== "OWNER") return;
-
-  const parsed = priceSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return;
-
-  const raw = parsed.data.basePrice.trim();
-  // An empty box means "no price", which is different from a price of zero —
-  // one hides the figure, the other advertises a free room.
-  const value = raw === "" ? null : Number(raw);
-  if (value !== null && (!Number.isFinite(value) || value < 0)) return;
-
-  await withOrg(member.orgId, (tx) =>
-    tx.room.updateMany({
-      where: { id: parsed.data.roomId },
-      data: { basePrice: value === null ? null : Math.round(value) },
-    }),
-  );
-
-  revalidatePath("/cho-nghi");
 }
 
 /* -------------------------------------------------------------------------- */

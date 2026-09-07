@@ -117,7 +117,14 @@ export async function requestBooking(
 
     const room = await tx.room.findFirst({
       where: { id: data.roomId, propertyId: property.id },
-      select: { id: true, name: true, capacity: true, basePrice: true },
+      select: {
+        id: true,
+        name: true,
+        capacity: true,
+        basePrice: true,
+        minNights: true,
+        maxNights: true,
+      },
     });
     if (!room) return null;
 
@@ -125,6 +132,22 @@ export async function requestBooking(
   });
 
   if (!found) return { error: t("Không tìm thấy phòng này.") };
+
+  // Giới hạn số đêm của chính phòng này, kiểm sau khi đã biết phòng nào.
+  // MAX_NIGHTS ở trên là trần chung của cả sản phẩm; hai con số dưới đây là
+  // điều kiện chủ nhà đặt ra, và nếu không chặn ở đây thì hai ô trong trang
+  // quản lý chỉ là hai con số để nhìn.
+  const nights = daysBetween(checkIn, checkOut);
+  if (nights < found.room.minNights) {
+    return {
+      error: fill(t("Phòng này nhận ít nhất {n} đêm."), { n: found.room.minNights }),
+    };
+  }
+  if (found.room.maxNights !== null && nights > found.room.maxNights) {
+    return {
+      error: fill(t("Phòng này nhận nhiều nhất {n} đêm."), { n: found.room.maxNights }),
+    };
+  }
 
   if (data.guests > found.room.capacity) {
     return {

@@ -10,11 +10,14 @@ import { formatMoney, todayIn } from "@/lib/dates";
 import { InfoForm } from "./InfoForm";
 import { PublicPageForm } from "./PublicPageForm";
 import { DeletePropertyForm } from "./DeletePropertyForm";
+import { RoomsTab } from "./RoomsTab";
 import {
+  createRoom,
   deleteProperty,
+  deleteRoom,
   publishProperty,
-  setRoomPrice,
   updateProperty,
+  updateRoom,
 } from "./actions";
 
 import { getT, readLocale } from "@/lib/locale";
@@ -88,7 +91,18 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         published: true,
         currency: true,
         rooms: {
-          select: { id: true, name: true, capacity: true, basePrice: true },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            capacity: true,
+            maxAdults: true,
+            maxChildren: true,
+            basePrice: true,
+            minNights: true,
+            maxNights: true,
+            amenities: true,
+          },
           orderBy: { name: "asc" },
         },
       },
@@ -221,65 +235,15 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
       ) : null}
 
       {tab === "phong" ? (
-      <>
-      {/* ---- rooms and prices ------------------------------------------- */}
-      <section className="mt-10">
-        <h2 className="text-[1.125rem] font-semibold text-ink-900">
-          {t("Phòng và giá")}
-        </h2>
-        <p className="mb-4 mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-600">
-          {t("Giá mỗi đêm hiển thị trên trang đặt phòng. Phòng chưa có giá vẫn nhận được đặt, chỉ là khách không thấy con số nào.")}
-        </p>
-
-        <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
-          {property.rooms.map((room) => (
-            <li
-              key={room.id}
-              className="flex flex-wrap items-center gap-4 px-5 py-4"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-semibold text-ink-900">
-                  {room.name}
-                </p>
-                <p className="text-[12.5px] text-ink-500">
-                  {t("Tối đa")} <span className="tnum">{room.capacity}</span> {t("khách")}
-                </p>
-              </div>
-
-              <form action={setRoomPrice} className="flex items-end gap-2">
-                <input type="hidden" name="roomId" value={room.id} />
-                <div>
-                  <label
-                    htmlFor={`price-${room.id}`}
-                    className="block text-[12px] font-medium text-ink-600"
-                  >
-                    {fill(t("Giá mỗi đêm ({tien})"), {
-                      tien: currencySymbol(property.currency),
-                    })}
-                  </label>
-                  <input
-                    id={`price-${room.id}`}
-                    name="basePrice"
-                    type="number"
-                    min={0}
-                    step={property.currency === "VND" ? 10000 : 1}
-                    defaultValue={room.basePrice ?? ""}
-                    className="mt-1 min-h-11 w-40 rounded-xl border border-line-strong bg-white px-3 text-[15px] tnum"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="min-h-11 rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
-                >
-                  {t("Lưu")}
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      </>
+        <RoomsTab
+          rooms={property.rooms}
+          propertyId={property.id}
+          locale={locale}
+          currency={currencySymbol(property.currency)}
+          createAction={createRoom}
+          updateAction={updateRoom}
+          deleteAction={deleteRoom}
+        />
       ) : null}
 
       {tab === "thong-tin" ? (
