@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { AmenityPicker } from "@/components/AmenityPicker";
 import { useT } from "@/components/I18nProvider";
@@ -103,7 +104,20 @@ export function AddRoomPanel({
         {label}
       </button>
 
-      {open ? (
+      {/* Ngăn kéo đi qua portal lên thẳng <body>.
+          ----------------------------------------------------------------
+          Nút mở nó nằm trong một ô của bảng lịch, mà ô đó là
+          `position: sticky; z-index: 2` — tức là một stacking context riêng.
+          Mọi thứ vẽ bên trong ô ấy chỉ xếp lớp được với nhau; z-50 của lớp
+          phủ không bao giờ vượt lên trên những ô sticky đứng SAU nó trong
+          DOM. Kết quả: ngăn kéo mở ra mà vài ô ở góc dưới bên trái vẫn sáng
+          nguyên, nằm đè lên lớp phủ.
+          Đo được bằng document.elementFromPoint trên đúng những ô đó: nó trả
+          về chính cái link, không phải lớp phủ.
+          Portal đưa ngăn kéo ra khỏi ô, thành con của <body>, nơi z-50 có
+          nghĩa so với cả trang. */}
+      {open
+        ? createPortal(
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* Nền mờ là một nút thật, không phải một thẻ div bắt sự kiện: bấm
               ra ngoài để đóng phải dùng được cả bằng bàn phím. */}
@@ -320,8 +334,10 @@ export function AddRoomPanel({
               <Footer onClose={() => setOpen(false)} label={label} busy={busy} />
             </form>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
