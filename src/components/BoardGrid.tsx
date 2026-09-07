@@ -141,7 +141,12 @@ export function BoardGrid({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+    // relative không phải để trang trí: bản tóm tắt sr-only ở cuối là
+    // position:absolute, và nếu không có tổ tiên nào được định vị thì nó neo
+    // vào gốc trang. Nó vẫn vô hình, nhưng vẫn tính vào vùng cuộn của <html>
+    // — đo được 104px khoảng xám thừa dưới đáy trang. Có relative thì
+    // overflow-hidden ngay ở đây cắt nó đi.
+    <div className="relative overflow-hidden rounded-2xl border border-line bg-surface">
       {/* The only horizontally scrolling element on the page. The room-name
           column is sticky inside it, so it stays put as the dates move. */}
       <div className="overflow-x-auto">
