@@ -41,6 +41,11 @@ export function AddRoomPanel({
   const [amenities, setAmenities] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Hai ô này được điều khiển để dải tóm tắt ở cuối luôn nói đúng thứ đang gõ.
+  // Những ô còn lại vẫn để trình duyệt giữ: không có gì đọc chúng theo thời
+  // gian thực, nên biến chúng thành controlled chỉ thêm việc cho React.
+  const [count, setCount] = useState("1");
+  const [price, setPrice] = useState("");
 
   /**
    * Gọi thẳng action trong một hàm async thay vì qua useActionState.
@@ -75,6 +80,8 @@ export function AddRoomPanel({
     }
     setError(null);
     setAmenities([]);
+    setCount("1");
+    setPrice("");
   }
 
   useEffect(() => {
@@ -134,8 +141,30 @@ export function AddRoomPanel({
             aria-label={label}
             className="relative flex h-full w-full max-w-md flex-col bg-surface shadow-xl"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
-              <div className="min-w-0">
+            <div className="flex items-start gap-3 border-b border-line px-5 py-4">
+              {/* Ô biểu tượng đầu tiêu đề, giống bản thiết kế. Chỉ trang trí,
+                  nên aria-hidden — cái tên ngay bên cạnh đã nói nó là gì. */}
+              <span
+                aria-hidden="true"
+                className="grid size-10 shrink-0 place-items-center rounded-xl bg-clay-50 text-brand"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 18v-9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9" />
+                  <path d="M3 14h18" />
+                  <path d="M7 11h4" />
+                  <path d="M3 18v2M21 18v2" />
+                </svg>
+              </span>
+
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
                   {propertyName}
                 </p>
@@ -227,14 +256,14 @@ export function AddRoomPanel({
                 </section>
 
                 <section>
-                  <h3 className={heading}>{t("Sức chứa và giá")}</h3>
+                  <h3 className={heading}>{t("Giá & sức chứa")}</h3>
                   <div className="mt-3 grid gap-4 sm:grid-cols-2">
                     <div>
                       <label
                         htmlFor="ar-count"
                         className="block text-[14px] font-medium text-ink-700"
                       >
-                        {t("Số phòng cùng loại")}
+                        {t("Số lượng phòng")}
                       </label>
                       <input
                         id="ar-count"
@@ -242,7 +271,8 @@ export function AddRoomPanel({
                         type="number"
                         min={1}
                         max={50}
-                        defaultValue={1}
+                        value={count}
+                        onChange={(e) => setCount(e.target.value)}
                         className={input}
                       />
                     </div>
@@ -251,21 +281,34 @@ export function AddRoomPanel({
                         htmlFor="ar-price"
                         className="block text-[14px] font-medium text-ink-700"
                       >
-                        {fill(t("Giá mỗi đêm ({tien})"), { tien: currency })}
+                        {t("Giá mỗi đêm")}
                       </label>
-                      <input
-                        id="ar-price"
-                        name="basePrice"
-                        inputMode="numeric"
-                        className={input}
-                      />
+                      {/* Đơn vị tiền nằm trong ô, canh phải — như bản thiết
+                          kế. Nó là một nhãn chứ không phải một ô nhập: tiền
+                          tệ do tổ chức đặt, không đổi được ở đây. */}
+                      <div className="relative">
+                        <input
+                          id="ar-price"
+                          name="basePrice"
+                          inputMode="numeric"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className={`${input} pr-14`}
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[13px] font-medium text-ink-400"
+                        >
+                          {currency}
+                        </span>
+                      </div>
                     </div>
                     <div>
                       <label
                         htmlFor="ar-adults"
                         className="block text-[14px] font-medium text-ink-700"
                       >
-                        {t("Người lớn tối đa")}
+                        {t("Tối đa người lớn")}
                       </label>
                       <input
                         id="ar-adults"
@@ -282,7 +325,7 @@ export function AddRoomPanel({
                         htmlFor="ar-children"
                         className="block text-[14px] font-medium text-ink-700"
                       >
-                        {t("Trẻ em tối đa")}
+                        {t("Tối đa trẻ em")}
                       </label>
                       <input
                         id="ar-children"
@@ -294,6 +337,32 @@ export function AddRoomPanel({
                         className={input}
                       />
                     </div>
+                  </div>
+                </section>
+
+                {/* Số đêm tối thiểu/tối đa gập lại: phần lớn phòng không đặt
+                    giới hạn nào, và hai ô luôn mở làm form dài ra vì một câu
+                    hỏi hiếm khi được trả lời. <details> chứ không phải state
+                    riêng — trình duyệt đã biết gập mở, kể cả khi chưa có
+                    JavaScript. */}
+                <details className="group rounded-xl border border-line">
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-500">
+                    {t("Quy tắc lưu trú nâng cao")}
+                    <svg
+                      viewBox="0 0 16 16"
+                      className="size-4 transition-transform group-open:rotate-180"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M4 6l4 4 4-4" />
+                    </svg>
+                  </summary>
+
+                  <div className="grid gap-4 border-t border-line px-4 py-4 sm:grid-cols-2">
                     <div>
                       <label
                         htmlFor="ar-min"
@@ -326,9 +395,31 @@ export function AddRoomPanel({
                         max={365}
                         className={input}
                       />
+                      <p className="mt-1.5 text-[13px] text-ink-500">
+                        {t("Để trống nghĩa là không giới hạn.")}
+                      </p>
                     </div>
                   </div>
-                </section>
+                </details>
+
+                {/* Dải tóm tắt: đọc lại thành câu những gì vừa gõ. Nó bắt
+                    được cái lỗi mà không ô nào bắt được — gõ nhầm một số 0 vào
+                    giá thì con số ở đây đọc lên nghe sai ngay. */}
+                <p className="rounded-xl bg-clay-50 px-4 py-3 text-[14px] text-ink-800">
+                  <span className="tnum font-medium">
+                    {fill(t("{n} phòng"), { n: Number(count) || 0 })}
+                  </span>
+                  {price.trim() !== "" && Number(price) > 0 ? (
+                    <span className="tnum float-right font-semibold">
+                      {new Intl.NumberFormat(locale === "en" ? "en-US" : "vi-VN").format(
+                        Number(price),
+                      )}{" "}
+                      {currency} / {t("đêm")}
+                    </span>
+                  ) : (
+                    <span className="float-right text-ink-500">{t("Chưa đặt giá")}</span>
+                  )}
+                </p>
               </div>
 
               <Footer onClose={() => setOpen(false)} label={label} busy={busy} />

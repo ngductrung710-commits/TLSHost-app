@@ -987,8 +987,9 @@ export const EN: Record<string, string> = {
     "Shown to guests on the booking page. The first photo is the cover.",
   "Phần ảnh chưa làm — nó cần một nơi lưu trữ được chọn trước.":
     "Photos are not built yet — they need somewhere to live, chosen first.",
-  "Sức chứa và giá": "Capacity and price",
   "Ảnh phòng": "Room photos",
+  "Giá & sức chứa": "Price and capacity",
+  "Quy tắc lưu trú nâng cao": "Advanced stay rules",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":
