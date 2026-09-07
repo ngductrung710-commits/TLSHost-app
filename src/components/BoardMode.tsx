@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 
 import { useT } from "@/components/I18nProvider";
+import { openNewBooking } from "@/components/NewBookingPanel";
 import { fill } from "@/lib/i18n";
 
 /**
@@ -123,5 +124,25 @@ export function DayCell({
       ? fill(t("Chặn đêm — {phong}, {ngay}"), { phong: roomName, ngay: date })
       : fill(t("Thêm đặt phòng — {phong}, {ngay}"), { phong: roomName, ngay: date });
 
-  return <Link href={href} aria-label={label} className={className} />;
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className={className}
+      onClick={(e) => {
+        // Chế độ "Chặn" vẫn đi tới trang khóa đêm như cũ.
+        if (mode === "chan") return;
+
+        // Giữ nguyên href và chỉ chặn cú bấm thường: bấm giữa chuột, Ctrl+bấm
+        // hay "mở trong tab mới" vẫn phải ra được trang /lich/moi, và nếu
+        // JavaScript chưa tải xong thì cái link vẫn là một cái link.
+        if (e.defaultPrevented) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (e.button !== 0) return;
+
+        e.preventDefault();
+        openNewBooking({ roomId, from: date });
+      }}
+    />
+  );
 }

@@ -807,8 +807,32 @@ model Booking {
   checkOut DateTime @db.Date
 
   guests    Int           @default(2)
+  /// Tách số khách. Ba cột này là thứ người ta thật sự gõ vào; `guests` ở trên
+  /// là tổng, ghi cùng lúc.
+  ///
+  /// Giữ cả tổng lẫn phần tách, theo đúng lối đã dùng ở Room.capacity: mọi chỗ
+  /// kiểm tra sức chứa trong ứng dụng đang đọc một cột duy nhất, và đổi sang
+  /// giá trị suy ra lúc đọc là phải rà lại tất cả để chắc không chỗ nào so với
+  /// một tổng đã cũ.
+  ///
+  /// Em bé không cộng vào `guests`. Đó là quy ước của chính ngành: một chiếc
+  /// nôi không chiếm một chỗ nằm, và mọi kênh bán đều hỏi riêng con số này.
+  adults   Int @default(2)
+  children Int @default(0)
+  infants  Int @default(0)
+
   /// Minor units. Total for the whole stay, not per night.
   totalCents Int?
+
+  /// Tiền cọc đã nhận, minor units. Null nghĩa là chưa hỏi tới, khác hẳn 0 —
+  /// 0 là "đã quyết định: không cọc". Cột này không phải một khoản thanh toán
+  /// qua cổng: Payment là hàng do Stripe hay PayPal sinh ra và có externalId
+  /// riêng, còn đây là chủ nhà tự ghi lại số tiền khách đã chuyển.
+  depositCents  Int?
+  /// Lúc chủ nhà đánh dấu khoản cọc đó là đã nhận. Một mốc thời gian chứ không
+  /// phải boolean, vì "đã nhận lúc nào" là câu sẽ có người hỏi.
+  depositPaidAt DateTime?
+
   source    BookingSource @default(DIRECT)
   status    BookingStatus @default(CONFIRMED)
   notes     String?

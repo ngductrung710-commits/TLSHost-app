@@ -6,13 +6,19 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { NightsTakenError, assertNightsFree } from "@/lib/availability";
-import { canEditBooking, canManageBookings, requireMember } from "@/lib/dal";
+import {
+  canEditBooking,
+  canManageBookings,
+  requireMember,
+  visiblePropertyFilter,
+} from "@/lib/dal";
 import {
   PG_CHECK_VIOLATION,
   PG_EXCLUSION_VIOLATION,
   pgErrorCode,
   withOrg,
 } from "@/lib/db";
+import { AUTO_ROOM } from "@/lib/bookingForm";
 import { parseIsoDate, shortVi, toIsoDate } from "@/lib/dates";
 import { getT } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
@@ -59,6 +65,14 @@ const bookingFields = {
   checkOut: z.string(),
   guests: z.coerce.number().int().min(1).max(50),
   totalCents: z.coerce.number().int().min(0).optional(),
+  // Ba ô của ngăn kéo. Trang /lich/moi vẫn chỉ gửi `guests`, nên cả ba đều
+  // optional: một form cũ không được thành không hợp lệ chỉ vì có form mới.
+  adults: z.coerce.number().int().min(0).max(50).optional(),
+  children: z.coerce.number().int().min(0).max(50).optional(),
+  infants: z.coerce.number().int().min(0).max(50).optional(),
+  depositCents: z.coerce.number().int().min(0).optional(),
+  // Checkbox: có mặt trong FormData nghĩa là đã tích, vắng mặt nghĩa là không.
+  depositPaid: z.coerce.boolean().optional(),
   source: z.enum([
     "DIRECT",
     "AIRBNB",
@@ -126,6 +140,9 @@ async function calendarError(error: unknown): Promise<BookingState | null> {
     if (error.message === "ROOM_NOT_FOUND") {
       return { error: "Không tìm thấy phòng này." };
     }
+    if (error.message === "NO_FREE_ROOM") {
+      return { error: "Không còn phòng nào trống trong những đêm này." };
+    }
     if (error.message === "BOOKING_NOT_FOUND") {
       return { error: "Không tìm thấy đặt phòng này." };
     }
@@ -141,10 +158,14 @@ async function calendarError(error: unknown): Promise<BookingState | null> {
 /* Bookings                                                                    */
 /* -------------------------------------------------------------------------- */
 
-export async function createBooking(
-  _prev: BookingState,
+/**
+ * Phần lõi dùng chung của hai lối tạo đơn: trang /lich/moi và ngăn kéo trên
+ * lịch. Trả về ngày nhận phòng khi thành công, để bên gọi tự quyết định đi đâu
+ * tiếp — trang thì chuyển hướng, ngăn kéo thì đóng lại và ở nguyên trên lịch.
+ */
+async function saveNewBooking(
   formData: FormData,
-): Promise<BookingState> {
+): Promise<BookingState | { checkIn: Date }> {
   const t = await getT();
   const member = await requireMember();
 
@@ -171,50 +192,146 @@ export async function createBooking(
     return { error: t("Ngày trả phòng phải sau ngày nhận phòng.") };
   }
 
-  try {
-    await withOrg(member.orgId, async (tx) => {
-      // Row-level security already makes a room from another org invisible, so
-      // a miss here means "not yours" and "does not exist" give the same
-      // answer — which is the answer to give.
-      const room = await tx.room.findUnique({
-        where: { id: data.roomId },
-        select: { id: true },
-      });
-      if (!room) throw new Error("ROOM_NOT_FOUND");
+  // Phần tách chỉ đến từ ngăn kéo. Khi không có, tổng `guests` là tất cả những
+  // gì form nói ra, và dồn hết vào người lớn — giống hệt cách migration đối xử
+  // với dữ liệu cũ, để hai đường vào không sinh ra hai kiểu hàng khác nhau.
+  const hasSplit = data.adults !== undefined;
+  const adults = hasSplit ? data.adults! : data.guests;
+  const children = data.children ?? 0;
+  const infants = data.infants ?? 0;
+  const guests = hasSplit ? adults + children : data.guests;
+  if (guests < 1) return { error: t("Cần ít nhất một khách.") };
 
-      // Cross-table check: bookings and blocks cannot collide, and no single
-      // constraint spans both tables. Takes a row lock on the room first.
-      await assertNightsFree(tx, {
-        roomId: data.roomId,
-        from: checkIn,
-        to: checkOut,
-      });
+  try {
+    const created = await withOrg(member.orgId, async (tx) => {
+      let roomId = data.roomId;
+
+      if (roomId === AUTO_ROOM) {
+        // "Tự động gán": thử từng phòng nhìn thấy được, lấy phòng đầu tiên
+        // còn trống. Thử chứ không truy vấn một câu tìm phòng trống, vì
+        // assertNightsFree mới là thứ biết đủ — nó xét cả lượt đặt lẫn đêm bị
+        // chặn, và nó khoá hàng lại, nên phòng nó trả về vẫn còn trống ở dòng
+        // ngay sau.
+        const candidates = await tx.room.findMany({
+          where: { property: visiblePropertyFilter(member) },
+          select: { id: true },
+          orderBy: [{ property: { name: "asc" } }, { name: "asc" }],
+        });
+
+        let picked: string | null = null;
+        for (const candidate of candidates) {
+          try {
+            await assertNightsFree(tx, {
+              roomId: candidate.id,
+              from: checkIn,
+              to: checkOut,
+            });
+            picked = candidate.id;
+            break;
+          } catch (error) {
+            if (error instanceof NightsTakenError) continue;
+            throw error;
+          }
+        }
+        if (!picked) throw new Error("NO_FREE_ROOM");
+        roomId = picked;
+      } else {
+        // Row-level security already makes a room from another org invisible,
+        // so a miss here means "not yours" and "does not exist" give the same
+        // answer — which is the answer to give.
+        const room = await tx.room.findUnique({
+          where: { id: roomId },
+          select: { id: true },
+        });
+        if (!room) throw new Error("ROOM_NOT_FOUND");
+
+        // Cross-table check: bookings and blocks cannot collide, and no single
+        // constraint spans both tables. Takes a row lock on the room first.
+        await assertNightsFree(tx, { roomId, from: checkIn, to: checkOut });
+      }
+
+      // Tiền cọc chỉ được đánh dấu đã nhận khi có một con số. Tích ô mà bỏ
+      // trống số tiền thì không có gì để nói là đã nhận.
+      const deposit = data.depositCents ?? null;
+
+      // Ngăn kéo không gửi tổng tiền khi để hệ thống tự gán phòng: lúc bấm nút
+      // nó chưa biết phòng nào, nên chưa biết giá nào. Tính ở đây, từ giá của
+      // đúng cái phòng vừa được chọn.
+      let totalCents = data.totalCents ?? null;
+      if (totalCents === null) {
+        const priced = await tx.room.findUnique({
+          where: { id: roomId },
+          select: { basePrice: true },
+        });
+        const nights = Math.round(
+          (checkOut.getTime() - checkIn.getTime()) / 86_400_000,
+        );
+        totalCents =
+          priced?.basePrice != null ? priced.basePrice * nights : null;
+      }
 
       await tx.booking.create({
         data: {
           orgId: member.orgId,
-          roomId: data.roomId,
+          roomId,
           guestName: data.guestName,
           guestEmail: data.guestEmail || null,
           guestPhone: data.guestPhone || null,
           checkIn,
           checkOut,
-          guests: data.guests,
-          totalCents: data.totalCents ?? null,
+          guests,
+          adults,
+          children,
+          infants,
+          totalCents,
+          depositCents: deposit,
+          depositPaidAt: data.depositPaid && deposit ? new Date() : null,
           source: data.source,
           notes: data.notes || null,
           createdByMembershipId: member.membershipId,
         },
       });
+
+      return true;
     });
+
+    if (!created) return { error: t("Thông tin chưa hợp lệ.") };
   } catch (error) {
     const known = await calendarError(error);
     if (known) return known;
     throw error;
   }
 
+  return { checkIn };
+}
+
+export async function createBooking(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const result = await saveNewBooking(formData);
+  if ("error" in result) return result;
+
   revalidatePath("/lich");
-  redirect(`/lich?tu=${toIsoDate(checkIn)}`);
+  redirect(`/lich?tu=${toIsoDate(result.checkIn)}`);
+}
+
+/**
+ * Cùng việc, nhưng không chuyển hướng.
+ *
+ * Ngăn kéo nằm ngay trên bảng lịch: đơn vừa tạo phải hiện ra ở đúng chỗ vừa
+ * bấm, chứ không phải sau một lần tải lại trang đưa mình về đầu danh sách.
+ * revalidatePath là đủ — Next vẽ lại bảng, ngăn kéo tự đóng.
+ */
+export async function createBookingInline(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const result = await saveNewBooking(formData);
+  if ("error" in result) return result;
+
+  revalidatePath("/lich");
+  return { error: null };
 }
 
 export async function updateBooking(

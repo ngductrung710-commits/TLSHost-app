@@ -81,6 +81,45 @@ export const EN: Record<string, string> = {
 
   /* ---- Calendar ---- */
   "Tạo đặt phòng": "New booking",
+
+  /* ---- Ngăn kéo tạo đơn đặt phòng ---- */
+  "Đơn đặt mới": "New booking",
+  "Tạo đơn đặt phòng": "Create a booking",
+  "Bước {n} trên {tong}": "Step {n} of {tong}",
+  "Bắt đầu với thông tin lưu trú": "Start with the stay",
+  "Kiểm tra ngày, phòng và số khách trước khi thêm thông tin khách.":
+    "Check the dates, the room and the party before adding the guest.",
+  "Phòng được gán": "Assigned room",
+  "Tự động gán": "Assign automatically",
+  "Người lớn": "Adults",
+  "Trẻ em": "Children",
+  "Em bé": "Infants",
+  "Chưa có giá": "No rate set",
+  "Chọn khi lưu, theo phòng còn trống": "Picked on save, from whatever is free",
+  "Thêm khách chính": "Add the lead guest",
+  "Nhập khách chính trước. Có thể để trống thông tin liên hệ nếu chưa có.":
+    "Enter the lead guest first. Contact details can be left empty for now.",
+  "Số điện thoại": "Phone number",
+  "Bắt buộc nhập tên khách.": "A guest name is required.",
+  "Cần ít nhất một khách.": "At least one guest is required.",
+  "Không còn phòng nào trống trong những đêm này.":
+    "No room is free for these nights.",
+  "Xem lại và thanh toán": "Review and payment",
+  "Thêm tiền cọc nếu cần, kiểm tra lại thông tin rồi tạo đơn đặt.":
+    "Add a deposit if you need one, check the details, then create the booking.",
+  "Nguồn đặt phòng": "Booking source",
+  "Thủ công / khách vãng lai": "Manual / walk-in",
+  "Tiền cọc": "Deposit",
+  "Chọn nhanh, kéo thanh trượt hoặc nhập tiền cọc tùy chỉnh.":
+    "Pick a preset, drag the slider, or type your own deposit.",
+  "Số tiền tùy chỉnh": "Custom amount",
+  "Đánh dấu đã thanh toán": "Mark as paid",
+  "Tóm tắt đơn đặt": "Booking summary",
+  "{nl} Người lớn / {te} Trẻ em / {eb} Em bé":
+    "{nl} adults / {te} children / {eb} infants",
+  "Còn lại": "Outstanding",
+  "Tiếp": "Next",
+  "Tạo đơn đặt": "Create booking",
   "Sửa đặt phòng": "Edit booking",
   "Khóa đêm": "Block nights",
   "Đặt phòng": "Booking",

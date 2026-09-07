@@ -5,7 +5,8 @@ import Link from "next/link";
 import { BoardGrid } from "@/components/BoardGrid";
 import { SOURCE_LABELS, loadBoard } from "@/lib/board";
 import { findBookings } from "@/lib/search";
-import { orgCurrency, requireMember } from "@/lib/dal";
+import { orgCurrency, requireMember, visiblePropertyFilter } from "@/lib/dal";
+import { withOrg } from "@/lib/db";
 import {
   addDays,
   parseIsoDate,
@@ -16,8 +17,9 @@ import {
 } from "@/lib/dates";
 
 import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
-import { deleteBlock, renameRoom } from "./actions";
+import { createBookingInline, deleteBlock, renameRoom } from "./actions";
 import { BoardModeToggle } from "@/components/BoardMode";
+import { NewBookingPanel } from "@/components/NewBookingPanel";
 import { DisplayOptions } from "@/components/DisplayOptions";
 import { MonthPicker } from "@/components/MonthPicker";
 import { currencySymbol } from "@/lib/currencies";
@@ -58,6 +60,26 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
   const hits = query.trim() ? await findBookings(member, query) : null;
 
   const board = await loadBoard(member, from, WINDOW_DAYS);
+
+  const currency = await orgCurrency();
+
+  // Danh sách phòng cho ngăn kéo tạo đơn. Bảng lịch chỉ tải những phòng nằm
+  // trong khung ngày đang xem và không mang theo giá, còn ô "Phòng được gán"
+  // phải liệt kê đủ mọi phòng, kèm giá để tính tiền ngay khi đang gõ.
+  const bookableRooms = await withOrg(member.orgId, (tx) =>
+    tx.room.findMany({
+      where: { property: visiblePropertyFilter(member) },
+      select: { id: true, name: true, basePrice: true, property: { select: { name: true } } },
+      orderBy: [{ property: { name: "asc" } }, { name: "asc" }],
+    }),
+  ).then((rows) =>
+    rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      propertyName: r.property.name,
+      basePrice: r.basePrice,
+    })),
+  );
 
   const prev = toIsoDate(addDays(from, -WINDOW_DAYS));
   const next = toIsoDate(addDays(from, WINDOW_DAYS));
@@ -176,13 +198,17 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
 
           <BoardModeToggle />
 
-          <Link
-            href="/lich/moi"
-            className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white hover:bg-brand-dark"
-          >
-            <span aria-hidden="true" className="text-[15px] leading-none">+</span>
-            {t("Đặt phòng mới")}
-          </Link>
+          {/* Ngăn kéo, không phải một trang riêng. Nó cũng là thứ mở ra khi
+              bấm vào một ô trống trên bảng — cùng một component, nên hai lối
+              vào không thể lệch nhau. Trang /lich/moi vẫn còn nguyên và vẫn
+              chạy: đó là nơi cú Ctrl+bấm trên một ô đi tới. */}
+          <NewBookingPanel
+            rooms={bookableRooms}
+            action={createBookingInline}
+            locale={locale}
+            currency={currencySymbol(currency)}
+            today={toIsoDate(today)}
+          />
         </div>
       </div>
 
@@ -247,7 +273,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
               locale={locale}
               renameAction={renameRoom}
               addRoomAction={createRoom}
-              currency={currencySymbol(await orgCurrency())}
+              currency={currencySymbol(currency)}
               canRename={member.role === "OWNER"}
             />
           </div>
