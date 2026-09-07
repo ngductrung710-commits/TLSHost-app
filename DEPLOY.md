@@ -475,6 +475,27 @@ không đọc được chúng — nên kẻ chiếm được máy chủ chỉ c�
 chạy mà họ vốn đã có, chứ không có lịch sử, không có những dòng đã xoá, không có
 các khoá thanh toán cũ.
 
+**Khoá công khai đang dùng** — sinh ngày 05/09/2026:
+
+```
+age14supv3chharm9s8a409rl9h63c30zr9mp5evmapj6nfjnze2s48q48fy87
+```
+
+Ghi hẳn ra đây, có chủ ý. Khoá công khai không phải bí mật — nó chỉ mã hoá
+được, không giải mã được gì. Nhưng nó là chuỗi phải dán chính xác vào máy chủ,
+và dán nhầm một ký tự thì mọi bản sao lưu từ đó trở đi được mã hoá cho một khoá
+bạn không hề cầm. Không có gì báo lỗi, vì việc mã hoá vẫn thành công.
+
+Kiểm tra một bản sao khoá riêng có khớp dòng trên không:
+
+```bash
+scripts/verify-age-key.sh < duong-dan-toi-ban-sao
+```
+
+Kịch bản đó không ghi khoá xuống đĩa và không in nó ra. Chạy nó sau mỗi lần
+chép khoá — ra giấy, ra USB, vào trình quản lý mật khẩu. Chép sai một ký tự thì
+chỉ có nó nói cho bạn biết, và nói ngay hôm nay thay vì vào ngày ổ cứng chết.
+
 ### Nơi cất — ngoài máy chủ
 
 Backblaze B2 rẻ và đủ dùng. Tạo bucket riêng tư, tạo application key giới hạn
@@ -494,7 +515,7 @@ sudo -u postgres rclone lsd b2:
 
 ```bash
 sudo tee /etc/default/tlshost-backup > /dev/null <<'ENV'
-TLSHOST_AGE_RECIPIENT=age1... # dán public key ở đây
+TLSHOST_AGE_RECIPIENT=age14supv3chharm9s8a409rl9h63c30zr9mp5evmapj6nfjnze2s48q48fy87
 TLSHOST_RCLONE_REMOTE=b2:tlshost-backups
 TLSHOST_BACKUP_HEARTBEAT=https://hc-ping.com/... # xem mục dưới
 ENV
