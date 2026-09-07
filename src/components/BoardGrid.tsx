@@ -7,6 +7,7 @@ import { fill, makeT, type Locale, type T } from "@/lib/i18n";
 import { dictFor } from "@/lib/locale";
 import { EmptyState } from "@/components/EmptyState";
 import { AddRoomPanel } from "@/components/AddRoomPanel";
+import { DayCell } from "@/components/BoardMode";
 import { RoomGroup } from "@/components/RoomGroup";
 import { RoomNameCell } from "@/components/RoomNameCell";
 
@@ -276,10 +277,11 @@ export function BoardGrid({
                   }}
                 >
                   {board.days.map((day, i) => (
-                    <Link
+                    <DayCell
                       key={toIsoDate(day)}
-                      href={`/lich/moi?room=${room.id}&from=${toIsoDate(day)}`}
-                      aria-label={`Thêm đặt phòng — ${room.name}, ${toIsoDate(day)}`}
+                      roomId={room.id}
+                      roomName={room.name}
+                      date={toIsoDate(day)}
                       className={[
                         // Chiều cao đọc từ biến chứ không cố định h-11: nút
                         // "Mật độ hàng" đổi đúng biến này, và một lớp Tailwind

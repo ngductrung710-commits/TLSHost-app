@@ -17,6 +17,7 @@ import {
 
 import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
 import { deleteBlock, renameRoom } from "./actions";
+import { BoardModeToggle } from "@/components/BoardMode";
 import { DisplayOptions } from "@/components/DisplayOptions";
 import { MonthPicker } from "@/components/MonthPicker";
 import { currencySymbol } from "@/lib/currencies";
@@ -143,20 +144,38 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
             />
           </form>
 
-          <DisplayOptions />
-
+          {/* Chỗ nghỉ trống là màn hình duy nhất không có mục nào trên thanh
+              bên (xem chú thích trong layout), nên nó phải còn đường vào từ
+              đây. Thu lại thành một nút biểu tượng: nó không cùng loại việc
+              với cặp nút chế độ ngay cạnh, và để nguyên chữ thì hai thứ khác
+              nhau trông như một hàng lựa chọn. */}
           <Link
             href="/ban-hang"
-            className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
+            title={t("Tìm phòng trống")}
+            aria-label={t("Tìm phòng trống")}
+            className="grid size-9 place-items-center rounded-full border border-line text-ink-700 transition-colors hover:bg-sand-50"
           >
-            {t("Tìm phòng trống")}
+            <svg
+              viewBox="0 0 24 24"
+              className="size-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 18v-9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9" />
+              <path d="M3 14h18" />
+              <path d="M7 11h4" />
+              <path d="M3 18v2M21 18v2" />
+            </svg>
           </Link>
-          <Link
-            href="/lich/khoa"
-            className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"
-          >
-            {t("Khóa đêm")}
-          </Link>
+
+          <DisplayOptions />
+
+          <BoardModeToggle />
+
           <Link
             href="/lich/moi"
             className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white hover:bg-brand-dark"
