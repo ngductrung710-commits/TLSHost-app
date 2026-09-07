@@ -1,11 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useSyncExternalStore } from "react";
 
 import { useT } from "@/components/I18nProvider";
-import { openNewBooking } from "@/components/NewBookingPanel";
-import { fill } from "@/lib/i18n";
 
 /**
  * Chế độ của bảng lịch: bấm vào một ô trống thì tạo đặt phòng, hay chặn đêm.
@@ -44,8 +41,12 @@ function serverSnapshot(): BoardMode {
   return "dat";
 }
 
-function useMode(): BoardMode {
+export function useBoardMode(): BoardMode {
   return useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+}
+
+function useMode(): BoardMode {
+  return useBoardMode();
 }
 
 /** Cặp nút trên thanh công cụ. */
@@ -88,61 +89,6 @@ export function BoardModeToggle() {
   );
 }
 
-/**
- * Một ô ngày trống trên bảng.
- *
- * Nó là client component chỉ vì một lý do: địa chỉ của nó đổi theo chế độ ở
- * trên. Mọi thứ còn lại — màu cuối tuần, viền, đánh dấu hôm nay — vẫn do máy
- * chủ tính rồi truyền xuống qua className, nên phần chạy trên trình duyệt chỉ
- * còn đúng một câu điều kiện.
- */
-export function DayCell({
-  roomId,
-  roomName,
-  date,
-  className,
-}: {
-  roomId: string;
-  roomName: string;
-  /** Ngày dạng YYYY-MM-DD. */
-  date: string;
-  className: string;
-}) {
-  const t = useT();
-  const mode = useMode();
-
-  const href =
-    mode === "chan"
-      ? `/lich/khoa?room=${roomId}&from=${date}`
-      : `/lich/moi?room=${roomId}&from=${date}`;
-
-  // Nhãn phải nói đúng việc sắp xảy ra. Một ô đọc lên là "Thêm đặt phòng" mà
-  // bấm vào lại ra trang khóa đêm là thứ chỉ người dùng trình đọc màn hình
-  // gặp phải, và họ không có cái nút sẫm màu ở trên để đối chiếu.
-  const label =
-    mode === "chan"
-      ? fill(t("Chặn đêm — {phong}, {ngay}"), { phong: roomName, ngay: date })
-      : fill(t("Thêm đặt phòng — {phong}, {ngay}"), { phong: roomName, ngay: date });
-
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      className={className}
-      onClick={(e) => {
-        // Chế độ "Chặn" vẫn đi tới trang khóa đêm như cũ.
-        if (mode === "chan") return;
-
-        // Giữ nguyên href và chỉ chặn cú bấm thường: bấm giữa chuột, Ctrl+bấm
-        // hay "mở trong tab mới" vẫn phải ra được trang /lich/moi, và nếu
-        // JavaScript chưa tải xong thì cái link vẫn là một cái link.
-        if (e.defaultPrevented) return;
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        if (e.button !== 0) return;
-
-        e.preventDefault();
-        openNewBooking({ roomId, from: date });
-      }}
-    />
-  );
-}
+// Một ô ngày trống từng là component riêng ở đây; giờ cả hàng ô do DayStrip
+// lo, để một cú kéo chọn được nhiều đêm. Chế độ (useBoardMode) và openNewBooking
+// vẫn là hai thứ DayStrip đọc từ chỗ này.

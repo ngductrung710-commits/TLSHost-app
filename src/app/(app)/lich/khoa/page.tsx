@@ -36,6 +36,12 @@ export default async function NewBlockPage(props: PageProps<"/lich/khoa">) {
   const requested = typeof params.from === "string" ? parseIsoDate(params.from) : null;
   const from = requested ?? today;
 
+  // Ngày kết thúc đến từ một cú kéo trên lịch. Chỉ nhận khi nó thật sự sau
+  // ngày bắt đầu — một giá trị hỏng trong địa chỉ không đáng để mặc định sai,
+  // và mặc định cũ (đúng một đêm) vẫn là câu trả lời hợp lý.
+  const requestedTo = typeof params.to === "string" ? parseIsoDate(params.to) : null;
+  const to = requestedTo && requestedTo > from ? requestedTo : addDays(from, 1);
+
   const wanted = typeof params.room === "string" ? params.room : null;
   const defaultRoomId = rooms.find((r) => r.id === wanted)?.id ?? rooms[0].id;
 
@@ -60,7 +66,7 @@ export default async function NewBlockPage(props: PageProps<"/lich/khoa">) {
         }))}
         defaultRoomId={defaultRoomId}
         defaultFrom={toIsoDate(from)}
-        defaultTo={toIsoDate(addDays(from, 1))}
+        defaultTo={toIsoDate(to)}
       />
     </>
   );

@@ -41,7 +41,12 @@ type RoomOption = {
  * nhau, không có tổ tiên chung nào tiện để đặt context. Một kho nhỏ ngoài
  * React nối chúng lại, đúng lối đã dùng cho DisplayOptions và BoardMode.
  */
-export type OpenRequest = { roomId: string; from: string } | null;
+export type OpenRequest = {
+  roomId: string;
+  from: string;
+  /** Ngày trả phòng, khi mở từ một cú kéo nhiều đêm. Bỏ trống thì một đêm. */
+  to?: string;
+} | null;
 
 let pending: OpenRequest = null;
 const listeners = new Set<() => void>();
@@ -59,8 +64,12 @@ function serverSnapshot(): OpenRequest {
   return null;
 }
 
-/** Gọi từ một ô trống trên lịch. */
-export function openNewBooking(request: { roomId: string; from: string }): void {
+/** Gọi từ một ô trống, hoặc một cú kéo, trên lịch. */
+export function openNewBooking(request: {
+  roomId: string;
+  from: string;
+  to?: string;
+}): void {
   pending = request;
   for (const listener of listeners) listener();
 }
@@ -141,9 +150,14 @@ export function NewBookingPanel({
    */
   if (request) {
     const from = request.from;
+    // Ngày trả phòng: lấy từ cú kéo nếu có và hợp lệ, không thì một đêm.
+    const to =
+      request.to && nightsBetween(from, request.to) >= 1
+        ? request.to
+        : addDays(from, 1);
     clearRequest();
     setCheckIn(from);
-    setCheckOut(addDays(from, 1));
+    setCheckOut(to);
     setRoomId(request.roomId);
     setStep(0);
     setError(null);

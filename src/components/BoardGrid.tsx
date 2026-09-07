@@ -7,7 +7,7 @@ import { fill, makeT, type Locale, type T } from "@/lib/i18n";
 import { dictFor } from "@/lib/locale";
 import { EmptyState } from "@/components/EmptyState";
 import { AddRoomPanel } from "@/components/AddRoomPanel";
-import { DayCell } from "@/components/BoardMode";
+import { DayStrip } from "@/components/DayStrip";
 import { RoomGroup } from "@/components/RoomGroup";
 import { RoomNameCell } from "@/components/RoomNameCell";
 
@@ -270,32 +270,13 @@ export function BoardGrid({
                 className="board__row border-b border-line"
                 style={{ gridColumn: `2 / span ${board.days.length}` }}
               >
-                <div
-                  className="grid h-full"
-                  style={{
-                    gridTemplateColumns: `repeat(${board.days.length}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {board.days.map((day, i) => (
-                    <DayCell
-                      key={toIsoDate(day)}
-                      roomId={room.id}
-                      roomName={room.name}
-                      date={toIsoDate(day)}
-                      className={[
-                        // Chiều cao đọc từ biến chứ không cố định h-11: nút
-                        // "Mật độ hàng" đổi đúng biến này, và một lớp Tailwind
-                        // cứng sẽ không nghe.
-                        "h-[var(--board-row-h,2.75rem)] border-r border-line/60 transition-colors last:border-r-0 hover:bg-clay-50",
-                        i === todayIndex
-                          ? "bg-clay-50/60"
-                          : isWeekend(day)
-                            ? "bg-sand-50/60"
-                            : "",
-                      ].join(" ")}
-                    />
-                  ))}
-                </div>
+                <DayStrip
+                  roomId={room.id}
+                  roomName={room.name}
+                  days={board.days.map((d) => toIsoDate(d))}
+                  todayIndex={todayIndex}
+                  weekend={board.days.map((d) => isWeekend(d))}
+                />
 
                 {room.spans.map((span) => (
                   <StayBar
