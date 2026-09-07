@@ -82,6 +82,18 @@ export const EN: Record<string, string> = {
   /* ---- Calendar ---- */
   "Tạo đặt phòng": "New booking",
 
+  /* ---- Trạng thái & thẻ đơn trên lịch ---- */
+  "Chờ xử lý": "Pending",
+  "Đã nhận phòng": "Checked in",
+  "Đã trả phòng": "Checked out",
+  "Vắng mặt": "No-show",
+  "Xác nhận": "Confirm",
+  "Ghi nhận thanh toán": "Record payment",
+  "Mở": "Open",
+  "Chủ nhật": "Sunday",
+  "Đơn chưa có giá để ghi nhận thanh toán.":
+    "This booking has no price to record a payment against.",
+
   /* ---- Ngăn kéo tạo đơn đặt phòng ---- */
   "Đơn đặt mới": "New booking",
   "Tạo đơn đặt phòng": "Create a booking",

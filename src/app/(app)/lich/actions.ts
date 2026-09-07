@@ -270,10 +270,20 @@ async function saveNewBooking(
           priced?.basePrice != null ? priced.basePrice * nights : null;
       }
 
+      // Số đơn kế tiếp trong tổ chức: max hiện có + 1. Nằm trong cùng giao
+      // dịch đã khoá phòng qua assertNightsFree, nên hai đơn tạo cùng lúc
+      // không nhận trùng số — và unique(orgId, ref) là lưới an toàn cuối.
+      const top = await tx.booking.aggregate({
+        where: { orgId: member.orgId },
+        _max: { ref: true },
+      });
+      const nextRef = (top._max.ref ?? 0) + 1;
+
       await tx.booking.create({
         data: {
           orgId: member.orgId,
           roomId,
+          ref: nextRef,
           guestName: data.guestName,
           guestEmail: data.guestEmail || null,
           guestPhone: data.guestPhone || null,
@@ -286,6 +296,10 @@ async function saveNewBooking(
           totalCents,
           depositCents: deposit,
           depositPaidAt: data.depositPaid && deposit ? new Date() : null,
+          // Đơn mới bắt đầu ở "chờ xử lý", đúng như bản thiết kế: chủ nhà bấm
+          // "Xác nhận" khi đã chắc. Đơn từ kênh về là chuyện khác — chúng đã
+          // được kênh xác nhận rồi — nhưng đó là đường tạo khác, không qua đây.
+          status: "PENDING",
           source: data.source,
           notes: data.notes || null,
           createdByMembershipId: member.membershipId,
@@ -439,6 +453,108 @@ export async function cancelBooking(formData: FormData): Promise<void> {
 
   revalidatePath("/lich");
   redirect(backTo ? `/lich?tu=${backTo}` : "/lich");
+}
+
+/**
+ * Dời trạng thái một lượt đặt — xác nhận, nhận phòng, trả phòng, vắng mặt.
+ *
+ * Không kiểm chuyển tiếp hợp lệ theo kiểu máy trạng thái cứng nhắc: thẻ trên
+ * lịch chỉ bày ra đúng những bước đi được từ trạng thái hiện tại, nên một yêu
+ * cầu vô lý (đang chờ mà đòi trả phòng) không có đường bấm tới. Ở đây chỉ chặn
+ * những giá trị không phải trạng thái, và để "Hủy" cho action riêng của nó vì
+ * hủy còn giải phóng các đêm.
+ */
+export async function setBookingStatus(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const t = await getT();
+  const member = await requireMember();
+  if (!canManageBookings(member)) {
+    return { error: t("Bạn không có quyền sửa đặt phòng.") };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const allowed = ["PENDING", "CONFIRMED", "CHECKED_IN", "CHECKED_OUT", "NO_SHOW"];
+  if (!id || !allowed.includes(status)) {
+    return { error: t("Thông tin chưa hợp lệ.") };
+  }
+
+  await withOrg(member.orgId, async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id },
+      select: { createdByMembershipId: true },
+    });
+    if (!booking) throw new Error("BOOKING_NOT_FOUND");
+    if (!canEditBooking(member, booking.createdByMembershipId)) {
+      throw new Error("FORBIDDEN");
+    }
+    await tx.booking.updateMany({
+      where: { id },
+      data: { status: status as never },
+    });
+  }).catch((error) => {
+    // Nuốt hai lỗi đã biết thành câu người đọc được; ném tiếp thứ lạ.
+    if (error instanceof Error && error.message === "BOOKING_NOT_FOUND") return;
+    if (error instanceof Error && error.message === "FORBIDDEN") return;
+    throw error;
+  });
+
+  revalidatePath("/lich");
+  revalidatePath(`/lich/dat-phong/${id}`);
+  return { error: null };
+}
+
+/**
+ * Ghi nhận đã thu đủ tiền: cọc bằng tổng, và đánh dấu thời điểm.
+ *
+ * Đây là cách chủ nhà tự ghi lại "khách đã trả xong", khác với Payment do cổng
+ * thanh toán sinh ra. Một cú bấm ghi trọn phần còn lại — trường hợp thường
+ * nhất — và vẫn sửa lại được ở trang chi tiết nếu cần con số khác.
+ */
+export async function markBookingPaid(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const t = await getT();
+  const member = await requireMember();
+  if (!canManageBookings(member)) {
+    return { error: t("Bạn không có quyền sửa đặt phòng.") };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { error: t("Thông tin chưa hợp lệ.") };
+
+  let problem: string | null = null;
+  await withOrg(member.orgId, async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id },
+      select: { createdByMembershipId: true, totalCents: true },
+    });
+    if (!booking) throw new Error("BOOKING_NOT_FOUND");
+    if (!canEditBooking(member, booking.createdByMembershipId)) {
+      throw new Error("FORBIDDEN");
+    }
+    if (booking.totalCents === null) {
+      problem = t("Đơn chưa có giá để ghi nhận thanh toán.");
+      return;
+    }
+    await tx.booking.updateMany({
+      where: { id },
+      data: { depositCents: booking.totalCents, depositPaidAt: new Date() },
+    });
+  }).catch((error) => {
+    if (error instanceof Error && error.message === "BOOKING_NOT_FOUND") return;
+    if (error instanceof Error && error.message === "FORBIDDEN") return;
+    throw error;
+  });
+
+  if (problem) return { error: problem };
+
+  revalidatePath("/lich");
+  revalidatePath(`/lich/dat-phong/${id}`);
+  return { error: null };
 }
 
 /* -------------------------------------------------------------------------- */

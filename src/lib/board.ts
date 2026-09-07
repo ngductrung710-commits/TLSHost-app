@@ -2,7 +2,8 @@ import "server-only";
 
 import { withOrg } from "@/lib/db";
 import { visiblePropertyFilter, type ActiveMember } from "@/lib/dal";
-import { addDays, daysBetween } from "@/lib/dates";
+import { addDays, daysBetween, toIsoDate } from "@/lib/dates";
+import { countsAsSold } from "@/lib/bookingStatus";
 
 /**
  * Everything the board needs for one window of dates, in one round trip.
@@ -28,6 +29,16 @@ export type Span = {
   nights: number;
   source: string | null;
   createdByMembershipId: string | null;
+  /** Trạng thái của lượt đặt; null với một đêm bị khóa (không phải đơn). */
+  status: string | null;
+  /** Số thứ tự đơn trong tổ chức, để dựng mã. Null cho khối khóa. */
+  ref: number | null;
+  /** Ngày nhận/trả dạng YYYY-MM-DD, cho thẻ popover. */
+  checkIn: string | null;
+  checkOut: string | null;
+  /** Tổng tiền và cọc đã nhận, minor units — để tính "còn lại". */
+  totalCents: number | null;
+  depositCents: number | null;
 };
 
 export type BoardRoom = {
@@ -106,6 +117,10 @@ export async function loadBoard(
           checkIn: true,
           checkOut: true,
           source: true,
+          status: true,
+          ref: true,
+          totalCents: true,
+          depositCents: true,
           createdByMembershipId: true,
         },
         orderBy: { checkIn: "asc" },
@@ -159,6 +174,12 @@ export async function loadBoard(
       label: b.guestName,
       source: b.source,
       createdByMembershipId: b.createdByMembershipId,
+      status: b.status,
+      ref: b.ref,
+      checkIn: toIsoDate(b.checkIn),
+      checkOut: toIsoDate(b.checkOut),
+      totalCents: b.totalCents,
+      depositCents: b.depositCents,
       ...place(b.checkIn, b.checkOut),
     });
   }
@@ -170,6 +191,12 @@ export async function loadBoard(
       label: BLOCK_LABELS[b.reason] ?? "Đã khóa",
       source: null,
       createdByMembershipId: null,
+      status: null,
+      ref: null,
+      checkIn: null,
+      checkOut: null,
+      totalCents: null,
+      depositCents: null,
       ...place(b.dateFrom, b.dateTo),
     });
   }
@@ -189,7 +216,7 @@ export async function loadBoard(
     (total, room) =>
       total +
       room.spans
-        .filter((s) => s.kind === "booking")
+        .filter((s) => s.kind === "booking" && countsAsSold(s.status ?? ""))
         .reduce((sum, s) => sum + s.span, 0),
     0,
   );
@@ -203,6 +230,7 @@ export async function loadBoard(
       room.spans.some(
         (s) =>
           s.kind === "booking" &&
+          countsAsSold(s.status ?? "") &&
           s.offset <= column &&
           column < s.offset + s.span,
       ),

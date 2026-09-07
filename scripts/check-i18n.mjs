@@ -86,6 +86,10 @@ const LABEL_MODULES = [
   // page. Left out of this list, an English guest whose payment failed
   // got a Vietnamese sentence and the suite reported a full translation.
   "src/lib/payments.ts",
+  // Nhãn trạng thái và tên nút chuyển trạng thái của một lượt đặt. Thanh trên
+  // lịch render chúng qua t(STATUS_LABEL[...]) / t(tr.label), nên chuỗi gốc
+  // nằm ở bảng trong tệp này chứ không phải trong component.
+  "src/lib/bookingStatus.ts",
 ];
 
 /**

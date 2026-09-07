@@ -785,7 +785,15 @@ enum BookingSource {
 }
 
 enum BookingStatus {
+  /// Chờ xử lý: đã nhận yêu cầu, chưa xác nhận. Vẫn giữ đêm trên lịch.
+  PENDING
   CONFIRMED
+  /// Khách đã tới, đang ở.
+  CHECKED_IN
+  /// Khách đã trả phòng.
+  CHECKED_OUT
+  /// Khách không đến. Vẫn là một bản ghi, nhưng không nên tính là một đêm bán.
+  NO_SHOW
   CANCELLED
 }
 
@@ -797,6 +805,13 @@ model Booking {
   id     String @id @default(cuid())
   orgId  String
   roomId String
+
+  /// Số thứ tự đơn trong phạm vi một tổ chức, để dựng mã người đọc được như
+  /// "HOM0001". Không phải id — id là cuid, không đọc lên được và không nói
+  /// đơn này là đơn thứ mấy. Cấp lúc tạo bằng max+1 trong cùng giao dịch đã
+  /// khoá phòng, nên hai đơn không thể nhận trùng số. Nullable vì những đơn
+  /// tạo trước khi có cột này chưa có số; migration đánh số lại cho chúng.
+  ref Int?
 
   guestName  String
   guestEmail String?
@@ -851,6 +866,9 @@ model Booking {
 
   @@index([orgId])
   @@index([roomId, checkIn])
+  /// Số đơn là duy nhất trong một tổ chức — hai đơn cùng một mã thì mã vô
+  /// nghĩa. Không duy nhất toàn cục: mỗi tổ chức đếm từ đầu.
+  @@unique([orgId, ref])
   @@map("booking")
 }
 

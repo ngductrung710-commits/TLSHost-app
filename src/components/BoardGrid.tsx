@@ -8,6 +8,7 @@ import { dictFor } from "@/lib/locale";
 import { EmptyState } from "@/components/EmptyState";
 import { AddRoomPanel } from "@/components/AddRoomPanel";
 import { DayStrip } from "@/components/DayStrip";
+import { BookingBar } from "@/components/BookingBar";
 import { RoomGroup } from "@/components/RoomGroup";
 import { RoomNameCell } from "@/components/RoomNameCell";
 
@@ -32,59 +33,37 @@ const NAME_COL = "13rem";
 // bộ chọn tháng đã lo phần đi xa.
 const DAY_COL = "6.5rem";
 
-function StayBar({
+/** Một đêm bị khóa — không phải một lượt đặt, nên không có thẻ và không có
+    trang phía sau để mở. Giữ nguyên kiểu viền đứt cũ. */
+function BlockBar({
   span,
   days,
   t,
 }: {
   span: Board["rooms"][number]["spans"][number];
-  /** Số cột trong hàng, để đặt thanh theo phần trăm thay vì theo pixel. */
   days: number;
   t: T;
 }) {
-  const booking = span.kind === "booking";
-
   const inner = [
     "flex h-full items-center gap-1.5 overflow-hidden rounded-lg px-2 text-[12px] font-medium",
     span.openStart ? "stay--open-start" : "",
     span.openEnd ? "stay--open-end" : "",
-    booking
-      ? "bg-ink-900 text-sand-100 transition-colors hover:bg-ink-700"
-      : "border border-dashed border-ink-400 bg-sand-200 text-ink-700",
+    "border border-dashed border-ink-400 bg-sand-200 text-ink-700",
   ].join(" ");
 
-  // The bar shows a name; the tooltip carries what will not fit in a two-night
-  // bar. Both are also in the visually hidden summary below the board, so this
-  // is convenience rather than the only route to the information.
-  const tooltip = `${span.label} · ${fill(t("{n} đêm"), { n: span.nights })}${
-    span.source ? ` · ${t(SOURCE_LABELS[span.source] ?? span.source)}` : ""
-  }`;
+  const tooltip = `${span.label} · ${fill(t("{n} đêm"), { n: span.nights })}`;
 
   return (
     <div
       className="absolute inset-y-1 px-0.5"
-      // Phần trăm của cả hàng, không phải bội số của một bề rộng cột cố
-      // định. Cột giờ co giãn theo màn hình, và một phép nhân với hằng số
-      // pixel sẽ đặt thanh lệch khỏi ô ngay khi cửa sổ rộng hơn mức tối thiểu.
       style={{
         left: `${(span.offset / days) * 100}%`,
         width: `${(span.span / days) * 100}%`,
       }}
     >
-      {/* Two branches rather than one polymorphic tag. A booking opens its own
-          page; a block has nothing behind it to edit, so it stays a plain div
-          rather than a link that goes nowhere. Written out because Link's href
-          is required, and a component that is sometimes a Link and sometimes a
-          div cannot satisfy that with a spread. */}
-      {booking ? (
-        <Link href={`/lich/dat-phong/${span.id}`} className={inner} title={tooltip}>
-          <span className="truncate">{span.label}</span>
-        </Link>
-      ) : (
-        <div className={inner} title={tooltip}>
-          <span className="truncate">{span.label}</span>
-        </div>
-      )}
+      <div className={inner} title={tooltip}>
+        <span className="truncate">{span.label}</span>
+      </div>
     </div>
   );
 }
@@ -97,6 +76,8 @@ export function BoardGrid({
   addRoomAction,
   currency,
   canRename,
+  statusAction,
+  payAction,
 }: {
   board: Board;
   today: string;
@@ -110,6 +91,16 @@ export function BoardGrid({
   currency: string;
   /** Chỉ chủ nhà thêm/đổi tên phòng; những vai khác chỉ đọc. */
   canRename: boolean;
+  // Server action cho thẻ đơn: dời trạng thái, và ghi nhận thanh toán. Truyền
+  // xuống chứ không để BookingBar import — xem chú thích trong BookingBar.
+  statusAction: (
+    prev: { error: string | null },
+    fd: FormData,
+  ) => Promise<{ error: string | null }>;
+  payAction: (
+    prev: { error: string | null },
+    fd: FormData,
+  ) => Promise<{ error: string | null }>;
 }) {
   // Derived from the locale it was handed rather than read from the cookie:
   // this is a component, not a page, and it renders once per calendar view.
@@ -278,14 +269,43 @@ export function BoardGrid({
                   weekend={board.days.map((d) => isWeekend(d))}
                 />
 
-                {room.spans.map((span) => (
-                  <StayBar
-                    key={`${span.kind}-${span.id}`}
-                    span={span}
-                    days={board.days.length}
-                    t={t}
-                  />
-                ))}
+                {room.spans.map((span) =>
+                  span.kind === "booking" ? (
+                    <BookingBar
+                      key={`booking-${span.id}`}
+                      data={{
+                        id: span.id,
+                        label: span.label,
+                        status: span.status,
+                        ref: span.ref,
+                        source: span.source,
+                        checkIn: span.checkIn,
+                        checkOut: span.checkOut,
+                        nights: span.nights,
+                        totalCents: span.totalCents,
+                        depositCents: span.depositCents,
+                        offset: span.offset,
+                        span: span.span,
+                        openStart: span.openStart,
+                        openEnd: span.openEnd,
+                      }}
+                      days={board.days.length}
+                      roomName={room.name}
+                      propertyName={room.propertyName}
+                      currency={currency}
+                      locale={locale}
+                      statusAction={statusAction}
+                      payAction={payAction}
+                    />
+                  ) : (
+                    <BlockBar
+                      key={`block-${span.id}`}
+                      span={span}
+                      days={board.days.length}
+                      t={t}
+                    />
+                  ),
+                )}
               </div>
                 </div>
               ))}

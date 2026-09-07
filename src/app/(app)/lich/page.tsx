@@ -17,7 +17,13 @@ import {
 } from "@/lib/dates";
 
 import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
-import { createBookingInline, deleteBlock, renameRoom } from "./actions";
+import {
+  createBookingInline,
+  deleteBlock,
+  markBookingPaid,
+  renameRoom,
+  setBookingStatus,
+} from "./actions";
 import { BoardModeToggle } from "@/components/BoardMode";
 import { NewBookingPanel } from "@/components/NewBookingPanel";
 import { DisplayOptions } from "@/components/DisplayOptions";
@@ -275,6 +281,8 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
               addRoomAction={createRoom}
               currency={currencySymbol(currency)}
               canRename={member.role === "OWNER"}
+              statusAction={setBookingStatus}
+              payAction={markBookingPaid}
             />
           </div>
 
