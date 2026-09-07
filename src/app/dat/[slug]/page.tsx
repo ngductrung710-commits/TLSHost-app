@@ -15,6 +15,7 @@ import {
 import { guestLocale, guestT, withLocale } from "@/lib/guestLocale";
 import { siteUrl } from "@/lib/links";
 import { shownPrice, vndPerUsd } from "@/lib/exchange";
+import { policyLines } from "@/lib/policies";
 import { fill } from "@/lib/i18n";
 import { I18nProvider } from "@/components/I18nProvider";
 import { guestClientDict } from "./guestDict";
@@ -42,6 +43,16 @@ type Loaded = {
   type: string | null;
   intro: string | null;
   houseRules: string | null;
+  checkInFrom: string | null;
+  checkOutBy: string | null;
+  smokingPolicy: string | null;
+  petsPolicy: string | null;
+  eventsPolicy: string | null;
+  photographyPolicy: string | null;
+  childrenPolicy: string | null;
+  quietHoursFrom: string | null;
+  quietHoursTo: string | null;
+  depositNote: string | null;
   amenities: string[];
   currency: string;
   timezone: string;
@@ -73,6 +84,16 @@ async function load(slug: string): Promise<Loaded | null> {
         address: true,
         intro: true,
         houseRules: true,
+        checkInFrom: true,
+        checkOutBy: true,
+        smokingPolicy: true,
+        petsPolicy: true,
+        eventsPolicy: true,
+        photographyPolicy: true,
+        childrenPolicy: true,
+        quietHoursFrom: true,
+        quietHoursTo: true,
+        depositNote: true,
         amenities: true,
       },
     });
@@ -117,6 +138,16 @@ async function load(slug: string): Promise<Loaded | null> {
     type: found.property.type,
     intro: found.property.intro,
     houseRules: found.property.houseRules,
+    checkInFrom: found.property.checkInFrom,
+    checkOutBy: found.property.checkOutBy,
+    smokingPolicy: found.property.smokingPolicy,
+    petsPolicy: found.property.petsPolicy,
+    eventsPolicy: found.property.eventsPolicy,
+    photographyPolicy: found.property.photographyPolicy,
+    childrenPolicy: found.property.childrenPolicy,
+    quietHoursFrom: found.property.quietHoursFrom,
+    quietHoursTo: found.property.quietHoursTo,
+    depositNote: found.property.depositNote,
     amenities: found.property.amenities,
     currency: org?.currency ?? "VND",
     timezone: org?.timezone ?? "Asia/Ho_Chi_Minh",
@@ -204,6 +235,7 @@ export default async function PublicBookingPage(
   // workspace in English must not flip a stranger's page. See
   // src/lib/guestLocale.ts.
   const propertyAmenities = amenityNames(property.amenities, locale);
+  const policies = policyLines(property, t);
   const houseRules = (property.houseRules ?? "")
     .split("\n")
     .map((line) => line.trim())
@@ -463,9 +495,23 @@ export default async function PublicBookingPage(
           </section>
         ) : null}
 
-        {houseRules.length > 0 ? (
+        {policies.length > 0 || houseRules.length > 0 ? (
           <section className="mt-10">
             <h2 className="text-[1.125rem] font-semibold">{t("Nội quy lưu trú")}</h2>
+            {/* Những quy định chủ nhà chọn từ danh sách đi trước, rồi tới
+                những dòng họ tự viết. Cùng một danh sách chấm đầu dòng, vì
+                với khách thì cả hai đều chỉ là điều cần biết trước khi đặt —
+                chúng chỉ khác nhau ở phía quản trị. */}
+            <ul className="mt-4 space-y-1.5">
+              {policies.map((line) => (
+                <li
+                  key={line}
+                  className="text-[15px] leading-relaxed text-[var(--ink-soft)]"
+                >
+                  · {line}
+                </li>
+              ))}
+            </ul>
             <ul className="mt-4 space-y-1.5">
               {houseRules.map((rule) => (
                 <li key={rule} className="text-[15px] leading-relaxed text-[var(--ink-soft)]">

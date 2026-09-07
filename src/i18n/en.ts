@@ -879,8 +879,6 @@ export const EN: Record<string, string> = {
   "Không bắt buộc.": "Optional.",
   "Kênh nối theo từng phòng, nên danh sách nằm chung một chỗ cho mọi cơ sở. Mở trang Kênh để nối Airbnb, Booking.com và các kênh khác.":
     "Channels connect per room, so the list lives in one place for every property. Open Channels to connect Airbnb, Booking.com and the rest.",
-  "Mỗi dòng nội quy là một dòng riêng. Khách đọc chúng trước khi đặt.":
-    "One rule per line. Guests read these before they book.",
   "Mở cài đặt thanh toán": "Open payment settings",
   "Mở trang Kênh": "Open Channels",
   "Phần của cơ sở": "Property sections",
@@ -936,6 +934,49 @@ export const EN: Record<string, string> = {
   "Phòng này nhận ít nhất {n} đêm.": "This room takes at least {n} nights.",
   "Phòng này nhận nhiều nhất {n} đêm.":
     "This room takes at most {n} nights.",
+  "Bắt đầu": "Starts",
+  "Cho phép": "Allowed",
+  "Chính sách": "Policies",
+  "Chưa đặt": "Not set",
+  "Chọn nội quy tiêu chuẩn và thêm những điều khách cần biết trước khi đặt.":
+    "Set the standard rules and add anything a guest should know before booking.",
+  "Chụp ảnh thương mại": "Commercial photography",
+  "Cần duyệt": "On request",
+  "Ghi chú đặt cọc hoặc thanh toán": "Deposit or payment note",
+  "Giờ yên tĩnh": "Quiet hours",
+  "Hút thuốc và vape": "Smoking and vaping",
+  "Không phù hợp": "Not suitable",
+  "Không": "No",
+  "Kết thúc": "Ends",
+  "Mỗi dòng là một quy định riêng, thêm vào ngoài những mục đã chọn ở trên.":
+    "One rule per line, on top of the choices above.",
+  "Nhận phòng từ": "Check-in from",
+  "Phù hợp": "Suitable",
+  "Quy định bổ sung": "Additional rules",
+  "Thú cưng": "Pets",
+  "Tiệc và sự kiện": "Parties and events",
+  "Trả phòng trước": "Check-out by",
+  "Trẻ em và em bé": "Children and infants",
+  "Đặt cọc, tiền mặt, chuyển khoản hoặc hướng dẫn thanh toán":
+    "Deposit, cash, bank transfer or payment instructions",
+  "Chỗ nghỉ này không phù hợp với trẻ em và em bé.":
+    "This place is not suitable for children or infants.",
+  "Chụp ảnh thương mại cần hỏi chủ nhà trước.":
+    "Commercial photography needs the host's permission first.",
+  "Giờ yên tĩnh từ {a} đến {b}.": "Quiet hours from {a} to {b}.",
+  "Không chụp ảnh thương mại.": "No commercial photography.",
+  "Không hút thuốc, kể cả thuốc lá điện tử.": "No smoking, vaping included.",
+  "Không mang thú cưng.": "No pets.",
+  "Không tổ chức tiệc hay sự kiện.": "No parties or events.",
+  "Nhận phòng từ {a}, trả phòng trước {b}.":
+    "Check in from {a}, check out by {b}.",
+  "Nhận phòng từ {a}.": "Check in from {a}.",
+  "Phù hợp với trẻ em và em bé.": "Suitable for children and infants.",
+  "Tiệc và sự kiện cần hỏi chủ nhà trước.":
+    "Parties and events need the host's permission first.",
+  "Trả phòng trước {b}.": "Check out by {b}.",
+  "Được hút thuốc.": "Smoking is allowed.",
+  "Được mang thú cưng.": "Pets are welcome.",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":

@@ -76,6 +76,11 @@ const LABEL_MODULES = [
   // English would otherwise get a Vietnamese confirmation in their inbox, and
   // no check would say so.
   "src/lib/bookingMail.ts",
+  // Câu chính sách mà khách đọc trên trang đặt phòng. Cùng lý do như
+  // bookingMail ngay trên: không màn hình nào chứa chúng dưới dạng chữ viết
+  // thẳng, nên không tệp nào trong ROOTS nhìn thấy — và một khách đọc trang
+  // bằng tiếng Anh sẽ gặp "Không mang thú cưng." giữa một trang tiếng Anh.
+  "src/lib/policies.ts",
   // Its error strings are handed to a guest verbatim, at the one moment
   // a guest most needs to read them: t(checkout.error) on the payment
   // page. Left out of this list, an English guest whose payment failed

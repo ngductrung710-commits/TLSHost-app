@@ -207,6 +207,29 @@ export async function deleteRoom(
 
 export type EditState = { error: string | null; notice?: string };
 
+/** "HH:MM" hoặc null. Xem ghi chú ở checkInFrom bên dưới. */
+const clock = z
+  .string()
+  .trim()
+  .transform((v) => (/^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : null));
+
+/**
+ * Một quy định ba trạng thái, giới hạn theo đúng những lựa chọn mà ô này bày
+ * ra. Cột trong cơ sở dữ liệu nhận cả ba giá trị của enum, nhưng "hút thuốc —
+ * cần duyệt" không phải một câu có nghĩa, nên nó bị chặn ở đây chứ không chờ
+ * ai đó đọc ra sau này.
+ */
+function allowance(allowed: readonly ("ALLOWED" | "ON_REQUEST" | "NOT_ALLOWED")[]) {
+  return z
+    .string()
+    .trim()
+    .transform((v) =>
+      (allowed as readonly string[]).includes(v)
+        ? (v as "ALLOWED" | "ON_REQUEST" | "NOT_ALLOWED")
+        : null,
+    );
+}
+
 /**
  * Cùng bộ trường như lúc tạo, trừ phòng.
  *
@@ -235,6 +258,30 @@ const editSchema = z.object({
 
   intro: z.string().trim().max(600).transform(lines),
   houseRules: z.string().trim().transform(lines),
+
+  /**
+   * Giờ trên đồng hồ treo tường, dạng "HH:MM".
+   *
+   * Ô trống về null, và null nghĩa là chưa đặt. Chuỗi lạ cũng về null thay vì
+   * làm hỏng cả thao tác lưu: giá trị này đến từ <input type="time"> do chính
+   * ứng dụng vẽ ra, nên một chuỗi sai nghĩa là có gì đó hỏng ở phía chúng ta,
+   * và chặn chủ nhà lại là cách sai để phát hiện điều đó.
+   */
+  checkInFrom: clock,
+  checkOutBy: clock,
+  quietHoursFrom: clock,
+  quietHoursTo: clock,
+
+  smokingPolicy: allowance(["ALLOWED", "NOT_ALLOWED"]),
+  petsPolicy: allowance(["ALLOWED", "NOT_ALLOWED"]),
+  eventsPolicy: allowance(["ON_REQUEST", "NOT_ALLOWED"]),
+  photographyPolicy: allowance(["ON_REQUEST", "NOT_ALLOWED"]),
+  childrenPolicy: z
+    .enum(["", "SUITABLE", "NOT_SUITABLE"])
+    .catch("")
+    .transform((v) => (v === "" ? null : v)),
+
+  depositNote: z.string().trim().max(400),
 });
 
 export async function updateProperty(
@@ -259,6 +306,16 @@ export async function updateProperty(
     countryCode: formData.get("countryCode") ?? "VN",
     intro: formData.get("intro") ?? "",
     houseRules: formData.get("houseRules") ?? "",
+    checkInFrom: formData.get("checkInFrom") ?? "",
+    checkOutBy: formData.get("checkOutBy") ?? "",
+    quietHoursFrom: formData.get("quietHoursFrom") ?? "",
+    quietHoursTo: formData.get("quietHoursTo") ?? "",
+    smokingPolicy: formData.get("smokingPolicy") ?? "",
+    petsPolicy: formData.get("petsPolicy") ?? "",
+    eventsPolicy: formData.get("eventsPolicy") ?? "",
+    photographyPolicy: formData.get("photographyPolicy") ?? "",
+    childrenPolicy: formData.get("childrenPolicy") ?? "",
+    depositNote: formData.get("depositNote") ?? "",
   });
   if (!parsed.success) {
     return { error: t(parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ.") };
@@ -284,6 +341,19 @@ export async function updateProperty(
         intro: data.intro || null,
         houseRules: data.houseRules || null,
         amenities: parseAmenityIds(formData.get("propertyAmenities")),
+        checkInFrom: data.checkInFrom,
+        checkOutBy: data.checkOutBy,
+        smokingPolicy: data.smokingPolicy,
+        petsPolicy: data.petsPolicy,
+        eventsPolicy: data.eventsPolicy,
+        photographyPolicy: data.photographyPolicy,
+        childrenPolicy: data.childrenPolicy,
+        // Giờ yên tĩnh chỉ được lưu khi có ĐỦ hai đầu. Một đầu thiếu không
+        // phải một khoảng, và lưu nó lại sẽ hiện lên trang khách thành một
+        // câu cụt: "yên tĩnh từ 22:00 đến —".
+        quietHoursFrom: data.quietHoursTo === null ? null : data.quietHoursFrom,
+        quietHoursTo: data.quietHoursFrom === null ? null : data.quietHoursTo,
+        depositNote: data.depositNote || null,
       },
     }),
   );

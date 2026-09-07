@@ -8,6 +8,8 @@ import { useT } from "@/components/I18nProvider";
 import { COUNTRIES } from "@/lib/countries";
 import { PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from "@/lib/propertyTypes";
 
+import { PolicyFields, type PolicyValues } from "./PolicyFields";
+
 import type { EditState } from "./actions";
 
 /**
@@ -95,7 +97,7 @@ export function InfoForm({
     intro: string | null;
     houseRules: string | null;
     amenities: string[];
-  };
+  } & PolicyValues;
 }) {
   const t = useT();
   const [state, formAction] = useActionState<EditState, FormData>(action, {
@@ -247,6 +249,9 @@ export function InfoForm({
         />
       </section>
 
+      {/* ---- chính sách ---------------------------------------------------- */}
+      <PolicyFields value={property} />
+
       {/* ---- giới thiệu và nội quy ---------------------------------------- */}
       <section className="space-y-4">
         <div>
@@ -254,7 +259,7 @@ export function InfoForm({
             {t("Giới thiệu và nội quy")}
           </h2>
           <p className="mt-1 text-[14px] text-ink-600">
-            {t("Mỗi dòng nội quy là một dòng riêng. Khách đọc chúng trước khi đặt.")}
+            {t("Mỗi dòng là một quy định riêng, thêm vào ngoài những mục đã chọn ở trên.")}
           </p>
         </div>
 
@@ -277,7 +282,7 @@ export function InfoForm({
             htmlFor="houseRules"
             className="block text-[14px] font-medium text-ink-700"
           >
-            {t("Nội quy lưu trú")}
+            {t("Quy định bổ sung")}
           </label>
           <textarea
             id="houseRules"

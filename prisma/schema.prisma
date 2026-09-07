@@ -204,6 +204,27 @@ model Session {
 /// What kind of place this is. Shown to guests beside the address, because
 /// "Homestay" and "Resort" set different expectations before anyone reads a
 /// word of the description.
+/// Ba trạng thái của một quy định, và trạng thái thứ tư là NULL.
+///
+/// NULL nghĩa là "chưa đặt", khác hẳn với "không cho phép". Một chỗ nghỉ chưa
+/// trả lời câu hỏi về thú cưng thì khách phải hỏi; một chỗ nghỉ đã trả lời
+/// "không" thì khách không cần hỏi. Gộp hai thứ đó vào một giá trị mặc định
+/// là cách biến sự im lặng thành một lời từ chối mà chủ nhà chưa nói.
+enum Allowance {
+  ALLOWED
+  ON_REQUEST
+  NOT_ALLOWED
+}
+
+/// Riêng cho câu hỏi trẻ em: chỗ nghỉ hợp hay không hợp với trẻ nhỏ. Không
+/// dùng Allowance vì "không cho phép trẻ em" và "chỗ này không phù hợp với
+/// trẻ em" là hai câu khác nhau — câu sau nói về cầu thang và ban công, không
+/// phải về một lệnh cấm.
+enum Suitability {
+  SUITABLE
+  NOT_SUITABLE
+}
+
 enum PropertyType {
   HOTEL
   BOUTIQUE_HOTEL
@@ -255,6 +276,29 @@ model Property {
   currency String @default("VND")
 
   /// House rules, one per line, shown to guests verbatim.
+  /// Giờ nhận và trả phòng, dạng "HH:MM" 24 giờ.
+  ///
+  /// Chuỗi chứ không phải DateTime: đây là giờ trên đồng hồ treo tường của
+  /// chỗ nghỉ, không phải một thời điểm. Lưu bằng DateTime sẽ kéo theo một
+  /// ngày tháng vô nghĩa và một múi giờ phải diễn giải mỗi lần đọc.
+  checkInFrom  String?
+  checkOutBy   String?
+
+  smokingPolicy     Allowance?
+  petsPolicy        Allowance?
+  eventsPolicy      Allowance?
+  photographyPolicy Allowance?
+  childrenPolicy    Suitability?
+
+  /// Giờ yên tĩnh. Cả hai cùng null nghĩa là không đặt — không có cờ bật/tắt
+  /// riêng, vì một cờ bật kèm hai ô trống là hai nguồn sự thật cho một câu
+  /// hỏi, và chúng sẽ có ngày mâu thuẫn nhau.
+  quietHoursFrom String?
+  quietHoursTo   String?
+
+  /// Ghi chú về đặt cọc hoặc cách thanh toán, khách đọc trước khi đặt.
+  depositNote String?
+
   houseRules String?
 
   /// Amenity ids from src/lib/amenities.ts.
