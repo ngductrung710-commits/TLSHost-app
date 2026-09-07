@@ -4,16 +4,37 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { requireMember } from "@/lib/dal";
-import { amenityNames } from "@/lib/amenities";
 import { withOrg } from "@/lib/db";
 import { formatMoney, todayIn } from "@/lib/dates";
 
+import { InfoForm } from "./InfoForm";
 import { PublicPageForm } from "./PublicPageForm";
 import { DeletePropertyForm } from "./DeletePropertyForm";
-import { deleteProperty, publishProperty, setRoomPrice } from "./actions";
+import {
+  deleteProperty,
+  publishProperty,
+  setRoomPrice,
+  updateProperty,
+} from "./actions";
+
 import { getT, readLocale } from "@/lib/locale";
 import { currencySymbol } from "@/lib/currencies";
 import { fill } from "@/lib/i18n";
+
+/**
+ * Năm tab, cùng thứ tự với bản thiết kế được yêu cầu bám theo.
+ *
+ * Khoá là tiếng Việt vì mọi đường dẫn khác trong ứng dụng cũng vậy — /cho-nghi,
+ * /buong-phong, /dat-lai-mat-khau. Một ?tab=photos lạc giữa chúng chỉ nói lên
+ * rằng nó được chép từ nơi khác.
+ */
+const TABS = [
+  { key: "thong-tin", label: "Thông tin" },
+  { key: "anh", label: "Ảnh" },
+  { key: "phong", label: "Phòng" },
+  { key: "thanh-toan", label: "Thanh toán" },
+  { key: "ota", label: "OTA" },
+] as const;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -27,13 +48,39 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
 
   const { id } = await props.params;
 
+  /**
+   * Tab nào đang mở, đọc từ địa chỉ trang chứ không từ state.
+   *
+   * Nghĩa là mỗi tab có một URL thật: gửi link cho người khác thì họ mở đúng
+   * tab đó, nút quay lại của trình duyệt đi ngược từng tab, và tải lại trang
+   * không văng về tab đầu. Một tab dựng bằng useState thì không thứ nào ở
+   * trên còn đúng.
+   *
+   * Giá trị lạ rơi về "thong-tin" chứ không báo lỗi — ?tab=xyz là địa chỉ ai
+   * đó gõ tay, và trả về 404 cho một tham số phụ là phản ứng quá tay.
+   */
+  const params = await props.searchParams;
+  const requested = typeof params.tab === "string" ? params.tab : "";
+  const tab = (["thong-tin", "anh", "phong", "thanh-toan", "ota"] as const).includes(
+    requested as "thong-tin",
+  )
+    ? requested
+    : "thong-tin";
+
   const property = await withOrg(member.orgId, (tx) =>
     tx.property.findUnique({
       where: { id },
       select: {
         id: true,
         name: true,
+        type: true,
         address: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        region: true,
+        postalCode: true,
+        countryCode: true,
         intro: true,
         houseRules: true,
         amenities: true,
@@ -77,11 +124,7 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
       ])
     : [0, 0];
 
-  const amenities = amenityNames(property.amenities, await readLocale());
-  const houseRules = (property.houseRules ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
+  const locale = await readLocale();
 
   return (
     <>
@@ -99,43 +142,86 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         <p className="mt-1 text-[14px] text-ink-600">{property.address}</p>
       ) : null}
 
-      {/* What the wizard collected, shown back. Read-only for now: changing an
-          amenity after creation needs an editor this page does not have yet,
-          and a list that looks editable and is not is worse than a plain one. */}
-      {amenities.length > 0 || houseRules.length > 0 ? (
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {amenities.length > 0 ? (
-            <section>
-              <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-500">
-                {t("Tiện nghi cơ sở")}
-              </h2>
-              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                {amenities.map((name) => (
-                  <li key={name} className="text-[14px] text-ink-700">
-                    · {name}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+      {/* ---- thanh tab --------------------------------------------------- */}
+      <nav
+        aria-label={t("Phần của cơ sở")}
+        className="mt-6 flex gap-1 overflow-x-auto border-b border-line"
+      >
+        {TABS.map(({ key, label }) => {
+          const active = tab === key;
+          return (
+            <Link
+              key={key}
+              href={`/cho-nghi/${property.id}?tab=${key}`}
+              aria-current={active ? "page" : undefined}
+              className={`-mb-px shrink-0 border-b-2 px-3.5 py-2.5 text-[14px] font-medium transition-colors ${
+                active
+                  ? "border-ink-900 text-ink-900"
+                  : "border-transparent text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              {t(label)}
+            </Link>
+          );
+        })}
+      </nav>
 
-          {houseRules.length > 0 ? (
-            <section>
-              <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-500">
-                {t("Nội quy lưu trú")}
-              </h2>
-              <ul className="mt-2 space-y-1">
-                {houseRules.map((rule) => (
-                  <li key={rule} className="text-[14px] text-ink-700">
-                    · {rule}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+      {tab === "thong-tin" ? (
+        <div className="mt-8">
+          <InfoForm action={updateProperty} locale={locale} property={property} />
         </div>
       ) : null}
 
+      {tab === "anh" ? (
+        <section className="mt-8 rounded-2xl border border-line bg-surface p-6">
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">
+            {t("Ảnh cơ sở")}
+          </h2>
+          {/* Nói thẳng là chưa có, thay vì bày một nút bấm không làm gì. Ảnh
+              cần một chỗ để cất tệp — đĩa của máy chủ hay một kho như R2 —
+              và đó là quyết định phải chốt trước khi viết dòng đầu tiên. */}
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+            {t("Phần này chưa làm. Ảnh cần một nơi lưu trữ được chọn trước — trên máy chủ hoặc một kho ảnh riêng — nên nó đi sau khi có máy chủ.")}
+          </p>
+        </section>
+      ) : null}
+
+      {tab === "thanh-toan" ? (
+        <section className="mt-8 rounded-2xl border border-line bg-surface p-6">
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">
+            {t("Thanh toán")}
+          </h2>
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+            {t("Cổng thanh toán đang đặt ở cấp tổ chức: kết nối một lần, mọi cơ sở dùng chung. Mở phần Cài đặt để kết nối hoặc đổi.")}
+          </p>
+          <Link
+            href="/cai-dat"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border border-line-strong px-5 text-[14px] font-semibold text-ink-900 hover:border-ink-900"
+          >
+            {t("Mở cài đặt thanh toán")}
+          </Link>
+        </section>
+      ) : null}
+
+      {tab === "ota" ? (
+        <section className="mt-8 rounded-2xl border border-line bg-surface p-6">
+          <h2 className="text-[1.125rem] font-semibold text-ink-900">
+            {t("Đồng bộ kênh")}
+          </h2>
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-ink-600">
+            {t("Kênh nối theo từng phòng, nên danh sách nằm chung một chỗ cho mọi cơ sở. Mở trang Kênh để nối Airbnb, Booking.com và các kênh khác.")}
+          </p>
+          <Link
+            href="/kenh"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border border-line-strong px-5 text-[14px] font-semibold text-ink-900 hover:border-ink-900"
+          >
+            {t("Mở trang Kênh")}
+          </Link>
+        </section>
+      ) : null}
+
+      {tab === "phong" ? (
+      <>
       {/* ---- rooms and prices ------------------------------------------- */}
       <section className="mt-10">
         <h2 className="text-[1.125rem] font-semibold text-ink-900">
@@ -193,6 +279,11 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
         </ul>
       </section>
 
+      </>
+      ) : null}
+
+      {tab === "thong-tin" ? (
+      <>
       {/* ---- the public page -------------------------------------------- */}
       <section className="mt-12 border-t border-line pt-10">
         <h2 className="text-[1.125rem] font-semibold text-ink-900">
@@ -275,6 +366,8 @@ export default async function PropertyPage(props: PageProps<"/cho-nghi/[id]">) {
           upcoming={upcoming}
         />
       </section>
+      </>
+      ) : null}
     </>
   );
 }

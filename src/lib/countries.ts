@@ -7,6 +7,21 @@
 
 export type Country = { code: string; vi: string; en: string };
 
+/**
+ * Mã đã bị ISO 3166-1 rút, và vì sao chúng không có ở đây.
+ *
+ * Danh sách này sinh ra từ một bản CLDR có kèm cả mã lịch sử, nên "Việt Nam"
+ * xuất hiện hai lần: một lần VN, một lần VD — mã cũ của Việt Nam Dân chủ Cộng
+ * hòa. Mười sáu mã như thế, mỗi mã trùng tên hiển thị với mã hiện hành: DD
+ * (Đông Đức), SU (Liên Xô), BU (Miến Điện), ZR (Zaire), YU (Nam Tư)...
+ *
+ * Trong một danh sách chọn, hai dòng chữ giống hệt nhau là một trò tung đồng
+ * xu. Đo được: 2 trên 4 cơ sở trong cơ sở dữ liệu đã chọn trúng VD, và không
+ * ai biết vì trên màn hình nó vẫn hiện "Việt Nam".
+ *
+ * Migration 20260907_country_codes ánh xạ những dòng đã lỡ lưu mã cũ sang mã
+ * hiện hành.
+ */
 export const COUNTRIES: readonly Country[] = [
   { code: "SA", vi: "Ả Rập Xê-út", en: "Saudi Arabia" },
   { code: "AF", vi: "Afghanistan", en: "Afghanistan" },
@@ -32,7 +47,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "BY", vi: "Belarus", en: "Belarus" },
   { code: "BZ", vi: "Belize", en: "Belize" },
   { code: "BJ", vi: "Benin", en: "Benin" },
-  { code: "DY", vi: "Benin", en: "Benin" },
   { code: "BM", vi: "Bermuda", en: "Bermuda" },
   { code: "BT", vi: "Bhutan", en: "Bhutan" },
   { code: "BE", vi: "Bỉ", en: "Belgium" },
@@ -44,7 +58,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "BN", vi: "Brunei", en: "Brunei" },
   { code: "BG", vi: "Bulgaria", en: "Bulgaria" },
   { code: "BF", vi: "Burkina Faso", en: "Burkina Faso" },
-  { code: "HV", vi: "Burkina Faso", en: "Burkina Faso" },
   { code: "BI", vi: "Burundi", en: "Burundi" },
   { code: "BQ", vi: "Ca-ri-bê Hà Lan", en: "Caribbean Netherlands" },
   { code: "UM", vi: "Các tiểu đảo xa của Hoa Kỳ", en: "U.S. Outlying Islands" },
@@ -60,14 +73,12 @@ export const COUNTRIES: readonly Country[] = [
   { code: "KM", vi: "Comoros", en: "Comoros" },
   { code: "CG", vi: "Congo - Brazzaville", en: "Congo - Brazzaville" },
   { code: "CD", vi: "Congo - Kinshasa", en: "Congo - Kinshasa" },
-  { code: "ZR", vi: "Congo - Kinshasa", en: "Congo - Kinshasa" },
   { code: "CR", vi: "Costa Rica", en: "Costa Rica" },
   { code: "DO", vi: "Cộng hòa Dominica", en: "Dominican Republic" },
   { code: "CF", vi: "Cộng hòa Trung Phi", en: "Central African Republic" },
   { code: "CI", vi: "Côte d’Ivoire", en: "Côte d’Ivoire" },
   { code: "HR", vi: "Croatia", en: "Croatia" },
   { code: "CU", vi: "Cuba", en: "Cuba" },
-  { code: "AN", vi: "Curaçao", en: "Curaçao" },
   { code: "CW", vi: "Curaçao", en: "Curaçao" },
   { code: "DG", vi: "Diego Garcia", en: "Diego Garcia" },
   { code: "DJ", vi: "Djibouti", en: "Djibouti" },
@@ -82,7 +93,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "NF", vi: "Đảo Norfolk", en: "Norfolk Island" },
   { code: "HK", vi: "Đặc khu Hành chính Hồng Kông, Trung Quốc", en: "Hong Kong SAR China" },
   { code: "MO", vi: "Đặc khu Hành chính Macao, Trung Quốc", en: "Macao SAR China" },
-  { code: "DD", vi: "Đức", en: "Germany" },
   { code: "DE", vi: "Đức", en: "Germany" },
   { code: "EC", vi: "Ecuador", en: "Ecuador" },
   { code: "SV", vi: "El Salvador", en: "El Salvador" },
@@ -160,7 +170,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "MS", vi: "Montserrat", en: "Montserrat" },
   { code: "MZ", vi: "Mozambique", en: "Mozambique" },
   { code: "MN", vi: "Mông Cổ", en: "Mongolia" },
-  { code: "BU", vi: "Myanmar (Miến Điện)", en: "Myanmar (Burma)" },
   { code: "MM", vi: "Myanmar (Miến Điện)", en: "Myanmar (Burma)" },
   { code: "NO", vi: "Na Uy", en: "Norway" },
   { code: "AQ", vi: "Nam Cực", en: "Antarctica" },
@@ -173,7 +182,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "NC", vi: "New Caledonia", en: "New Caledonia" },
   { code: "NZ", vi: "New Zealand", en: "New Zealand" },
   { code: "RU", vi: "Nga", en: "Russia" },
-  { code: "SU", vi: "Nga", en: "Russia" },
   { code: "JP", vi: "Nhật Bản", en: "Japan" },
   { code: "NI", vi: "Nicaragua", en: "Nicaragua" },
   { code: "NE", vi: "Niger", en: "Niger" },
@@ -187,7 +195,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "PY", vi: "Paraguay", en: "Paraguay" },
   { code: "PE", vi: "Peru", en: "Peru" },
   { code: "FR", vi: "Pháp", en: "France" },
-  { code: "FX", vi: "Pháp", en: "France" },
   { code: "FI", vi: "Phần Lan", en: "Finland" },
   { code: "PH", vi: "Philippines", en: "Philippines" },
   { code: "PF", vi: "Polynesia thuộc Pháp", en: "French Polynesia" },
@@ -219,9 +226,7 @@ export const COUNTRIES: readonly Country[] = [
   { code: "CQ", vi: "Sark", en: "Sark" },
   { code: "CZ", vi: "Séc", en: "Czechia" },
   { code: "SN", vi: "Senegal", en: "Senegal" },
-  { code: "CS", vi: "Serbia", en: "Serbia" },
   { code: "RS", vi: "Serbia", en: "Serbia" },
-  { code: "YU", vi: "Serbia", en: "Serbia" },
   { code: "SC", vi: "Seychelles", en: "Seychelles" },
   { code: "SL", vi: "Sierra Leone", en: "Sierra Leone" },
   { code: "SG", vi: "Singapore", en: "Singapore" },
@@ -251,7 +256,6 @@ export const COUNTRIES: readonly Country[] = [
   { code: "SE", vi: "Thụy Điển", en: "Sweden" },
   { code: "CH", vi: "Thụy Sĩ", en: "Switzerland" },
   { code: "TL", vi: "Timor-Leste", en: "Timor-Leste" },
-  { code: "TP", vi: "Timor-Leste", en: "Timor-Leste" },
   { code: "TG", vi: "Togo", en: "Togo" },
   { code: "TK", vi: "Tokelau", en: "Tokelau" },
   { code: "TO", vi: "Tonga", en: "Tonga" },
@@ -267,19 +271,14 @@ export const COUNTRIES: readonly Country[] = [
   { code: "UA", vi: "Ukraina", en: "Ukraine" },
   { code: "UY", vi: "Uruguay", en: "Uruguay" },
   { code: "UZ", vi: "Uzbekistan", en: "Uzbekistan" },
-  { code: "NH", vi: "Vanuatu", en: "Vanuatu" },
   { code: "VU", vi: "Vanuatu", en: "Vanuatu" },
   { code: "VE", vi: "Venezuela", en: "Venezuela" },
-  { code: "VD", vi: "Việt Nam", en: "Vietnam" },
   { code: "VN", vi: "Việt Nam", en: "Vietnam" },
   { code: "ZZ", vi: "Vùng không xác định", en: "Unknown Region" },
   { code: "GB", vi: "Vương quốc Anh", en: "United Kingdom" },
-  { code: "UK", vi: "Vương quốc Anh", en: "United Kingdom" },
   { code: "WF", vi: "Wallis và Futuna", en: "Wallis & Futuna" },
-  { code: "YD", vi: "Yemen", en: "Yemen" },
   { code: "YE", vi: "Yemen", en: "Yemen" },
   { code: "ZM", vi: "Zambia", en: "Zambia" },
-  { code: "RH", vi: "Zimbabwe", en: "Zimbabwe" },
   { code: "ZW", vi: "Zimbabwe", en: "Zimbabwe" },
 ];
 

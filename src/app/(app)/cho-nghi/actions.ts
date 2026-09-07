@@ -5,27 +5,16 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireMember } from "@/lib/dal";
-import { keepKnownAmenities } from "@/lib/amenities";
 import { isCountryCode } from "@/lib/countries";
 import { CURRENCY_CODES } from "@/lib/currencies";
 import { withOrg } from "@/lib/db";
 import { LIMIT_MESSAGES } from "@/lib/plans";
 import { fill } from "@/lib/i18n";
 import { getT } from "@/lib/locale";
+import { composeAddress, lines, parseAmenityIds } from "@/lib/propertyForm";
 import { PROPERTY_TYPES } from "@/lib/propertyTypes";
 
 export type PropertyState = { error: string | null };
-
-/**
- * A textarea posts CRLF, whatever you typed into it.
- *
- * The HTML spec says so, and the stored house rules came back as
- * "Nhận phòng sau 14:00\r\nTrả phòng trước 11:00". Nothing renders wrong, so
- * it survives review — until something splits on "\n" to count the rules or
- * list them, and every line but the last carries an invisible \r that turns
- * "14:00" into "14:00\r" in a comparison, an export, or an iCal field.
- */
-const lines = (text: string) => text.replaceAll("\r\n", "\n");
 
 /**
  * What the five-step wizard posts.
@@ -67,37 +56,6 @@ const schema = z.object({
   houseRules: z.string().trim().transform(lines),
 });
 
-/** The one line every screen shows, composed once so the screens agree. */
-function composeAddress(parts: {
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  region: string;
-  postalCode: string;
-}): string {
-  return [
-    parts.addressLine1,
-    parts.addressLine2,
-    parts.city,
-    parts.region,
-    parts.postalCode,
-  ]
-    .filter((p) => p !== "")
-    .join(", ");
-}
-
-function parseIds(raw: FormDataEntryValue | null): string[] {
-  try {
-    const value: unknown = JSON.parse(String(raw ?? "[]"));
-    if (!Array.isArray(value)) return [];
-    return keepKnownAmenities(value.filter((v): v is string => typeof v === "string"));
-  } catch {
-    // A malformed amenity list is not worth failing the creation over — the
-    // host loses some ticks, not the property.
-    return [];
-  }
-}
-
 export async function createProperty(
   _prev: PropertyState,
   formData: FormData,
@@ -136,8 +94,8 @@ export async function createProperty(
   }
   const data = parsed.data;
 
-  const propertyAmenities = parseIds(formData.get("propertyAmenities"));
-  const roomAmenities = parseIds(formData.get("roomAmenities"));
+  const propertyAmenities = parseAmenityIds(formData.get("propertyAmenities"));
+  const roomAmenities = parseAmenityIds(formData.get("roomAmenities"));
 
   // Counted at the moment of creation, not cached on the org. A limit that
   // reads a stale counter is a limit that can be walked past by opening two

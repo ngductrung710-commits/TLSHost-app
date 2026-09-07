@@ -875,6 +875,33 @@ export const EN: Record<string, string> = {
     "Creating an account means you agree to our {dieukhoan} and {riengtu}.",
   "Điều khoản sử dụng": "Terms of Service",
   "Chính sách riêng tư": "Privacy Policy",
+  "Chưa chọn": "Not chosen",
+  "Chỉ chủ nhà mới sửa được cơ sở.": "Only an owner can edit a property.",
+  "Cổng thanh toán đang đặt ở cấp tổ chức: kết nối một lần, mọi cơ sở dùng chung. Mở phần Cài đặt để kết nối hoặc đổi.":
+    "Payment gateways are set at the organization level: connect once and every property uses it. Open Settings to connect or change one.",
+  "Giới thiệu và nội quy": "Introduction and house rules",
+  "Không bắt buộc.": "Optional.",
+  "Kênh nối theo từng phòng, nên danh sách nằm chung một chỗ cho mọi cơ sở. Mở trang Kênh để nối Airbnb, Booking.com và các kênh khác.":
+    "Channels connect per room, so the list lives in one place for every property. Open Channels to connect Airbnb, Booking.com and the rest.",
+  "Mỗi dòng nội quy là một dòng riêng. Khách đọc chúng trước khi đặt.":
+    "One rule per line. Guests read these before they book.",
+  "Mở cài đặt thanh toán": "Open payment settings",
+  "Mở trang Kênh": "Open Channels",
+  "Phần của cơ sở": "Property sections",
+  "Phần này chưa làm. Ảnh cần một nơi lưu trữ được chọn trước — trên máy chủ hoặc một kho ảnh riêng — nên nó đi sau khi có máy chủ.":
+    "Not built yet. Photos need somewhere to live — the server's own disk or a separate image store — and that choice comes with the server.",
+  "Quốc gia": "Country",
+  "Thông tin cơ bản": "Basic details",
+  "Thông tin": "Details",
+  "Tên và vị trí là những thứ khách nhìn thấy đầu tiên.":
+    "The name and the location are what a guest sees first.",
+  "Tòa nhà, tầng, căn": "Building, floor, unit",
+  "Vị trí": "Location",
+  "Địa chỉ này hiện trên trang đặt phòng và trong thư xác nhận gửi khách.":
+    "This address appears on the booking page and in the confirmation sent to guests.",
+  "Đồng bộ kênh": "Channel sync",
+  "Ảnh cơ sở": "Property photos",
+  "Ảnh": "Photos",
   "Chỉ chủ nhà mới đổi được gói.": "Only an owner can change the plan.",
   "Gói này không mua được.": "That plan is not for sale.",
   "Gói hiện tại đang không có hạn kết thúc, mua thêm một tháng sẽ rút ngắn lại. Liên hệ chúng tôi thay vì mua ở đây.":
