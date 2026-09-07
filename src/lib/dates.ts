@@ -119,6 +119,31 @@ export function fullDate(date: Date, locale: "vi" | "en" = "vi"): string {
     : `${shortVi(date)}/${date.getUTCFullYear()}`;
 }
 
+/**
+ * Khoảng ngày trên thanh tiêu đề lịch: "7 tháng 9 – 20 tháng 9, 2026".
+ *
+ * Dài hơn "7/9 – 20/9", và dài hơn có chủ ý. Dòng này là câu trả lời cho "tôi
+ * đang nhìn khoảng nào", nên nó phải nói cả năm — một bảng lịch mở ở tháng 9
+ * năm sau trông y hệt tháng 9 năm nay. Năm chỉ viết một lần, ở cuối, vì hai
+ * đầu cùng năm là chuyện gần như luôn đúng.
+ */
+export function rangeLabel(from: Date, to: Date, locale: "vi" | "en" = "vi"): string {
+  const sameYear = from.getUTCFullYear() === to.getUTCFullYear();
+  const head =
+    locale === "en"
+      ? shortDate(from, "en") + (sameYear ? "" : " " + from.getUTCFullYear())
+      : fromLabelVi(from) + (sameYear ? "" : ", " + from.getUTCFullYear());
+  const tail =
+    locale === "en"
+      ? fullDate(to, "en")
+      : fromLabelVi(to) + ", " + to.getUTCFullYear();
+  return head + " – " + tail;
+}
+
+function fromLabelVi(date: Date): string {
+  return date.getUTCDate() + " tháng " + (date.getUTCMonth() + 1);
+}
+
 /** Saturday or Sunday, read in UTC. */
 export function isWeekend(date: Date): boolean {
   const day = date.getUTCDay();

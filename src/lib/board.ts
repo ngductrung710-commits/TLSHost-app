@@ -33,6 +33,10 @@ export type Span = {
 export type BoardRoom = {
   id: string;
   name: string;
+  /** Gộp hàng theo cơ sở dựa vào id, không dựa vào tên. Hai cơ sở trùng tên là
+      chuyện có thật — trong chính cơ sở dữ liệu này đang có ba tổ chức cùng
+      tên "The Local Stay" — và gộp theo tên sẽ trộn phòng của hai nhà. */
+  propertyId: string;
   propertyName: string;
   spans: Span[];
 };
@@ -70,7 +74,7 @@ export async function loadBoard(
         select: {
           id: true,
           name: true,
-          property: { select: { name: true } },
+          property: { select: { id: true, name: true } },
         },
         orderBy: [{ property: { name: "asc" } }, { name: "asc" }],
       });
@@ -173,6 +177,7 @@ export async function loadBoard(
   const boardRooms: BoardRoom[] = rooms.map((room) => ({
     id: room.id,
     name: room.name,
+    propertyId: room.property.id,
     propertyName: room.property.name,
     spans: (byRoom.get(room.id) ?? []).sort((a, b) => a.offset - b.offset),
   }));

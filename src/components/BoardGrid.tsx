@@ -18,7 +18,11 @@ import { EmptyState } from "@/components/EmptyState";
  */
 
 const NAME_COL = "13rem";
-const DAY_COL = "3.25rem";
+// Rộng hơn 3.25rem cũ. Ở bề rộng đó, hai mươi mốt cột vẫn tràn ra ngoài màn
+// hình laptop — nên bảng vừa chật vừa phải cuộn, tức là chịu cái giá của việc
+// nhồi nhiều ngày mà không được lợi gì. Mười bốn ngày ở 4.25rem vừa đúng một
+// màn 1440, và một ô rộng hơn thì tên khách trên thanh đặt phòng đọc được.
+const DAY_COL = "4.25rem";
 
 function StayBar({
   span,
@@ -144,15 +148,71 @@ export function BoardGrid({
             </div>
           ))}
 
+          {/* Lấp đầy, ngay dưới dải ngày ------------------------------------
+              Trước đây hàng này nằm dưới đáy, với lý do là mắt nên đọc "đã đặt
+              gì" trước rồi mới tới "còn trống bao nhiêu". Lý do đó không sai,
+              nhưng nó chỉ đúng khi bảng ngắn: với mười phòng, con số phần trăm
+              trôi khỏi màn hình và không ai cuộn xuống để tìm nó. Trên cùng
+              thì nó luôn nằm cạnh cái ngày mà nó nói về. */}
+          <div className="board__sticky border-b border-r border-line bg-sand-50/60 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+            {t("Lấp đầy")}
+          </div>
+          {board.perDay.map((day, i) => (
+            <div
+              key={`occ-${toIsoDate(board.days[i])}`}
+              className={[
+                "border-b border-line px-1 py-2 text-center",
+                i === todayIndex
+                  ? "bg-clay-50"
+                  : isWeekend(board.days[i])
+                    ? "bg-sand-50"
+                    : "bg-sand-50/60",
+              ].join(" ")}
+            >
+              <div
+                className={`text-[12px] font-semibold tnum ${
+                  day.sold === 0 ? "text-ink-300" : "text-ink-900"
+                }`}
+              >
+                {day.total === 0 ? "—" : `${Math.round((day.sold / day.total) * 100)}%`}
+              </div>
+              <div className="text-[10px] text-ink-400 tnum">
+                {day.sold}/{day.total}
+              </div>
+            </div>
+          ))}
+
           {/* Rows -------------------------------------------------------- */}
-          {board.rooms.map((room) => (
+          {board.rooms.map((room, index) => (
             <div key={room.id} className="contents">
+              {/* Tiêu đề nhóm, chỉ vẽ ở phòng đầu tiên của mỗi cơ sở.
+                  board.rooms đã sắp theo cơ sở rồi tên phòng, nên "khác cơ sở
+                  với hàng trên" là đủ để biết chỗ bắt đầu một nhóm — không cần
+                  gom lại thành mảng lồng nhau và cũng không phá được thế
+                  `display: contents` mà lưới này dựa vào. */}
+              {index === 0 || board.rooms[index - 1].propertyId !== room.propertyId ? (
+                <>
+                  <div className="board__sticky border-b border-r border-line bg-canvas-alt/60 px-4 py-2">
+                    <Link
+                      href={`/cho-nghi/${room.propertyId}`}
+                      className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-700 hover:text-ink-900"
+                    >
+                      <span className="truncate">{room.propertyName}</span>
+                      <span className="shrink-0 rounded-full bg-sand-200 px-1.5 text-[10px] font-semibold text-ink-600 tnum">
+                        {board.rooms.filter((r) => r.propertyId === room.propertyId).length}
+                      </span>
+                    </Link>
+                  </div>
+                  <div
+                    className="border-b border-line bg-canvas-alt/60"
+                    style={{ gridColumn: `2 / span ${board.days.length}` }}
+                  />
+                </>
+              ) : null}
+
               <div className="board__sticky border-b border-r border-line px-4 py-2.5">
                 <p className="truncate text-[13px] font-semibold text-ink-900">
                   {room.name}
-                </p>
-                <p className="truncate text-[11px] text-ink-500">
-                  {room.propertyName}
                 </p>
               </div>
 
@@ -194,32 +254,21 @@ export function BoardGrid({
             </div>
           ))}
 
-          {/* Occupancy, one column per day. Sits under the rooms so the eye
-              lands on it after scanning the grid, which is the order a host
-              reads in: what is booked, then how full that leaves the night. */}
-          <div className="board__sticky border-t border-line px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
-            {t("Lấp đầy")}
-          </div>
-          {board.perDay.map((day, i) => (
-            <div
-              key={`occ-${toIsoDate(board.days[i])}`}
-              className={[
-                "border-t border-line px-1 py-2 text-center",
-                i === todayIndex ? "bg-clay-50" : isWeekend(board.days[i]) ? "bg-sand-50" : "",
-              ].join(" ")}
+          {/* Lối thêm, ngay trong lưới ------------------------------------
+              Chỗ một chủ nhà nghĩ tới việc thiếu một phòng là lúc đang nhìn
+              hàng phòng, không phải lúc đang ở trang Cài đặt. */}
+          <div className="board__sticky border-r border-line px-2 py-2">
+            <Link
+              href="/cho-nghi/moi"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-ink-500 transition-colors hover:bg-sand-100 hover:text-ink-900"
             >
-              <div
-                className={`text-[12px] font-semibold tnum ${
-                  day.sold === 0 ? "text-ink-300" : "text-ink-900"
-                }`}
-              >
-                {day.total === 0 ? "—" : `${Math.round((day.sold / day.total) * 100)}%`}
-              </div>
-              <div className="text-[10px] text-ink-400 tnum">
-                {day.sold}/{day.total}
-              </div>
-            </div>
-          ))}
+              <span aria-hidden="true" className="text-[15px] leading-none">
+                +
+              </span>
+              {t("Thêm cơ sở")}
+            </Link>
+          </div>
+          <div style={{ gridColumn: `2 / span ${board.days.length}` }} />
         </div>
       </div>
 

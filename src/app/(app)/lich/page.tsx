@@ -11,6 +11,7 @@ import {
   parseIsoDate,
   shortVi,
   todayIn,
+  rangeLabel,
   toIsoDate,
 } from "@/lib/dates";
 
@@ -24,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** How many days fit before the board needs scrolling on a laptop. */
-const WINDOW_DAYS = 21;
+const WINDOW_DAYS = 14;
 
 export default async function CalendarPage(props: PageProps<"/lich">) {
   const t = await getT();
@@ -99,7 +100,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
         </nav>
 
         <h1 className="ml-1 text-[15px] font-semibold text-ink-900">
-          {shortVi(board.from)} – {shortVi(addDays(board.to, -1))}
+          {rangeLabel(board.from, addDays(board.to, -1), locale)}
         </h1>
 
         <p className="text-[13px] text-ink-500">
