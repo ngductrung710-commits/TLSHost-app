@@ -113,13 +113,6 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
           search={query}
         />
 
-        <p className="text-[13px] text-ink-500">
-          {fill(t("{n} phòng"), { n: board.rooms.length })} ·{" "}
-          <span className="tnum font-medium text-ink-700">
-            {fill(t("lấp đầy {n}%"), { n: board.occupancy })}
-          </span>
-        </p>
-
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {/* A GET form, so a search is a URL: it survives a refresh, it can be
               sent to someone, and the back button leaves it. */}
@@ -240,9 +233,6 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
             />
           </div>
 
-          <p className="mt-4 text-[13px] text-ink-500">
-            {t("Bấm vào một ô trống để thêm đặt phòng, bấm vào một lượt đặt để sửa.")}
-          </p>
         </>
       )}
 

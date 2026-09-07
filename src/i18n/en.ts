@@ -80,8 +80,6 @@ export const EN: Record<string, string> = {
   khách: "guests",
 
   /* ---- Calendar ---- */
-  "Bấm vào một ô trống để thêm đặt phòng, bấm vào một lượt đặt để sửa.":
-    "Click an empty cell to add a booking, click a booking to edit it.",
   "Tạo đặt phòng": "New booking",
   "Sửa đặt phòng": "Edit booking",
   "Khóa đêm": "Block nights",
@@ -457,7 +455,6 @@ export const EN: Record<string, string> = {
   "{n} phòng": "{n} rooms",
   "{n} đêm": "{n} nights",
   "{n} phòng cần dọn →": "{n} rooms to clean →",
-  "lấp đầy {n}%": "{n}% full",
   "Trung bình": "Average",
   "{choNghi} chỗ nghỉ · {phong} phòng": "{choNghi} properties · {phong} rooms",
   "{n} người đang hoạt động": "{n} people active",
