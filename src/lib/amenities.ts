@@ -207,6 +207,96 @@ export const AMENITIES: readonly Amenity[] = [
   { id: "car-rental", vi: "Thuê ô tô có tài xế", en: "Car hire with driver", category: "SERVICE", scope: "property" },
   { id: "invoice", vi: "Xuất hóa đơn VAT", en: "VAT invoice", category: "SERVICE", scope: "property" },
   { id: "concierge", vi: "Hỗ trợ khách 24/24", en: "24-hour guest support", category: "SERVICE", scope: "property" },
+
+  /* --- Bổ sung 07/09/2026, đối chiếu danh sách của bản thiết kế -----------
+     Danh sách bên đó có 534 mục và 94% chưa dịch — đo được, không phải cảm
+     tính: chỉ 34 nhãn có dấu tiếng Việt. Trong đó có cả "Sonoma Select", vốn
+     không phải tiện nghi mà là tên một chương trình nội bộ của Airbnb, và
+     Badminton với Solar Power thì bị xếp vào nhóm "Cơ bản".
+     Đây là những mục trong danh sách đó mà một chỗ nghỉ ở Việt Nam thật sự
+     có, đã dịch và xếp lại đúng nhóm. Phần còn lại — Helipad, Stables,
+     Chapel, Putting Green, Wine Cellar, Cotton Candy Machine — cố ý bỏ. */
+
+  { id: "intercom", vi: "Chuông cửa có liên lạc", en: "Buzzer/wireless intercom", category: "BASIC", scope: "property" },
+  { id: "keypad", vi: "Khoá mã số", en: "Keypad lock", category: "BASIC", scope: "both" },
+  { id: "gated-property", vi: "Khuôn viên có cổng", en: "Gated property", category: "BASIC", scope: "property" },
+  { id: "clothes-storage", vi: "Chỗ để hành lý trong phòng", en: "In-room luggage space", category: "BASIC", scope: "room" },
+
+  { id: "jetted-tub", vi: "Bồn tắm sục", en: "Jetted tub", category: "BATHROOM", scope: "room" },
+  { id: "outdoor-shower", vi: "Vòi sen ngoài trời", en: "Outdoor shower", category: "BATHROOM", scope: "property" },
+  { id: "shampoo", vi: "Dầu gội và sữa tắm", en: "Shampoo and body wash", category: "BATHROOM", scope: "room" },
+  { id: "hygiene-products", vi: "Băng vệ sinh", en: "Feminine hygiene products", category: "BATHROOM", scope: "property" },
+
+  { id: "private-living-room", vi: "Phòng khách riêng", en: "Private living room", category: "BEDROOM", scope: "room" },
+  { id: "dressing-area", vi: "Khu thay đồ", en: "Dressing area", category: "BEDROOM", scope: "room" },
+  { id: "reading-nook", vi: "Góc đọc sách", en: "Reading nook", category: "BEDROOM", scope: "room" },
+  { id: "sofa-bed", vi: "Ghế sofa giường", en: "Sofa bed", category: "BEDROOM", scope: "room" },
+  { id: "mattress-topper", vi: "Nệm topper", en: "Mattress topper", category: "BEDROOM", scope: "room" },
+  { id: "clothes-drying", vi: "Chỗ phơi đồ ngoài trời", en: "Outdoor drying space", category: "BEDROOM", scope: "property" },
+
+  { id: "projector", vi: "Máy chiếu", en: "Projector", category: "ENTERTAINMENT", scope: "both" },
+  { id: "streaming", vi: "Netflix hoặc dịch vụ xem phim", en: "Streaming service", category: "ENTERTAINMENT", scope: "room" },
+  { id: "game-console", vi: "Máy chơi game", en: "Game console", category: "ENTERTAINMENT", scope: "both" },
+  { id: "musical-instrument", vi: "Nhạc cụ", en: "Musical instrument", category: "ENTERTAINMENT", scope: "property" },
+  { id: "badminton", vi: "Sân cầu lông", en: "Badminton court", category: "ENTERTAINMENT", scope: "property" },
+  { id: "table-tennis", vi: "Bàn bóng bàn", en: "Table tennis", category: "ENTERTAINMENT", scope: "property" },
+  { id: "kayak", vi: "Thuyền kayak", en: "Kayak", category: "ENTERTAINMENT", scope: "property" },
+  { id: "surfboard", vi: "Ván lướt sóng", en: "Surfboard", category: "ENTERTAINMENT", scope: "property" },
+  { id: "paddleboard", vi: "Ván chèo đứng", en: "Stand-up paddleboard", category: "ENTERTAINMENT", scope: "property" },
+  { id: "snorkel-gear", vi: "Đồ lặn ống thở", en: "Snorkelling equipment", category: "ENTERTAINMENT", scope: "property" },
+
+  { id: "changing-table", vi: "Bàn thay tã", en: "Changing table", category: "FAMILY", scope: "property" },
+  { id: "baby-monitor", vi: "Máy theo dõi em bé", en: "Baby monitor", category: "FAMILY", scope: "room" },
+  { id: "children-books", vi: "Sách và đồ chơi cho trẻ", en: "Children's books and toys", category: "FAMILY", scope: "property" },
+  { id: "stroller", vi: "Xe đẩy em bé", en: "Stroller", category: "FAMILY", scope: "property" },
+
+  { id: "portable-fan", vi: "Quạt để bàn", en: "Portable fan", category: "CLIMATE", scope: "room" },
+  { id: "fireplace", vi: "Lò sưởi", en: "Fireplace", category: "CLIMATE", scope: "property" },
+  { id: "solar-power", vi: "Điện mặt trời", en: "Solar power", category: "CLIMATE", scope: "property" },
+
+  { id: "lockbox", vi: "Hộp khoá chìa", en: "Lockbox", category: "SAFETY", scope: "property" },
+  { id: "guard", vi: "Bảo vệ", en: "Security guard", category: "SAFETY", scope: "property" },
+  { id: "first-floor-window-bars", vi: "Song chắn cửa sổ", en: "Window bars", category: "SAFETY", scope: "property" },
+
+  { id: "desk-chair", vi: "Ghế làm việc", en: "Desk chair", category: "INTERNET", scope: "room" },
+  { id: "monitor", vi: "Màn hình rời", en: "External monitor", category: "INTERNET", scope: "room" },
+
+  { id: "mini-fridge", vi: "Tủ lạnh mini trong phòng", en: "Mini fridge", category: "KITCHEN", scope: "room" },
+  { id: "freezer", vi: "Tủ đông", en: "Freezer", category: "KITCHEN", scope: "property" },
+  { id: "dishwasher", vi: "Máy rửa bát", en: "Dishwasher", category: "KITCHEN", scope: "property" },
+  { id: "oven", vi: "Lò nướng", en: "Oven", category: "KITCHEN", scope: "property" },
+  { id: "toaster", vi: "Máy nướng bánh mì", en: "Toaster", category: "KITCHEN", scope: "property" },
+  { id: "blender", vi: "Máy xay sinh tố", en: "Blender", category: "KITCHEN", scope: "property" },
+  { id: "espresso-machine", vi: "Máy pha cà phê espresso", en: "Espresso machine", category: "KITCHEN", scope: "property" },
+  { id: "water-filter", vi: "Máy lọc nước", en: "Water filter", category: "KITCHEN", scope: "property" },
+  { id: "shared-kitchen", vi: "Bếp dùng chung", en: "Shared kitchen", category: "KITCHEN", scope: "property" },
+
+  { id: "night-market", vi: "Gần chợ đêm", en: "Near a night market", category: "LOCATION", scope: "property" },
+  { id: "bus-station", vi: "Gần bến xe", en: "Near a bus station", category: "LOCATION", scope: "property" },
+  { id: "train-station", vi: "Gần ga tàu", en: "Near a train station", category: "LOCATION", scope: "property" },
+  { id: "waterfall-view", vi: "Nhìn ra thác nước", en: "Waterfall view", category: "LOCATION", scope: "room" },
+  { id: "rice-field-view", vi: "Nhìn ra ruộng lúa", en: "Rice field view", category: "LOCATION", scope: "room" },
+
+  { id: "gazebo", vi: "Chòi nghỉ", en: "Gazebo", category: "OUTDOOR", scope: "property" },
+  { id: "pergola", vi: "Giàn che sân vườn", en: "Pergola", category: "OUTDOOR", scope: "property" },
+  { id: "hammock", vi: "Võng", en: "Hammock", category: "OUTDOOR", scope: "property" },
+  { id: "fish-pond", vi: "Hồ cá", en: "Fish pond", category: "OUTDOOR", scope: "property" },
+  { id: "fountain", vi: "Đài phun nước", en: "Fountain", category: "OUTDOOR", scope: "property" },
+  { id: "charcoal-bbq", vi: "Bếp nướng than", en: "Charcoal barbecue", category: "OUTDOOR", scope: "property" },
+  { id: "rooftop", vi: "Sân thượng", en: "Rooftop", category: "OUTDOOR", scope: "property" },
+  { id: "outdoor-kitchen", vi: "Bếp ngoài trời", en: "Outdoor kitchen", category: "OUTDOOR", scope: "property" },
+
+  { id: "parking-street", vi: "Đỗ xe trên đường", en: "Street parking", category: "PARKING", scope: "property" },
+  { id: "parking-paid", vi: "Bãi đỗ xe có phí", en: "Paid parking", category: "PARKING", scope: "property" },
+
+  { id: "accessible-bathroom", vi: "Phòng tắm cho người khuyết tật", en: "Accessible bathroom", category: "ACCESS", scope: "room" },
+  { id: "shower-chair", vi: "Ghế tắm", en: "Shower chair", category: "ACCESS", scope: "room" },
+  { id: "wide-hallway", vi: "Hành lang rộng", en: "Wide hallway", category: "ACCESS", scope: "property" },
+
+  { id: "massage", vi: "Dịch vụ mát-xa", en: "Massage service", category: "SERVICE", scope: "property" },
+  { id: "cooking-class", vi: "Lớp học nấu ăn", en: "Cooking class", category: "SERVICE", scope: "property" },
+  { id: "motorbike-repair", vi: "Sửa xe máy", en: "Motorbike repair", category: "SERVICE", scope: "property" },
+  { id: "grocery-delivery", vi: "Đi chợ giúp", en: "Grocery run", category: "SERVICE", scope: "property" },
 ];
 
 const BY_ID = new Map(AMENITIES.map((a) => [a.id, a]));
