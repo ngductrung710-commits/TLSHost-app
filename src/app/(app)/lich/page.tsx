@@ -17,6 +17,7 @@ import {
 
 import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
 import { deleteBlock, renameRoom } from "./actions";
+import { DisplayOptions } from "@/components/DisplayOptions";
 import { MonthPicker } from "@/components/MonthPicker";
 import { currencySymbol } from "@/lib/currencies";
 import { getT, readLocale } from "@/lib/locale";
@@ -148,6 +149,9 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
               className="h-9 w-56 rounded-full border border-line bg-white pl-9 pr-3 text-[13px] text-ink-900 outline-none placeholder:text-ink-400 focus-visible:border-ink-900"
             />
           </form>
+
+          <DisplayOptions />
+
           <Link
             href="/ban-hang"
             className="flex h-9 items-center rounded-full border border-line px-4 text-[13px] font-medium text-ink-700 hover:bg-sand-50"

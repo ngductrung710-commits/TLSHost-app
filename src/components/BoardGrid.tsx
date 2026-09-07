@@ -276,7 +276,10 @@ export function BoardGrid({
                       href={`/lich/moi?room=${room.id}&from=${toIsoDate(day)}`}
                       aria-label={`Thêm đặt phòng — ${room.name}, ${toIsoDate(day)}`}
                       className={[
-                        "h-11 border-r border-line/60 transition-colors last:border-r-0 hover:bg-clay-50",
+                        // Chiều cao đọc từ biến chứ không cố định h-11: nút
+                        // "Mật độ hàng" đổi đúng biến này, và một lớp Tailwind
+                        // cứng sẽ không nghe.
+                        "h-[var(--board-row-h,2.75rem)] border-r border-line/60 transition-colors last:border-r-0 hover:bg-clay-50",
                         i === todayIndex
                           ? "bg-clay-50/60"
                           : isWeekend(day)
