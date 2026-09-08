@@ -82,6 +82,24 @@ function Globe({ className }: { className?: string }) {
   );
 }
 
+/** Trăng khuyết, đứng trước số đêm trên thanh. */
+function Moon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z" />
+    </svg>
+  );
+}
+
 type BookingAction = (
   prev: BookingState,
   fd: FormData,
@@ -270,6 +288,9 @@ export function BookingBar({
         </span>
         <span className="truncate">{data.label}</span>
         <span className="ml-auto flex shrink-0 items-center gap-1">
+          {/* Trăng khuyết = số đêm, giống bản thiết kế. */}
+          <Moon className="size-3 opacity-90" />
+          <span className="tnum opacity-90">{data.nights}</span>
           {unpaid ? (
             <span
               aria-hidden="true"
@@ -277,7 +298,6 @@ export function BookingBar({
               style={{ backgroundColor: "#F43F5E" }}
             />
           ) : null}
-          <span className="tnum opacity-90">{data.nights}</span>
         </span>
       </button>
 
