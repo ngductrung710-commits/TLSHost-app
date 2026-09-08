@@ -94,6 +94,12 @@ export const EN: Record<string, string> = {
   "Đơn chưa có giá để ghi nhận thanh toán.":
     "This booking has no price to record a payment against.",
   "Số tiền chưa hợp lệ.": "That amount isn't valid.",
+  "Đơn này đã thu đủ.": "This booking is already paid in full.",
+  "Tổng tiền": "Total",
+  "Đã thu": "Paid",
+  "bởi {ai}": "by {ai}",
+  "Chưa ghi nhận lần thu nào. Bấm một lượt đặt trên lịch để ghi nhận thanh toán.":
+    "No payments recorded yet. Click a booking on the calendar to record one.",
 
   /* ---- Ngăn kéo tạo đơn đặt phòng ---- */
   "Đơn đặt mới": "New booking",

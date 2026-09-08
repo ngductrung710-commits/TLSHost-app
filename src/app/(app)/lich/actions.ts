@@ -557,7 +557,26 @@ export async function recordPayment(
     // Số nhập được làm tròn về đồng và chặn trên ở phần còn nợ: không ai ghi
     // nhận nhiều hơn số đơn còn thiếu, và một con số quá tay chỉ là gõ nhầm.
     const add = parsed === null ? outstanding : Math.min(Math.round(parsed), outstanding);
+
+    // Không còn nợ, hoặc ghi nhận 0: không có gì để ghi thành một lần thu.
+    if (add <= 0) {
+      problem = t("Đơn này đã thu đủ.");
+      return;
+    }
+
     const paid = already + add;
+
+    // Một hàng cho đúng lần thu này, để trang chi tiết dựng lại lịch sử; và
+    // cập nhật tổng đã thu trên chính lượt đặt, để bảng lịch và "còn lại" đọc
+    // một cột thay vì cộng lại mỗi lần vẽ.
+    await tx.bookingPayment.create({
+      data: {
+        orgId: member.orgId,
+        bookingId: id,
+        amount: add,
+        recordedByMembershipId: member.membershipId,
+      },
+    });
 
     await tx.booking.updateMany({
       where: { id },

@@ -41,12 +41,22 @@ export default async function BookingPage(
         checkOut: true,
         guests: true,
         totalCents: true,
+        depositCents: true,
         source: true,
         status: true,
         notes: true,
         createdByMembershipId: true,
         createdAt: true,
         createdBy: { select: { user: { select: { name: true } } } },
+        manualPayments: {
+          select: {
+            id: true,
+            amount: true,
+            createdAt: true,
+            recordedBy: { select: { user: { select: { name: true } } } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
@@ -69,6 +79,10 @@ export default async function BookingPage(
   const editable = canEditBooking(member, booking.createdByMembershipId);
   const nights = daysBetween(booking.checkIn, booking.checkOut);
   const cancelled = booking.status === "CANCELLED";
+
+  const paidCents = booking.depositCents ?? 0;
+  const outstandingCents =
+    booking.totalCents === null ? null : Math.max(0, booking.totalCents - paidCents);
 
   return (
     <>
@@ -112,6 +126,72 @@ export default async function BookingPage(
           </span>
         ) : null}
       </div>
+
+      {/* Thanh toán: tổng, đã thu, còn lại — và từng lần đã ghi nhận. Chỉ hiện
+          khi đơn có giá; một đơn chưa đặt giá thì chưa có gì để thu. */}
+      {booking.totalCents !== null ? (
+        <section className="mt-6 max-w-xl rounded-2xl border border-line bg-surface p-5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+            {t("Thanh toán")}
+          </h2>
+
+          <dl className="mt-3 space-y-2 text-[14px]">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-ink-500">{t("Tổng tiền")}</dt>
+              <dd className="tnum font-medium text-ink-900">
+                {formatMoney(booking.totalCents, currency, locale)}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-ink-500">{t("Đã thu")}</dt>
+              <dd className="tnum font-medium text-ink-900">
+                {formatMoney(paidCents, currency, locale)}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 border-t border-line pt-2">
+              <dt className="font-medium text-ink-700">{t("Còn lại")}</dt>
+              <dd
+                className="tnum font-semibold"
+                style={{
+                  color: outstandingCents && outstandingCents > 0 ? "#E11D48" : undefined,
+                }}
+              >
+                {outstandingCents === null
+                  ? "—"
+                  : formatMoney(outstandingCents, currency, locale)}
+              </dd>
+            </div>
+          </dl>
+
+          {booking.manualPayments.length > 0 ? (
+            <ol className="mt-4 space-y-2 border-t border-line pt-4">
+              {booking.manualPayments.map((pay) => (
+                <li
+                  key={pay.id}
+                  className="flex items-baseline justify-between gap-4 text-[13px]"
+                >
+                  <span className="text-ink-600">
+                    {shortVi(pay.createdAt)}
+                    <span className="text-ink-400">
+                      {" · "}
+                      {fill(t("bởi {ai}"), {
+                        ai: pay.recordedBy?.user.name ?? "—",
+                      })}
+                    </span>
+                  </span>
+                  <span className="tnum font-medium text-ink-900">
+                    {formatMoney(pay.amount, currency, locale)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mt-4 border-t border-line pt-4 text-[13px] text-ink-500">
+              {t("Chưa ghi nhận lần thu nào. Bấm một lượt đặt trên lịch để ghi nhận thanh toán.")}
+            </p>
+          )}
+        </section>
+      ) : null}
 
       {cancelled ? (
         <p className="mt-6 max-w-xl rounded-xl border border-line bg-sand-50 px-4 py-3 text-[14px] leading-relaxed text-ink-600">

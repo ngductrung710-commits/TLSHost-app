@@ -83,6 +83,7 @@ model Organization {
   pushSubs    PushSubscription[]
   paymentAccounts PaymentAccount[]
   payments        Payment[]
+  bookingPayments BookingPayment[]
 
   @@map("organization")
 }
@@ -147,6 +148,7 @@ model Membership {
   scopes          MembershipScope[]
   createdBookings Booking[]         @relation("BookingCreator")
   cleanedRooms    Room[]            @relation("RoomCleaner")
+  recordedPayments BookingPayment[] @relation("PaymentRecorder")
 
   @@unique([orgId, userId])
   @@index([userId])
@@ -622,6 +624,36 @@ model Payment {
   @@map("payment")
 }
 
+/// Một lần chủ nhà tự ghi nhận đã thu tiền của khách.
+///
+/// Khác hẳn Payment ở trên: Payment là hàng do cổng Stripe/PayPal sinh ra, có
+/// externalId và trạng thái do cổng quyết. Còn đây là chủ nhà gõ tay "đã nhận
+/// từng này" — tiền mặt, chuyển khoản, cọc trước. Mỗi lần thu là một hàng, nên
+/// trang chi tiết dựng lại được lịch sử; tổng của chúng phản chiếu vào
+/// Booking.depositCents để bảng lịch và "còn lại" không phải cộng lại mỗi lần.
+model BookingPayment {
+  id        String @id @default(cuid())
+  orgId     String
+  bookingId String
+
+  /// Minor units. Số tiền của đúng lần thu này.
+  amount Int
+
+  /// Ai ghi nhận. Null nếu người đó sau này rời khỏi tổ chức — hàng vẫn còn,
+  /// chỉ mất tên người ghi, giống cách Booking.createdBy xử lý.
+  recordedByMembershipId String?
+
+  createdAt DateTime @default(now())
+
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  booking    Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  recordedBy Membership?  @relation("PaymentRecorder", fields: [recordedByMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([bookingId])
+  @@map("booking_payment")
+}
+
 /// One purchase of one month of a paid plan.
 ///
 /// Not a subscription: there is no stored credential to charge again and
@@ -863,6 +895,7 @@ model Booking {
   room      Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
   createdBy Membership?  @relation("BookingCreator", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
   payments  Payment[]
+  manualPayments BookingPayment[]
 
   @@index([orgId])
   @@index([roomId, checkIn])
