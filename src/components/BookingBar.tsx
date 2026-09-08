@@ -57,13 +57,27 @@ function normalizeStatus(s: string | null): BookingStatusName {
     : "CONFIRMED";
 }
 
-/** Quả địa cầu cho đơn trực tiếp; cùng biểu tượng đó cho mọi nguồn còn lại,
-    tên nguồn đã nằm trong thẻ. */
+/** Quả địa cầu dạng lưới (kinh/vĩ tuyến), giống hình được đưa. Cùng biểu
+    tượng đó cho mọi nguồn — tên nguồn đã nằm trong thẻ. */
 function Globe({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" />
+      {/* Ba vĩ tuyến: xích đạo và hai đường trên/dưới, thu ngắn để bám vành. */}
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="4.7" y1="7.5" x2="19.3" y2="7.5" />
+      <line x1="4.7" y1="16.5" x2="19.3" y2="16.5" />
+      {/* Kinh tuyến: đường thẳng giữa và hai đường cong (ellipse) hai bên. */}
+      <line x1="12" y1="3" x2="12" y2="21" />
+      <ellipse cx="12" cy="12" rx="4.3" ry="9" />
     </svg>
   );
 }
