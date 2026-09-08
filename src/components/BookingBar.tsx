@@ -245,7 +245,15 @@ export function BookingBar({
         style={{ backgroundColor: bar.bg, color: bar.fg, borderColor: bar.border }}
         title={`${data.label} · ${fill(t("{n} đêm"), { n: data.nights })}`}
       >
-        <Globe className="size-3.5 shrink-0 opacity-90" />
+        {/* Quả địa cầu đóng khung: ô vuông bo góc nền trắng, địa cầu xám bên
+            trong — giống bản thiết kế. Nền trắng đặc đọc được trên mọi màu
+            thanh (hổ phách, teal, xám) mà không phải đổi theo trạng thái. */}
+        <span
+          aria-hidden="true"
+          className="grid size-[18px] shrink-0 place-items-center rounded-md bg-white text-ink-500 ring-1 ring-inset ring-black/10"
+        >
+          <Globe className="size-3" />
+        </span>
         <span className="truncate">{data.label}</span>
         <span className="ml-auto flex shrink-0 items-center gap-1">
           {unpaid ? (
