@@ -93,6 +93,7 @@ export const EN: Record<string, string> = {
   "Chủ nhật": "Sunday",
   "Đơn chưa có giá để ghi nhận thanh toán.":
     "This booking has no price to record a payment against.",
+  "Số tiền chưa hợp lệ.": "That amount isn't valid.",
 
   /* ---- Ngăn kéo tạo đơn đặt phòng ---- */
   "Đơn đặt mới": "New booking",

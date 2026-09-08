@@ -129,6 +129,10 @@ export function BookingBar({
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Khi mở form ghi nhận thanh toán, cùng số tiền đang gõ. Số dạng chuỗi để ô
+  // nhập cho phép xoá trắng; đọc lại bằng Number lúc gửi.
+  const [paying, setPaying] = useState(false);
+  const [payAmount, setPayAmount] = useState("");
   const barRef = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +154,10 @@ export function BookingBar({
     setPos({ top: Math.max(8, top), left });
   }
 
+  function close() {
+    setOpen(false);
+    setPaying(false);
+  }
   function show() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     place();
@@ -157,21 +165,37 @@ export function BookingBar({
   }
   function scheduleClose() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setOpen(false), 140);
+    // Đang gõ số tiền thì đừng tự đóng khi chuột lỡ rời ra: form còn dở, đóng
+    // mất là mất luôn con số vừa gõ. Rời ra lúc chưa mở form thì đóng như cũ.
+    if (paying) return;
+    // Ân hạn đủ rộng để đi từ thanh xuống thẻ (có một khoảng hở giữa hai cái):
+    // đi chậm qua khoảng hở mà thẻ đã đóng thì hụt tay. Đóng ngay khi bấm ra
+    // ngoài vẫn có, nên chờ lâu hơn một chút không giữ thẻ lại quá mức.
+    closeTimer.current = setTimeout(() => close(), 300);
   }
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") close();
     };
-    const onScroll = () => setOpen(false);
+    const onScroll = () => close();
+    // Bấm ra ngoài cả thanh lẫn thẻ thì đóng. Cần cho cảm ứng, nơi không có
+    // "rời chuột": chạm thanh mở thẻ, chạm chỗ khác đóng lại.
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (barRef.current?.contains(target)) return;
+      if (cardRef.current?.contains(target)) return;
+      close();
+    };
     document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown, true);
     // Cuộn thì đóng: thẻ neo theo toạ độ màn hình, cuộn một cái là nó lệch khỏi
     // thanh. Đóng gọn hơn là chạy theo.
     window.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown, true);
       window.removeEventListener("scroll", onScroll, true);
     };
   }, [open]);
@@ -188,7 +212,7 @@ export function BookingBar({
     setBusy(false);
     // revalidatePath trong action đã vẽ lại bảng từ máy chủ; thanh này mang
     // trạng thái mới. Đóng thẻ để người dùng thấy kết quả trên lịch.
-    if (!result.error) setOpen(false);
+    if (!result.error) close();
   }
 
   const inner = [
@@ -210,7 +234,7 @@ export function BookingBar({
       <button
         ref={barRef}
         type="button"
-        onClick={() => (open ? setOpen(false) : show())}
+        onClick={show}
         onPointerEnter={show}
         onPointerLeave={scheduleClose}
         onFocus={show}
@@ -303,37 +327,111 @@ export function BookingBar({
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-                {transitions.map((tr) => (
-                  <button
-                    key={tr.to}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => run(statusAction, { status: tr.to })}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[12px] font-semibold text-ink-800 hover:bg-sand-50 disabled:opacity-50"
+              {paying ? (
+                /* Form ghi nhận thanh toán: nhập số tiền vừa thu, mặc định là
+                   phần còn nợ. Ba nút nhanh chọn theo phần trăm phần còn nợ. */
+                <div className="mt-4 border-t border-line pt-3">
+                  <label
+                    htmlFor={`pay-${data.id}`}
+                    className="block text-[12px] font-semibold text-ink-700"
                   >
-                    {t(tr.label)}
-                  </button>
-                ))}
-                {unpaid ? (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => run(payAction, {})}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[12px] font-semibold text-ink-800 hover:bg-sand-50 disabled:opacity-50"
+                    {t("Số tiền")}
+                  </label>
+                  <div className="relative mt-1.5">
+                    <input
+                      id={`pay-${data.id}`}
+                      inputMode="numeric"
+                      value={payAmount}
+                      onChange={(e) =>
+                        setPayAmount(e.target.value.replace(/\D/g, ""))
+                      }
+                      className="tnum block h-9 w-full rounded-lg border border-line-strong bg-white pl-3 pr-12 text-[14px] text-ink-900 outline-none focus-visible:border-ink-900"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] font-medium text-ink-400"
+                    >
+                      {currency}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-3 gap-1.5">
+                    {(
+                      [
+                        { label: "25%", part: 0.25 },
+                        { label: "50%", part: 0.5 },
+                        { label: t("Còn lại"), part: 1 },
+                      ] as const
+                    ).map((choice) => (
+                      <button
+                        key={choice.label}
+                        type="button"
+                        onClick={() =>
+                          setPayAmount(
+                            String(Math.round((outstanding ?? 0) * choice.part)),
+                          )
+                        }
+                        className="h-8 rounded-lg bg-sand-100 px-2 text-[12px] font-semibold text-ink-700 hover:bg-sand-200"
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaying(false)}
+                      className="inline-flex h-8 items-center rounded-full px-3 text-[12px] font-semibold text-ink-600 hover:text-ink-900"
+                    >
+                      {t("Hủy")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => run(payAction, { amount: payAmount })}
+                      className="inline-flex h-8 items-center rounded-full bg-ink-900 px-4 text-[12px] font-semibold text-sand-100 hover:bg-ink-800 disabled:opacity-50"
+                    >
+                      {t("Lưu")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                  {transitions.map((tr) => (
+                    <button
+                      key={tr.to}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => run(statusAction, { status: tr.to })}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[12px] font-semibold text-ink-800 hover:bg-sand-50 disabled:opacity-50"
+                    >
+                      {t(tr.label)}
+                    </button>
+                  ))}
+                  {unpaid ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setPayAmount(String(outstanding ?? 0));
+                        setPaying(true);
+                      }}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[12px] font-semibold text-ink-800 hover:bg-sand-50 disabled:opacity-50"
+                    >
+                      <IconCard className="size-3.5" />
+                      {t("Ghi nhận thanh toán")}
+                    </button>
+                  ) : null}
+                  <Link
+                    href={`/lich/dat-phong/${data.id}`}
+                    className="ml-auto inline-flex h-8 items-center gap-1 rounded-full bg-ink-900 px-3 text-[12px] font-semibold text-sand-100 hover:bg-ink-800"
                   >
-                    <IconCard className="size-3.5" />
-                    {t("Ghi nhận thanh toán")}
-                  </button>
-                ) : null}
-                <Link
-                  href={`/lich/dat-phong/${data.id}`}
-                  className="ml-auto inline-flex h-8 items-center gap-1 rounded-full bg-ink-900 px-3 text-[12px] font-semibold text-sand-100 hover:bg-ink-800"
-                >
-                  {t("Mở")}
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
+                    {t("Mở")}
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              )}
             </div>,
             document.body,
           )

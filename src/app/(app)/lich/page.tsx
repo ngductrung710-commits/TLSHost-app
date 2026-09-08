@@ -20,7 +20,7 @@ import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
 import {
   createBookingInline,
   deleteBlock,
-  markBookingPaid,
+  recordPayment,
   renameRoom,
   setBookingStatus,
 } from "./actions";
@@ -282,7 +282,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
               currency={currencySymbol(currency)}
               canRename={member.role === "OWNER"}
               statusAction={setBookingStatus}
-              payAction={markBookingPaid}
+              payAction={recordPayment}
             />
           </div>
 

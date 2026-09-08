@@ -507,13 +507,16 @@ export async function setBookingStatus(
 }
 
 /**
- * Ghi nhận đã thu đủ tiền: cọc bằng tổng, và đánh dấu thời điểm.
+ * Ghi nhận một khoản khách đã trả: cộng vào phần đã thu, chặn trên ở tổng tiền.
  *
- * Đây là cách chủ nhà tự ghi lại "khách đã trả xong", khác với Payment do cổng
- * thanh toán sinh ra. Một cú bấm ghi trọn phần còn lại — trường hợp thường
- * nhất — và vẫn sửa lại được ở trang chi tiết nếu cần con số khác.
+ * Đây là chủ nhà tự ghi lại tiền đã nhận, khác với Payment do cổng thanh toán
+ * sinh ra. Cộng dồn chứ không ghi đè: một đơn có thể trả làm nhiều lần — cọc
+ * trước, phần còn lại lúc nhận phòng — và mỗi lần bấm là một lần thu thêm.
+ * Khi phần đã thu chạm tổng thì đánh dấu thời điểm trả đủ.
+ *
+ * `amount` để trống nghĩa là "trả nốt phần còn lại" — cú bấm nhanh thường gặp.
  */
-export async function markBookingPaid(
+export async function recordPayment(
   _prev: BookingState,
   formData: FormData,
 ): Promise<BookingState> {
@@ -526,11 +529,19 @@ export async function markBookingPaid(
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: t("Thông tin chưa hợp lệ.") };
 
+  const raw = String(formData.get("amount") ?? "").trim();
+  // Chuỗi rỗng: trả nốt phần còn lại. Có số: đúng số đó. Số âm hay không phải
+  // số thì coi như không hợp lệ.
+  const parsed = raw === "" ? null : Number(raw);
+  if (parsed !== null && (!Number.isFinite(parsed) || parsed < 0)) {
+    return { error: t("Số tiền chưa hợp lệ.") };
+  }
+
   let problem: string | null = null;
   await withOrg(member.orgId, async (tx) => {
     const booking = await tx.booking.findUnique({
       where: { id },
-      select: { createdByMembershipId: true, totalCents: true },
+      select: { createdByMembershipId: true, totalCents: true, depositCents: true },
     });
     if (!booking) throw new Error("BOOKING_NOT_FOUND");
     if (!canEditBooking(member, booking.createdByMembershipId)) {
@@ -540,9 +551,21 @@ export async function markBookingPaid(
       problem = t("Đơn chưa có giá để ghi nhận thanh toán.");
       return;
     }
+
+    const already = booking.depositCents ?? 0;
+    const outstanding = Math.max(0, booking.totalCents - already);
+    // Số nhập được làm tròn về đồng và chặn trên ở phần còn nợ: không ai ghi
+    // nhận nhiều hơn số đơn còn thiếu, và một con số quá tay chỉ là gõ nhầm.
+    const add = parsed === null ? outstanding : Math.min(Math.round(parsed), outstanding);
+    const paid = already + add;
+
     await tx.booking.updateMany({
       where: { id },
-      data: { depositCents: booking.totalCents, depositPaidAt: new Date() },
+      data: {
+        depositCents: paid,
+        depositPaidAt:
+          paid >= booking.totalCents ? new Date() : undefined,
+      },
     });
   }).catch((error) => {
     if (error instanceof Error && error.message === "BOOKING_NOT_FOUND") return;
