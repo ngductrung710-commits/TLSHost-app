@@ -137,7 +137,7 @@ export function BookingBar({
   const cardRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const CARD_W = 300;
+  const CARD_W = 340;
 
   function place() {
     const el = barRef.current;
@@ -299,10 +299,10 @@ export function BookingBar({
                 {data.checkIn && data.checkOut ? (
                   <div className="flex items-center gap-2">
                     <IconCal className="size-4 shrink-0 text-ink-400" />
-                    <span>{dayLabel(data.checkIn)}</span>
+                    <span className="whitespace-nowrap">{dayLabel(data.checkIn)}</span>
                     <span className="text-ink-400">→</span>
-                    <span>{dayLabel(data.checkOut)}</span>
-                    <span className="tnum ml-auto text-ink-500">
+                    <span className="whitespace-nowrap">{dayLabel(data.checkOut)}</span>
+                    <span className="tnum ml-auto shrink-0 text-ink-500">
                       {fill(t("{n} đêm"), { n: data.nights })}
                     </span>
                   </div>
