@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useT } from "@/components/I18nProvider";
+import { openBookingDetail } from "@/components/BookingDetailDrawer";
 import type { BookingState } from "@/app/(app)/lich/actions";
 import {
   NEXT_ACTIONS,
@@ -423,13 +423,17 @@ export function BookingBar({
                       {t("Ghi nhận thanh toán")}
                     </button>
                   ) : null}
-                  <Link
-                    href={`/lich/dat-phong/${data.id}`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      openBookingDetail(data.id);
+                    }}
                     className="ml-auto inline-flex h-8 items-center gap-1 rounded-full bg-ink-900 px-3 text-[12px] font-semibold text-sand-100 hover:bg-ink-800"
                   >
                     {t("Mở")}
                     <span aria-hidden="true">→</span>
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>,

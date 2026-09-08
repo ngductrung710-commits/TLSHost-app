@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { BookingForm } from "@/components/BookingForm";
 import { SOURCE_LABELS } from "@/lib/board";
+import { PAYMENT_METHOD_LABEL } from "@/lib/bookingStatus";
 import { canEditBooking, canManageBookings, orgCurrency, requireMember, visiblePropertyFilter } from "@/lib/dal";
 import { withOrg } from "@/lib/db";
 import { daysBetween, formatMoney, shortVi, toIsoDate } from "@/lib/dates";
@@ -41,6 +42,7 @@ export default async function BookingPage(
         checkOut: true,
         guests: true,
         totalCents: true,
+        discountCents: true,
         depositCents: true,
         source: true,
         status: true,
@@ -52,6 +54,7 @@ export default async function BookingPage(
           select: {
             id: true,
             amount: true,
+            method: true,
             createdAt: true,
             recordedBy: { select: { user: { select: { name: true } } } },
           },
@@ -81,8 +84,12 @@ export default async function BookingPage(
   const cancelled = booking.status === "CANCELLED";
 
   const paidCents = booking.depositCents ?? 0;
+  const payableCents =
+    booking.totalCents === null
+      ? null
+      : Math.max(0, booking.totalCents - (booking.discountCents ?? 0));
   const outstandingCents =
-    booking.totalCents === null ? null : Math.max(0, booking.totalCents - paidCents);
+    payableCents === null ? null : Math.max(0, payableCents - paidCents);
 
   return (
     <>
@@ -142,6 +149,14 @@ export default async function BookingPage(
                 {formatMoney(booking.totalCents, currency, locale)}
               </dd>
             </div>
+            {booking.discountCents ? (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-ink-500">{t("Giảm giá")}</dt>
+                <dd className="tnum font-medium text-ink-900">
+                  −{formatMoney(booking.discountCents, currency, locale)}
+                </dd>
+              </div>
+            ) : null}
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-ink-500">{t("Đã thu")}</dt>
               <dd className="tnum font-medium text-ink-900">
@@ -173,6 +188,12 @@ export default async function BookingPage(
                   <span className="text-ink-600">
                     {shortVi(pay.createdAt)}
                     <span className="text-ink-400">
+                      {" · "}
+                      {t(
+                        PAYMENT_METHOD_LABEL[
+                          pay.method as keyof typeof PAYMENT_METHOD_LABEL
+                        ] ?? PAYMENT_METHOD_LABEL.OTHER,
+                      )}
                       {" · "}
                       {fill(t("bởi {ai}"), {
                         ai: pay.recordedBy?.user.name ?? "—",

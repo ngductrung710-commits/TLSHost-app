@@ -631,6 +631,13 @@ model Payment {
 /// từng này" — tiền mặt, chuyển khoản, cọc trước. Mỗi lần thu là một hàng, nên
 /// trang chi tiết dựng lại được lịch sử; tổng của chúng phản chiếu vào
 /// Booking.depositCents để bảng lịch và "còn lại" không phải cộng lại mỗi lần.
+enum BookingPaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
 model BookingPayment {
   id        String @id @default(cuid())
   orgId     String
@@ -638,6 +645,10 @@ model BookingPayment {
 
   /// Minor units. Số tiền của đúng lần thu này.
   amount Int
+
+  /// Cách khách trả lần này: tiền mặt, chuyển khoản, thẻ, hay khác. Mặc định
+  /// tiền mặt vì đó là cách khách vãng lai trả phổ biến nhất.
+  method BookingPaymentMethod @default(CASH)
 
   /// Ai ghi nhận. Null nếu người đó sau này rời khỏi tổ chức — hàng vẫn còn,
   /// chỉ mất tên người ghi, giống cách Booking.createdBy xử lý.
@@ -868,8 +879,14 @@ model Booking {
   children Int @default(0)
   infants  Int @default(0)
 
-  /// Minor units. Total for the whole stay, not per night.
+  /// Minor units. Total for the whole stay, not per night. Đây là giá gộp,
+  /// trước khi trừ giảm giá.
   totalCents Int?
+
+  /// Giảm giá cho lượt đặt này, minor units. Số tiền khách phải trả là
+  /// totalCents - discountCents. Null nghĩa là không giảm — khác 0 chỉ ở ý
+  /// nghĩa, nhưng để nhất quán với các cột tiền khác thì null là "chưa đặt".
+  discountCents Int?
 
   /// Tiền cọc đã nhận, minor units. Null nghĩa là chưa hỏi tới, khác hẳn 0 —
   /// 0 là "đã quyết định: không cọc". Cột này không phải một khoản thanh toán

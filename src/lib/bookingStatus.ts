@@ -94,3 +94,51 @@ export function bookingCode(propertyName: string, ref: number | null): string | 
 export function countsAsSold(status: string): boolean {
   return status !== "NO_SHOW" && status !== "CANCELLED";
 }
+
+/** Phương thức thanh toán. */
+export type PaymentMethodName = "CASH" | "BANK_TRANSFER" | "CARD" | "OTHER";
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethodName, string> = {
+  CASH: "Tiền mặt",
+  BANK_TRANSFER: "Chuyển khoản",
+  CARD: "Thẻ",
+  OTHER: "Khác",
+};
+
+export const PAYMENT_METHODS: PaymentMethodName[] = [
+  "CASH",
+  "BANK_TRANSFER",
+  "CARD",
+  "OTHER",
+];
+
+/**
+ * Giai đoạn lưu trú, suy ra từ ngày chứ không lưu: sắp đến, đang ở, hay đã trả
+ * phòng. Đây là một badge riêng cạnh trạng thái vòng đời — trạng thái là việc
+ * chủ nhà đã làm (đã xác nhận, đã nhận phòng), còn giai đoạn là lịch tự nói.
+ *
+ * Một đơn đã hủy hoặc vắng mặt không có giai đoạn — nó không còn là một kỳ ở.
+ */
+export type StayPhase = "UPCOMING" | "STAYING" | "DEPARTED" | null;
+
+export const STAY_PHASE_LABEL: Record<
+  Exclude<StayPhase, null>,
+  string
+> = {
+  UPCOMING: "Sắp đến",
+  STAYING: "Đang ở",
+  DEPARTED: "Đã qua",
+};
+
+/** Tất cả tham số là chuỗi YYYY-MM-DD, so sánh theo chuỗi là đủ và đúng. */
+export function stayPhase(
+  checkIn: string,
+  checkOut: string,
+  today: string,
+  status: string,
+): StayPhase {
+  if (status === "CANCELLED" || status === "NO_SHOW") return null;
+  if (checkOut <= today) return "DEPARTED";
+  if (checkIn <= today) return "STAYING";
+  return "UPCOMING";
+}

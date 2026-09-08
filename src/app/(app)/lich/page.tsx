@@ -18,13 +18,18 @@ import {
 
 import { createRoom } from "@/app/(app)/cho-nghi/[id]/actions";
 import {
+  cancelBooking,
   createBookingInline,
   deleteBlock,
+  deleteBookingPayment,
+  loadBookingDetail,
   recordPayment,
   renameRoom,
   setBookingStatus,
+  updateBookingInline,
 } from "./actions";
 import { BoardModeToggle } from "@/components/BoardMode";
+import { BookingDetailDrawer } from "@/components/BookingDetailDrawer";
 import { NewBookingPanel } from "@/components/NewBookingPanel";
 import { DisplayOptions } from "@/components/DisplayOptions";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -324,6 +329,21 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
           </ul>
         </section>
       ) : null}
+
+      {/* Một drawer duy nhất cho cả trang: nút "Mở" trên thẻ đơn gọi
+          openBookingDetail(id), drawer tự tải chi tiết. Action truyền xuống
+          chứ không để component client import thẳng — check:client. */}
+      <BookingDetailDrawer
+        loadDetail={loadBookingDetail}
+        updateAction={updateBookingInline}
+        statusAction={setBookingStatus}
+        payAction={recordPayment}
+        deletePaymentAction={deleteBookingPayment}
+        cancelAction={cancelBooking}
+        currency={currencySymbol(currency)}
+        locale={locale}
+        today={toIsoDate(today)}
+      />
     </>
   );
 }

@@ -70,6 +70,7 @@ const bookingFields = {
   adults: z.coerce.number().int().min(0).max(50).optional(),
   children: z.coerce.number().int().min(0).max(50).optional(),
   infants: z.coerce.number().int().min(0).max(50).optional(),
+  discountCents: z.coerce.number().int().min(0).optional(),
   depositCents: z.coerce.number().int().min(0).optional(),
   // Checkbox: có mặt trong FormData nghĩa là đã tích, vắng mặt nghĩa là không.
   depositPaid: z.coerce.boolean().optional(),
@@ -348,10 +349,10 @@ export async function createBookingInline(
   return { error: null };
 }
 
-export async function updateBooking(
-  _prev: BookingState,
+/** Phần lõi dùng chung của hai lối sửa đơn: trang và drawer. */
+async function saveBookingEdit(
   formData: FormData,
-): Promise<BookingState> {
+): Promise<BookingState | { checkIn: Date }> {
   const t = await getT();
   const member = await requireMember();
   if (!canManageBookings(member)) {
@@ -373,6 +374,14 @@ export async function updateBooking(
   if (checkOut <= checkIn) {
     return { error: t("Ngày trả phòng phải sau ngày nhận phòng.") };
   }
+
+  // Phần tách khách chỉ có khi form gửi lên; nếu không, tổng là tất cả.
+  const hasSplit = data.adults !== undefined;
+  const adults = hasSplit ? data.adults! : data.guests;
+  const children = data.children ?? 0;
+  const infants = data.infants ?? 0;
+  const guests = hasSplit ? adults + children : data.guests;
+  if (guests < 1) return { error: t("Cần ít nhất một khách.") };
 
   try {
     await withOrg(member.orgId, async (tx) => {
@@ -410,8 +419,12 @@ export async function updateBooking(
           guestPhone: data.guestPhone || null,
           checkIn,
           checkOut,
-          guests: data.guests,
+          guests,
+          adults,
+          children,
+          infants,
           totalCents: data.totalCents ?? null,
+          discountCents: data.discountCents ?? null,
           source: data.source,
           notes: data.notes || null,
         },
@@ -423,8 +436,160 @@ export async function updateBooking(
     throw error;
   }
 
+  return { checkIn };
+}
+
+export async function updateBooking(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const result = await saveBookingEdit(formData);
+  if ("error" in result) return result;
+
   revalidatePath("/lich");
-  redirect(`/lich?tu=${toIsoDate(checkIn)}`);
+  redirect(`/lich?tu=${toIsoDate(result.checkIn)}`);
+}
+
+/** Sửa đơn từ drawer trên lịch: không chuyển hướng, chỉ vẽ lại bảng. */
+export async function updateBookingInline(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const result = await saveBookingEdit(formData);
+  if ("error" in result) return result;
+
+  revalidatePath("/lich");
+  return { error: null };
+}
+
+export type BookingDetail = {
+  id: string;
+  ref: number | null;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  checkIn: string;
+  checkOut: string;
+  source: string;
+  status: string;
+  notes: string;
+  adults: number;
+  children: number;
+  infants: number;
+  totalCents: number | null;
+  discountCents: number | null;
+  depositCents: number | null;
+  roomId: string;
+  roomName: string;
+  propertyName: string;
+  editable: boolean;
+  createdByName: string | null;
+  createdAt: string;
+  payments: {
+    id: string;
+    amount: number;
+    method: string;
+    createdAt: string;
+    recordedByName: string | null;
+  }[];
+  rooms: { id: string; name: string; propertyName: string }[];
+};
+
+/**
+ * Tải đầy đủ một lượt đặt cho drawer chi tiết, kèm danh sách phòng để đổi
+ * phòng và lịch sử thanh toán. Trả null khi không thấy — RLS làm một đơn của
+ * tổ chức khác đơn giản là không tồn tại, nên "không phải của bạn" và "không
+ * có" cố ý giống nhau.
+ */
+export async function loadBookingDetail(
+  id: string,
+): Promise<BookingDetail | null> {
+  const member = await requireMember();
+  if (!canManageBookings(member)) return null;
+  if (!id) return null;
+
+  return withOrg(member.orgId, async (tx) => {
+    const b = await tx.booking.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        ref: true,
+        guestName: true,
+        guestEmail: true,
+        guestPhone: true,
+        checkIn: true,
+        checkOut: true,
+        source: true,
+        status: true,
+        notes: true,
+        adults: true,
+        children: true,
+        infants: true,
+        totalCents: true,
+        discountCents: true,
+        depositCents: true,
+        roomId: true,
+        createdByMembershipId: true,
+        createdAt: true,
+        room: { select: { name: true, property: { select: { name: true } } } },
+        createdBy: { select: { user: { select: { name: true } } } },
+        manualPayments: {
+          select: {
+            id: true,
+            amount: true,
+            method: true,
+            createdAt: true,
+            recordedBy: { select: { user: { select: { name: true } } } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+    if (!b) return null;
+
+    const rooms = await tx.room.findMany({
+      where: { property: visiblePropertyFilter(member) },
+      select: { id: true, name: true, property: { select: { name: true } } },
+      orderBy: [{ property: { name: "asc" } }, { name: "asc" }],
+    });
+
+    return {
+      id: b.id,
+      ref: b.ref,
+      guestName: b.guestName,
+      guestEmail: b.guestEmail ?? "",
+      guestPhone: b.guestPhone ?? "",
+      checkIn: toIsoDate(b.checkIn),
+      checkOut: toIsoDate(b.checkOut),
+      source: b.source,
+      status: b.status,
+      notes: b.notes ?? "",
+      adults: b.adults,
+      children: b.children,
+      infants: b.infants,
+      totalCents: b.totalCents,
+      discountCents: b.discountCents,
+      depositCents: b.depositCents,
+      roomId: b.roomId,
+      roomName: b.room.name,
+      propertyName: b.room.property.name,
+      editable: canEditBooking(member, b.createdByMembershipId),
+      createdByName: b.createdBy?.user.name ?? null,
+      createdAt: toIsoDate(b.createdAt),
+      payments: b.manualPayments.map((pay) => ({
+        id: pay.id,
+        amount: pay.amount,
+        method: pay.method,
+        createdAt: toIsoDate(pay.createdAt),
+        recordedByName: pay.recordedBy?.user.name ?? null,
+      })),
+      rooms: rooms.map((r) => ({
+        id: r.id,
+        name: r.name,
+        propertyName: r.property.name,
+      })),
+    };
+  });
 }
 
 export async function cancelBooking(formData: FormData): Promise<void> {
@@ -537,11 +702,23 @@ export async function recordPayment(
     return { error: t("Số tiền chưa hợp lệ.") };
   }
 
+  const methodRaw = String(formData.get("method") ?? "CASH");
+  const method = (["CASH", "BANK_TRANSFER", "CARD", "OTHER"] as const).includes(
+    methodRaw as never,
+  )
+    ? (methodRaw as "CASH" | "BANK_TRANSFER" | "CARD" | "OTHER")
+    : "CASH";
+
   let problem: string | null = null;
   await withOrg(member.orgId, async (tx) => {
     const booking = await tx.booking.findUnique({
       where: { id },
-      select: { createdByMembershipId: true, totalCents: true, depositCents: true },
+      select: {
+        createdByMembershipId: true,
+        totalCents: true,
+        discountCents: true,
+        depositCents: true,
+      },
     });
     if (!booking) throw new Error("BOOKING_NOT_FOUND");
     if (!canEditBooking(member, booking.createdByMembershipId)) {
@@ -552,8 +729,10 @@ export async function recordPayment(
       return;
     }
 
+    // Số khách phải trả là tổng trừ giảm giá; còn nợ là số đó trừ đã thu.
+    const payable = Math.max(0, booking.totalCents - (booking.discountCents ?? 0));
     const already = booking.depositCents ?? 0;
-    const outstanding = Math.max(0, booking.totalCents - already);
+    const outstanding = Math.max(0, payable - already);
     // Số nhập được làm tròn về đồng và chặn trên ở phần còn nợ: không ai ghi
     // nhận nhiều hơn số đơn còn thiếu, và một con số quá tay chỉ là gõ nhầm.
     const add = parsed === null ? outstanding : Math.min(Math.round(parsed), outstanding);
@@ -574,6 +753,7 @@ export async function recordPayment(
         orgId: member.orgId,
         bookingId: id,
         amount: add,
+        method,
         recordedByMembershipId: member.membershipId,
       },
     });
@@ -582,8 +762,8 @@ export async function recordPayment(
       where: { id },
       data: {
         depositCents: paid,
-        depositPaidAt:
-          paid >= booking.totalCents ? new Date() : undefined,
+        // Trả đủ khi đã thu chạm số phải trả (đã trừ giảm giá), không phải tổng.
+        depositPaidAt: paid >= payable ? new Date() : undefined,
       },
     });
   }).catch((error) => {
