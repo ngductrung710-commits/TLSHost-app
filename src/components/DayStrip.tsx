@@ -192,14 +192,18 @@ export function DayStrip({
       })}
 
       {/* Ô chọn: viền đứt bo góc, nền nhạt — vẽ đè lên lưới trong lúc kéo. Chỉ
-          trang trí, con số đêm nằm trong ngăn kéo sắp mở, nên aria-hidden. */}
+          trang trí, con số đêm nằm trong ngăn kéo sắp mở, nên aria-hidden.
+          Màu teal #008489 đặt thẳng chứ không mượn token: đây là màu của bản
+          thiết kế phuchost, không nằm trong bảng màu clay/sand của app. */}
       {showBox ? (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-1 z-10 rounded-lg border-2 border-dashed border-brand bg-brand/10"
+          className="pointer-events-none absolute inset-y-1 z-10 rounded-lg border-2 border-dashed"
           style={{
             left: `${(lo / days.length) * 100}%`,
             width: `${((hi - lo + 1) / days.length) * 100}%`,
+            borderColor: "#008489",
+            backgroundColor: "rgba(0, 132, 137, 0.1)",
           }}
         />
       ) : null}
