@@ -35,7 +35,9 @@ export const STATUS_BAR: Record<
   PENDING: { bg: "#FFB400", fg: "#101010", border: "#E0A000" },
   // Teal #008489, cũng lấy từ bản thiết kế.
   CONFIRMED: { bg: "#008489", fg: "#FFFFFF", border: "#006C70" },
-  CHECKED_IN: { bg: "#059669", fg: "#FFFFFF", border: "#047857" },
+  // Cũng teal, nhưng đậm hơn một nấc để phân biệt với "đã xác nhận": hai thanh
+  // cùng một màu thì không đọc được đâu là khách đã tới, đâu là chưa.
+  CHECKED_IN: { bg: "#00565A", fg: "#FFFFFF", border: "#003F42" },
   CHECKED_OUT: { bg: "#64748B", fg: "#FFFFFF", border: "#475569" },
   NO_SHOW: { bg: "#F43F5E", fg: "#FFFFFF", border: "#E11D48" },
   CANCELLED: { bg: "#E2E8F0", fg: "#475569", border: "#CBD5E1" },
@@ -45,7 +47,7 @@ export const STATUS_BAR: Record<
 export const STATUS_PILL: Record<BookingStatusName, { bg: string; fg: string }> = {
   PENDING: { bg: "#FFF4D6", fg: "#92610A" },
   CONFIRMED: { bg: "#D7EEEF", fg: "#006C70" },
-  CHECKED_IN: { bg: "#D1FAE5", fg: "#047857" },
+  CHECKED_IN: { bg: "#CBE3E4", fg: "#00565A" },
   CHECKED_OUT: { bg: "#E2E8F0", fg: "#475569" },
   NO_SHOW: { bg: "#FFE4E6", fg: "#E11D48" },
   CANCELLED: { bg: "#F1F5F9", fg: "#64748B" },
