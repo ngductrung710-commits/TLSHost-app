@@ -28,6 +28,7 @@ import { fill, type Locale } from "@/lib/i18n";
 
 export type BookingBarData = {
   id: string;
+  roomId: string;
   label: string;
   status: string | null;
   ref: number | null;
@@ -114,6 +115,7 @@ export function BookingBar({
   locale,
   statusAction,
   payAction,
+  moveAction,
 }: {
   data: BookingBarData;
   /** Số cột trong hàng, để đặt thanh theo phần trăm. */
@@ -128,6 +130,8 @@ export function BookingBar({
   // check:client chặn đúng điều đó.
   statusAction: BookingAction;
   payAction: BookingAction;
+  /** Dời đơn (kéo thả): đổi phòng + ngày, giữ nguyên số đêm. */
+  moveAction: BookingAction;
 }) {
   const t = useT();
   const status = normalizeStatus(data.status);
@@ -168,6 +172,21 @@ export function BookingBar({
   const barRef = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Kéo thả để dời đơn. dragStart giữ điểm bấm xuống; moved bật khi đã đi đủ
+  // xa để tính là kéo (dưới ngưỡng thì đó là một cú bấm, mở drawer). preview
+  // là ô đích vẽ đè trong lúc kéo; suppressClick nuốt cú click đuôi của kéo.
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const dragMoved = useRef(false);
+  const dropTarget = useRef<{ roomId: string; from: string } | null>(null);
+  const suppressClick = useRef(false);
+  const [dragging, setDragging] = useState(false);
+  const [preview, setPreview] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const CARD_W = 340;
 
@@ -247,6 +266,96 @@ export function BookingBar({
     if (!result.error) close();
   }
 
+  /* -- Kéo thả để dời đơn -------------------------------------------------- */
+
+  function addDaysIso(iso: string, n: number): string {
+    const d = new Date(`${iso}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /** Ô ngày dưới con trỏ, trả về phòng + ngày đích, hoặc null nếu ra ngoài. */
+  function targetAt(x: number, y: number): { roomId: string; from: string; rect: DOMRect } | null {
+    const cell = document
+      .elementFromPoint(x, y)
+      ?.closest<HTMLElement>("[data-day-date]");
+    if (!cell) return null;
+    const strip = cell.closest<HTMLElement>("[data-strip]");
+    if (!strip || !strip.dataset.strip) return null;
+    const from = cell.dataset.dayDate;
+    if (!from) return null;
+    return { roomId: strip.dataset.strip, from, rect: cell.getBoundingClientRect() };
+  }
+
+  function onBarPointerDown(e: React.PointerEvent) {
+    if (e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    dragMoved.current = false;
+    dropTarget.current = null;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onBarPointerMove(e: React.PointerEvent) {
+    if (!dragStart.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    if (!dragMoved.current && Math.hypot(dx, dy) < 5) return;
+    // Đã đủ xa để tính là kéo: đóng thẻ hover, bật chế độ kéo.
+    if (!dragMoved.current) {
+      dragMoved.current = true;
+      setDragging(true);
+      setOpen(false);
+    }
+    const target = targetAt(e.clientX, e.clientY);
+    if (!target) {
+      dropTarget.current = null;
+      setPreview(null);
+      return;
+    }
+    dropTarget.current = { roomId: target.roomId, from: target.from };
+    // Ô đích rộng một cột; ô xem trước trải đúng số đêm từ đó.
+    setPreview({
+      left: target.rect.left,
+      top: target.rect.top + 2,
+      width: target.rect.width * data.nights,
+      height: target.rect.height - 4,
+    });
+  }
+
+  function onBarPointerUp(e: React.PointerEvent) {
+    if (!dragStart.current) return;
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    const wasDrag = dragMoved.current;
+    const target = dropTarget.current;
+    dragStart.current = null;
+    dragMoved.current = false;
+    dropTarget.current = null;
+    setDragging(false);
+    setPreview(null);
+
+    // Xử lý mở/dời ngay ở đây, không dựa vào onClick: setPointerCapture ở
+    // pointerdown khiến trình duyệt không bắn sự kiện click sau đó. Đặt cờ để
+    // nếu click có bắn (một số trình duyệt vẫn bắn) thì onClick bỏ qua.
+    suppressClick.current = true;
+
+    const changed =
+      wasDrag &&
+      target &&
+      (target.roomId !== data.roomId || target.from !== data.checkIn);
+    if (changed) {
+      run(moveAction, {
+        roomId: target.roomId,
+        checkIn: target.from,
+        checkOut: addDaysIso(target.from, data.nights),
+      });
+      return;
+    }
+    // Bấm thường, hoặc kéo rồi thả lại chỗ cũ: mở drawer chi tiết.
+    close();
+    openBookingDetail(data.id);
+  }
+
   const inner = [
     "flex h-full w-full items-center gap-1.5 overflow-hidden rounded-lg border px-2 text-[12px] font-semibold shadow-sm transition-[filter] hover:brightness-105",
     data.openStart ? "stay--open-start" : "",
@@ -266,14 +375,26 @@ export function BookingBar({
       <button
         ref={barRef}
         type="button"
-        onClick={show}
+        onClick={() => {
+          // Chuột/cảm ứng đã được pointerup lo (và đặt cờ này). Chỉ bàn phím
+          // (Enter/Space) mới không qua pointer — nhánh dưới dành cho nó.
+          if (suppressClick.current) {
+            suppressClick.current = false;
+            return;
+          }
+          close();
+          openBookingDetail(data.id);
+        }}
+        onPointerDown={onBarPointerDown}
+        onPointerMove={onBarPointerMove}
+        onPointerUp={onBarPointerUp}
         onPointerEnter={show}
         onPointerLeave={scheduleClose}
         onFocus={show}
         onBlur={scheduleClose}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className={inner}
+        className={`${inner} ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
         style={{ backgroundColor: bar.bg, color: bar.fg, borderColor: bar.border }}
         title={`${data.label} · ${fill(t("{n} đêm"), { n: data.nights })}`}
       >
@@ -300,6 +421,26 @@ export function BookingBar({
           ) : null}
         </span>
       </button>
+
+      {/* Ô xem trước lúc kéo: viền đứt teal ở phòng + ngày sắp thả vào. Portal
+          lên body vì nó phải nằm trên hàng phòng khác, ngoài vùng cuộn. */}
+      {dragging && preview
+        ? createPortal(
+            <div
+              aria-hidden="true"
+              className="pointer-events-none fixed z-50 rounded-lg border-2 border-dashed"
+              style={{
+                left: preview.left,
+                top: preview.top,
+                width: preview.width,
+                height: preview.height,
+                borderColor: "#008489",
+                backgroundColor: "rgba(0, 132, 137, 0.15)",
+              }}
+            />,
+            document.body,
+          )
+        : null}
 
       {open && pos
         ? createPortal(

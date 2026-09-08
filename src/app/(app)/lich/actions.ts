@@ -450,6 +450,74 @@ export async function updateBooking(
   redirect(`/lich?tu=${toIsoDate(result.checkIn)}`);
 }
 
+/**
+ * Dời một lượt đặt bằng cách kéo thả trên lịch: chỉ đổi phòng và khoảng ngày,
+ * giữ nguyên mọi thứ khác. Riêng một action gọn thay vì updateBooking vì cú
+ * kéo chỉ biết ba thứ đó — nó không mang theo tên khách hay giá, và một form
+ * thiếu trường sẽ ghi đè phần còn lại bằng mặc định.
+ *
+ * Vẫn kiểm đêm trống (bỏ qua chính nó), nên kéo vào chỗ đã có người giữ sẽ bị
+ * từ chối và thanh bật về chỗ cũ khi bảng vẽ lại.
+ */
+export async function moveBooking(
+  _prev: BookingState,
+  formData: FormData,
+): Promise<BookingState> {
+  const t = await getT();
+  const member = await requireMember();
+  if (!canManageBookings(member)) {
+    return { error: t("Bạn không có quyền sửa đặt phòng.") };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const roomId = String(formData.get("roomId") ?? "");
+  const checkIn = parseIsoDate(String(formData.get("checkIn") ?? ""));
+  const checkOut = parseIsoDate(String(formData.get("checkOut") ?? ""));
+  if (!id || !roomId || !checkIn || !checkOut) {
+    return { error: t("Thông tin chưa hợp lệ.") };
+  }
+  if (checkOut <= checkIn) {
+    return { error: t("Ngày trả phòng phải sau ngày nhận phòng.") };
+  }
+
+  try {
+    await withOrg(member.orgId, async (tx) => {
+      const existing = await tx.booking.findUnique({
+        where: { id },
+        select: { createdByMembershipId: true },
+      });
+      if (!existing) throw new Error("BOOKING_NOT_FOUND");
+      if (!canEditBooking(member, existing.createdByMembershipId)) {
+        throw new Error("FORBIDDEN");
+      }
+      const room = await tx.room.findUnique({
+        where: { id: roomId },
+        select: { id: true },
+      });
+      if (!room) throw new Error("ROOM_NOT_FOUND");
+
+      await assertNightsFree(tx, {
+        roomId,
+        from: checkIn,
+        to: checkOut,
+        ignoreBookingId: id,
+      });
+
+      await tx.booking.update({
+        where: { id },
+        data: { roomId, checkIn, checkOut },
+      });
+    });
+  } catch (error) {
+    const known = await calendarError(error);
+    if (known) return known;
+    throw error;
+  }
+
+  revalidatePath("/lich");
+  return { error: null };
+}
+
 /** Sửa đơn từ drawer trên lịch: không chuyển hướng, chỉ vẽ lại bảng. */
 export async function updateBookingInline(
   _prev: BookingState,

@@ -23,6 +23,7 @@ import {
   deleteBlock,
   deleteBookingPayment,
   loadBookingDetail,
+  moveBooking,
   recordPayment,
   renameRoom,
   setBookingStatus,
@@ -288,6 +289,7 @@ export default async function CalendarPage(props: PageProps<"/lich">) {
               canRename={member.role === "OWNER"}
               statusAction={setBookingStatus}
               payAction={recordPayment}
+              moveAction={moveBooking}
             />
           </div>
 

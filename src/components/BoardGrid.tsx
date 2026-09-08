@@ -78,6 +78,7 @@ export function BoardGrid({
   canRename,
   statusAction,
   payAction,
+  moveAction,
 }: {
   board: Board;
   today: string;
@@ -98,6 +99,10 @@ export function BoardGrid({
     fd: FormData,
   ) => Promise<{ error: string | null }>;
   payAction: (
+    prev: { error: string | null },
+    fd: FormData,
+  ) => Promise<{ error: string | null }>;
+  moveAction: (
     prev: { error: string | null },
     fd: FormData,
   ) => Promise<{ error: string | null }>;
@@ -275,6 +280,7 @@ export function BoardGrid({
                       key={`booking-${span.id}`}
                       data={{
                         id: span.id,
+                        roomId: room.id,
                         label: span.label,
                         status: span.status,
                         ref: span.ref,
@@ -296,6 +302,7 @@ export function BoardGrid({
                       locale={locale}
                       statusAction={statusAction}
                       payAction={payAction}
+                      moveAction={moveAction}
                     />
                   ) : (
                     <BlockBar

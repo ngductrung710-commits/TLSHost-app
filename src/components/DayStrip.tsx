@@ -171,6 +171,7 @@ export function DayStrip({
             key={day}
             href={href}
             data-day-index={i}
+            data-day-date={day}
             aria-label={label}
             draggable={false}
             onClick={(e) => onCellClick(e, i)}
