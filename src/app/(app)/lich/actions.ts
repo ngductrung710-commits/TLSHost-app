@@ -599,6 +599,60 @@ export async function recordPayment(
   return { error: null };
 }
 
+/**
+ * Xoá một lần thu ghi nhầm, và trừ lại số đó khỏi tổng đã thu.
+ *
+ * Hàng lịch sử là bản ghi, nhưng một lần gõ nhầm thì phải sửa được — khác với
+ * lượt đặt (hủy chứ không xoá), một dòng thanh toán sai không có giá trị lưu
+ * lại. Trừ đúng số của nó khỏi depositCents, và nếu vì thế mà không còn trả đủ
+ * thì gỡ luôn mốc "đã trả đủ".
+ */
+export async function deleteBookingPayment(formData: FormData): Promise<void> {
+  const member = await requireMember();
+  if (!canManageBookings(member)) return;
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  let bookingId: string | null = null;
+  await withOrg(member.orgId, async (tx) => {
+    const pay = await tx.bookingPayment.findUnique({
+      where: { id },
+      select: {
+        amount: true,
+        bookingId: true,
+        booking: {
+          select: {
+            createdByMembershipId: true,
+            totalCents: true,
+            depositCents: true,
+          },
+        },
+      },
+    });
+    if (!pay) return;
+    if (!canEditBooking(member, pay.booking.createdByMembershipId)) return;
+
+    bookingId = pay.bookingId;
+    const remaining = Math.max(0, (pay.booking.depositCents ?? 0) - pay.amount);
+    const stillPaid =
+      pay.booking.totalCents !== null && remaining >= pay.booking.totalCents;
+
+    await tx.bookingPayment.delete({ where: { id } });
+    await tx.booking.update({
+      where: { id: pay.bookingId },
+      data: {
+        depositCents: remaining,
+        // Giữ mốc trả đủ nếu vẫn đủ (undefined = không đụng), gỡ nếu không.
+        depositPaidAt: stillPaid ? undefined : null,
+      },
+    });
+  });
+
+  revalidatePath("/lich");
+  if (bookingId) revalidatePath(`/lich/dat-phong/${bookingId}`);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Blocks                                                                      */
 /* -------------------------------------------------------------------------- */

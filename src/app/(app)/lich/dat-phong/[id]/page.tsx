@@ -8,7 +8,7 @@ import { canEditBooking, canManageBookings, orgCurrency, requireMember, visibleP
 import { withOrg } from "@/lib/db";
 import { daysBetween, formatMoney, shortVi, toIsoDate } from "@/lib/dates";
 
-import { cancelBooking, updateBooking } from "../../actions";
+import { cancelBooking, deleteBookingPayment, updateBooking } from "../../actions";
 import { getT, readLocale } from "@/lib/locale";
 import { fill } from "@/lib/i18n";
 
@@ -168,7 +168,7 @@ export default async function BookingPage(
               {booking.manualPayments.map((pay) => (
                 <li
                   key={pay.id}
-                  className="flex items-baseline justify-between gap-4 text-[13px]"
+                  className="flex items-baseline justify-between gap-3 text-[13px]"
                 >
                   <span className="text-ink-600">
                     {shortVi(pay.createdAt)}
@@ -179,8 +179,34 @@ export default async function BookingPage(
                       })}
                     </span>
                   </span>
-                  <span className="tnum font-medium text-ink-900">
-                    {formatMoney(pay.amount, currency, locale)}
+                  <span className="flex items-baseline gap-3">
+                    <span className="tnum font-medium text-ink-900">
+                      {formatMoney(pay.amount, currency, locale)}
+                    </span>
+                    {editable ? (
+                      <form action={deleteBookingPayment} className="contents">
+                        <input type="hidden" name="id" value={pay.id} />
+                        <button
+                          type="submit"
+                          aria-label={t("Xóa lần thu này")}
+                          title={t("Xóa lần thu này")}
+                          className="grid size-6 shrink-0 place-items-center rounded-full text-ink-400 hover:bg-danger-soft hover:text-danger"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="size-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M4 7h16M9 7V5h6v2M10 11v6M14 11v6M6 7l1 13h10l1-13" />
+                          </svg>
+                        </button>
+                      </form>
+                    ) : null}
                   </span>
                 </li>
               ))}

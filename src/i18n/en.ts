@@ -95,6 +95,7 @@ export const EN: Record<string, string> = {
     "This booking has no price to record a payment against.",
   "Số tiền chưa hợp lệ.": "That amount isn't valid.",
   "Đơn này đã thu đủ.": "This booking is already paid in full.",
+  "Xóa lần thu này": "Delete this payment",
   "Tổng tiền": "Total",
   "Đã thu": "Paid",
   "bởi {ai}": "by {ai}",
